@@ -15,5 +15,7 @@
   "showStorageLocation": "Show Storage Location",
   "showStorageStats": "Show Comment Statistics",
   "manageProjects": "Manage Project Comments",
+  "exportComments": "Export Comments Data",
+  "importComments": "Import Comments Data",
   "treeViewTitle": "Local Comments"
 } 

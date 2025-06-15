@@ -754,6 +754,255 @@ export function registerCommands(
         }
     });
 
+    // 导出注释数据命令
+    const exportCommentsCommand = vscode.commands.registerCommand('localComment.exportComments', async () => {
+        try {
+            const projectInfo = commentManager.getProjectInfo();
+            const allComments = commentManager.getAllComments();
+            
+            // 检查是否有注释数据
+            const totalComments = Object.values(allComments).reduce((sum, comments) => sum + comments.length, 0);
+            if (totalComments === 0) {
+                vscode.window.showWarningMessage('当前项目没有注释数据可以导出');
+                return;
+            }
+
+            // 生成默认文件名
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+            const defaultFileName = `${projectInfo.name}-comments-${timestamp}.json`;
+
+            // 让用户选择保存位置
+            const saveUri = await vscode.window.showSaveDialog({
+                defaultUri: vscode.Uri.file(defaultFileName),
+                filters: {
+                    'JSON文件': ['json'],
+                    '所有文件': ['*']
+                },
+                saveLabel: '导出注释数据'
+            });
+
+            if (!saveUri) {
+                return; // 用户取消了操作
+            }
+
+            // 执行导出
+            const success = await commentManager.exportComments(saveUri.fsPath);
+            
+            if (success) {
+                const fileCount = Object.keys(allComments).length;
+                vscode.window.showInformationMessage(
+                    `✅ 导出成功！已导出 ${fileCount} 个文件的 ${totalComments} 条注释`,
+                    '打开文件位置', '查看文件'
+                ).then(selection => {
+                    if (selection === '打开文件位置') {
+                        vscode.commands.executeCommand('revealFileInOS', saveUri);
+                    } else if (selection === '查看文件') {
+                        vscode.commands.executeCommand('vscode.open', saveUri);
+                    }
+                });
+            } else {
+                vscode.window.showErrorMessage('导出失败，请检查文件路径和权限');
+            }
+
+        } catch (error) {
+            console.error('导出注释数据时发生错误:', error);
+            vscode.window.showErrorMessage(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+    });
+
+    // 导入注释数据命令
+    const importCommentsCommand = vscode.commands.registerCommand('localComment.importComments', async () => {
+        try {
+            // 让用户选择导入文件
+            const openUri = await vscode.window.showOpenDialog({
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: {
+                    'JSON文件': ['json'],
+                    '所有文件': ['*']
+                },
+                openLabel: '选择注释数据文件'
+            });
+
+            if (!openUri || openUri.length === 0) {
+                return; // 用户取消了操作
+            }
+
+            const importPath = openUri[0].fsPath;
+
+            // 验证导入文件
+            const validation = await commentManager.validateImportFile(importPath);
+            
+            if (!validation.valid) {
+                vscode.window.showErrorMessage(`文件验证失败: ${validation.message}`);
+                return;
+            }
+
+            // 分析导入文件的路径信息
+            const pathAnalysis = await commentManager.analyzeImportPaths(importPath);
+            
+            if (!pathAnalysis.success) {
+                vscode.window.showErrorMessage(`路径分析失败: ${pathAnalysis.message}`);
+                return;
+            }
+
+            // 获取当前项目信息
+            const currentProject = commentManager.getProjectInfo();
+
+            // 显示导入预览信息
+            let previewMessage = `📋 导入预览:\n\n`;
+            previewMessage += `📁 源项目: ${validation.projectName}\n`;
+            previewMessage += `📁 目标项目: ${currentProject.name}\n`;
+            previewMessage += `📅 导出时间: ${validation.exportTime}\n`;
+            previewMessage += `📂 文件数量: ${validation.fileCount} 个\n`;
+            previewMessage += `💬 注释数量: ${validation.commentCount} 条\n\n`;
+
+            // 检查是否需要跨项目导入
+            const needsCrossProjectImport = pathAnalysis.commonBasePath && 
+                !pathAnalysis.commonBasePath.startsWith(currentProject.path.replace(/\\/g, '/'));
+
+            let importOptions: Array<{
+                label: string;
+                description: string;
+                detail: string;
+                mode: 'merge' | 'replace';
+                crossProject: 'direct' | 'remap';
+            }> = [];
+
+            if (needsCrossProjectImport) {
+                // 跨项目导入选项
+                previewMessage += `⚠️ 检测到跨项目导入需求\n`;
+                previewMessage += `源项目路径: ${pathAnalysis.commonBasePath}\n`;
+                previewMessage += `当前项目路径: ${currentProject.path}\n\n`;
+                previewMessage += `请选择导入方式:`;
+
+                importOptions = [
+                    {
+                        label: '🔄 智能路径重映射 + 合并',
+                        description: '推荐：自动重映射文件路径并合并注释',
+                        detail: `将源路径 ${pathAnalysis.commonBasePath} 映射到 ${currentProject.path}`,
+                        mode: 'merge',
+                        crossProject: 'remap'
+                    },
+                    {
+                        label: '🔄 智能路径重映射 + 替换',
+                        description: '自动重映射文件路径并替换所有注释',
+                        detail: '⚠️ 警告：这将删除当前项目的所有注释数据',
+                        mode: 'replace',
+                        crossProject: 'remap'
+                    },
+                    {
+                        label: '📁 直接导入 + 合并',
+                        description: '保持原始路径直接导入',
+                        detail: '注释将保持原始文件路径，可能无法匹配当前项目文件',
+                        mode: 'merge',
+                        crossProject: 'direct'
+                    },
+                    {
+                        label: '📁 直接导入 + 替换',
+                        description: '保持原始路径直接导入并替换',
+                        detail: '⚠️ 警告：这将删除当前项目的所有注释数据',
+                        mode: 'replace',
+                        crossProject: 'direct'
+                    }
+                ];
+            } else {
+                // 同项目导入选项
+                previewMessage += `请选择导入模式:`;
+
+                importOptions = [
+                    {
+                        label: '🔄 合并导入',
+                        description: '将导入的注释与现有注释合并',
+                        detail: '如果存在相同ID的注释将跳过，保留现有数据',
+                        mode: 'merge',
+                        crossProject: 'direct'
+                    },
+                    {
+                        label: '🔄 替换导入',
+                        description: '用导入的注释替换所有现有注释',
+                        detail: '⚠️ 警告：这将删除当前项目的所有注释数据',
+                        mode: 'replace',
+                        crossProject: 'direct'
+                    }
+                ];
+            }
+
+            // 让用户选择导入模式
+            const importMode = await vscode.window.showQuickPick(importOptions, {
+                placeHolder: '选择导入方式',
+                ignoreFocusOut: true
+            });
+
+            if (!importMode) {
+                return; // 用户取消了操作
+            }
+
+            // 如果是替换模式，再次确认
+            if (importMode.mode === 'replace') {
+                const confirm = await vscode.window.showWarningMessage(
+                    '⚠️ 确定要替换所有现有注释数据吗？\n\n此操作将删除当前项目的所有注释，且不可恢复！',
+                    { modal: true },
+                    '确定替换', '取消'
+                );
+                
+                if (confirm !== '确定替换') {
+                    return;
+                }
+            }
+
+            // 准备路径映射配置
+            let pathMapping: { oldBasePath: string; newBasePath: string } | undefined;
+            
+            if (importMode.crossProject === 'remap' && pathAnalysis.commonBasePath) {
+                pathMapping = {
+                    oldBasePath: pathAnalysis.commonBasePath,
+                    newBasePath: currentProject.path.replace(/\\/g, '/') + '/'
+                };
+            }
+
+            // 执行导入
+            const result = await commentManager.importComments(
+                importPath, 
+                importMode.mode, 
+                importMode.crossProject,
+                pathMapping
+            );
+            
+            if (result.success) {
+                // 刷新界面
+                tagManager.updateTags(commentManager.getAllComments());
+                commentProvider.refresh();
+                commentTreeProvider.refresh();
+
+                // 构建成功消息
+                let successMessage = result.message;
+                if (result.remappedFiles && result.remappedFiles > 0) {
+                    successMessage += `\n🔄 已重映射 ${result.remappedFiles} 个文件的路径`;
+                }
+
+                // 显示成功消息
+                vscode.window.showInformationMessage(
+                    `✅ ${successMessage}`,
+                    '查看注释列表', '显示统计'
+                ).then(selection => {
+                    if (selection === '查看注释列表') {
+                        vscode.commands.executeCommand('workbench.view.explorer');
+                    } else if (selection === '显示统计') {
+                        vscode.commands.executeCommand('localComment.showStorageStats');
+                    }
+                });
+            } else {
+                vscode.window.showErrorMessage(result.message);
+            }
+
+        } catch (error) {
+            console.error('导入注释数据时发生错误:', error);
+            vscode.window.showErrorMessage(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+    });
+
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
         showStorageLocationCommand,
@@ -774,6 +1023,8 @@ export function registerCommands(
         editCommentFromTreeCommand,
         addCommentCommand,
         addMarkdownCommentCommand,
-        convertSelectionToCommentCommand
+        convertSelectionToCommentCommand,
+        exportCommentsCommand,
+        importCommentsCommand
     ];
 } 

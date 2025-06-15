@@ -134,6 +134,16 @@
         "command": "localComment.manageProjects",
         "title": "%manageProjects%",
         "category": "Local Comment"
+      },
+      {
+        "command": "localComment.exportComments",
+        "title": "%exportComments%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.importComments",
+        "title": "%importComments%",
+        "category": "Local Comment"
       }
     ],
     "views": {

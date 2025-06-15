@@ -15,5 +15,7 @@
   "showStorageLocation": "显示存储位置",
   "showStorageStats": "显示注释统计",
   "manageProjects": "管理项目注释",
+  "exportComments": "导出注释数据",
+  "importComments": "导入注释数据",
   "treeViewTitle": "本地注释"
 } 

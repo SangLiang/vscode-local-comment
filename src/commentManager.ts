@@ -709,4 +709,331 @@ export class CommentManager {
             console.error('异步保存注释失败:', error);
         }
     }
+
+    /**
+     * 导出注释数据到指定文件
+     * @param exportPath 导出文件路径
+     * @returns 导出是否成功
+     */
+    public async exportComments(exportPath: string): Promise<boolean> {
+        try {
+            const projectInfo = this.getProjectInfo();
+            const exportData = {
+                version: '1.0.0',
+                exportTime: new Date().toISOString(),
+                projectInfo: {
+                    name: projectInfo.name,
+                    path: projectInfo.path
+                },
+                comments: this.comments,
+                metadata: {
+                    totalFiles: Object.keys(this.comments).length,
+                    totalComments: Object.values(this.comments).reduce((sum, comments) => sum + comments.length, 0)
+                }
+            };
+
+            // 确保导出目录存在
+            const exportDir = path.dirname(exportPath);
+            if (!fs.existsSync(exportDir)) {
+                fs.mkdirSync(exportDir, { recursive: true });
+            }
+
+            // 写入导出文件
+            fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2), 'utf8');
+            
+            console.log(`✅ 注释数据已导出到: ${exportPath}`);
+            return true;
+        } catch (error) {
+            console.error('导出注释数据失败:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 从指定文件导入注释数据
+     * @param importPath 导入文件路径
+     * @param mergeMode 导入模式：'replace' 替换现有数据，'merge' 合并数据
+     * @param crossProjectMode 跨项目导入模式：'direct' 直接导入，'remap' 路径重映射
+     * @param pathMapping 路径映射配置，用于跨项目导入
+     * @returns 导入结果信息
+     */
+    public async importComments(
+        importPath: string, 
+        mergeMode: 'replace' | 'merge' = 'merge',
+        crossProjectMode: 'direct' | 'remap' = 'direct',
+        pathMapping?: { oldBasePath: string; newBasePath: string }
+    ): Promise<{
+        success: boolean;
+        message: string;
+        importedFiles?: number;
+        importedComments?: number;
+        skippedComments?: number;
+        remappedFiles?: number;
+    }> {
+        try {
+            // 检查文件是否存在
+            if (!fs.existsSync(importPath)) {
+                return {
+                    success: false,
+                    message: '导入文件不存在'
+                };
+            }
+
+            // 读取导入文件
+            const importDataStr = fs.readFileSync(importPath, 'utf8');
+            const importData = JSON.parse(importDataStr);
+
+            // 验证导入数据格式
+            if (!importData.comments || typeof importData.comments !== 'object') {
+                return {
+                    success: false,
+                    message: '导入文件格式不正确，缺少注释数据'
+                };
+            }
+
+            let importedFiles = 0;
+            let importedComments = 0;
+            let skippedComments = 0;
+            let remappedFiles = 0;
+
+            if (mergeMode === 'replace') {
+                // 替换模式：清空现有数据
+                this.comments = {};
+            }
+
+            // 处理导入的注释数据
+            for (const [originalFilePath, comments] of Object.entries(importData.comments)) {
+                if (!Array.isArray(comments)) {
+                    continue;
+                }
+
+                let targetFilePath = originalFilePath;
+
+                // 处理跨项目路径重映射
+                if (crossProjectMode === 'remap' && pathMapping) {
+                    const { oldBasePath, newBasePath } = pathMapping;
+                    
+                    // 标准化路径分隔符
+                    const normalizedOldPath = originalFilePath.replace(/\\/g, '/');
+                    const normalizedOldBase = oldBasePath.replace(/\\/g, '/');
+                    const normalizedNewBase = newBasePath.replace(/\\/g, '/');
+                    
+                    if (normalizedOldPath.startsWith(normalizedOldBase)) {
+                        // 计算相对路径
+                        const relativePath = normalizedOldPath.substring(normalizedOldBase.length);
+                        // 构建新的完整路径
+                        targetFilePath = path.join(normalizedNewBase, relativePath).replace(/\\/g, '/');
+                        
+                        // 转换回系统路径格式
+                        targetFilePath = path.resolve(targetFilePath);
+                        remappedFiles++;
+                        
+                        console.log(`🔄 路径重映射: ${originalFilePath} -> ${targetFilePath}`);
+                    }
+                }
+
+                if (!this.comments[targetFilePath]) {
+                    this.comments[targetFilePath] = [];
+                    importedFiles++;
+                }
+
+                for (const comment of comments as LocalComment[]) {
+                    // 验证注释数据完整性
+                    if (!comment.id || typeof comment.line !== 'number' || !comment.content) {
+                        skippedComments++;
+                        continue;
+                    }
+
+                    if (mergeMode === 'merge') {
+                        // 合并模式：检查是否已存在相同ID的注释
+                        const existingIndex = this.comments[targetFilePath].findIndex(c => c.id === comment.id);
+                        if (existingIndex >= 0) {
+                            // 如果存在相同ID，跳过或更新（这里选择跳过避免冲突）
+                            skippedComments++;
+                            continue;
+                        }
+                    }
+
+                    // 添加注释，确保必要字段存在
+                    const importedComment: LocalComment = {
+                        id: comment.id || this.generateId(),
+                        line: comment.line,
+                        content: comment.content,
+                        timestamp: comment.timestamp || Date.now(),
+                        originalLine: comment.originalLine || comment.line,
+                        lineContent: comment.lineContent || '',
+                        isMatched: comment.isMatched
+                    };
+
+                    this.comments[targetFilePath].push(importedComment);
+                    importedComments++;
+                }
+            }
+
+            // 保存导入的数据
+            await this.saveComments();
+
+            let message = `导入完成！导入了 ${importedFiles} 个文件的 ${importedComments} 条注释`;
+            if (skippedComments > 0) {
+                message += `，跳过 ${skippedComments} 条注释`;
+            }
+            if (remappedFiles > 0) {
+                message += `，重映射了 ${remappedFiles} 个文件路径`;
+            }
+
+            console.log(`✅ ${message}`);
+            
+            return {
+                success: true,
+                message,
+                importedFiles,
+                importedComments,
+                skippedComments,
+                remappedFiles
+            };
+
+        } catch (error) {
+            console.error('导入注释数据失败:', error);
+            return {
+                success: false,
+                message: `导入失败: ${error instanceof Error ? error.message : '未知错误'}`
+            };
+        }
+    }
+
+    /**
+     * 分析导入文件中的文件路径，用于跨项目导入时的路径分析
+     * @param importPath 导入文件路径
+     * @returns 路径分析结果
+     */
+    public async analyzeImportPaths(importPath: string): Promise<{
+        success: boolean;
+        message: string;
+        filePaths?: string[];
+        commonBasePath?: string;
+        projectName?: string;
+    }> {
+        try {
+            if (!fs.existsSync(importPath)) {
+                return {
+                    success: false,
+                    message: '文件不存在'
+                };
+            }
+
+            const importDataStr = fs.readFileSync(importPath, 'utf8');
+            const importData = JSON.parse(importDataStr);
+
+            if (!importData.comments || typeof importData.comments !== 'object') {
+                return {
+                    success: false,
+                    message: '文件格式不正确'
+                };
+            }
+
+            const filePaths = Object.keys(importData.comments);
+            
+            if (filePaths.length === 0) {
+                return {
+                    success: false,
+                    message: '没有找到文件路径'
+                };
+            }
+
+            // 查找公共基础路径
+            let commonBasePath = '';
+            if (filePaths.length > 0) {
+                // 标准化所有路径
+                const normalizedPaths = filePaths.map(p => p.replace(/\\/g, '/'));
+                
+                // 找到最短路径作为基础
+                const shortestPath = normalizedPaths.reduce((a, b) => a.length <= b.length ? a : b);
+                
+                // 逐字符比较找到公共前缀
+                for (let i = 0; i < shortestPath.length; i++) {
+                    const char = shortestPath[i];
+                    if (normalizedPaths.every(path => path[i] === char)) {
+                        commonBasePath += char;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // 确保公共路径以目录分隔符结尾
+                const lastSlashIndex = commonBasePath.lastIndexOf('/');
+                if (lastSlashIndex > 0) {
+                    commonBasePath = commonBasePath.substring(0, lastSlashIndex + 1);
+                }
+            }
+
+            return {
+                success: true,
+                message: '路径分析完成',
+                filePaths,
+                commonBasePath,
+                projectName: importData.projectInfo?.name || '未知项目'
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                message: `路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`
+            };
+        }
+    }
+
+    /**
+     * 验证导入文件的格式和内容
+     * @param importPath 导入文件路径
+     * @returns 验证结果
+     */
+    public async validateImportFile(importPath: string): Promise<{
+        valid: boolean;
+        message: string;
+        fileCount?: number;
+        commentCount?: number;
+        projectName?: string;
+        exportTime?: string;
+    }> {
+        try {
+            if (!fs.existsSync(importPath)) {
+                return {
+                    valid: false,
+                    message: '文件不存在'
+                };
+            }
+
+            const importDataStr = fs.readFileSync(importPath, 'utf8');
+            const importData = JSON.parse(importDataStr);
+
+            // 检查基本结构
+            if (!importData.comments || typeof importData.comments !== 'object') {
+                return {
+                    valid: false,
+                    message: '文件格式不正确，缺少注释数据'
+                };
+            }
+
+            // 统计信息
+            const fileCount = Object.keys(importData.comments).length;
+            const commentCount = Object.values(importData.comments).reduce((sum: number, comments: any) => {
+                return sum + (Array.isArray(comments) ? comments.length : 0);
+            }, 0);
+
+            return {
+                valid: true,
+                message: '文件格式正确',
+                fileCount,
+                commentCount,
+                projectName: importData.projectInfo?.name || '未知项目',
+                exportTime: importData.exportTime || '未知时间'
+            };
+
+        } catch (error) {
+            return {
+                valid: false,
+                message: `文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`
+            };
+        }
+    }
 } 
