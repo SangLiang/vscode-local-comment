@@ -4,6 +4,44 @@ import * as fs from 'fs';
 import { TagManager } from '../tagManager';
 import { CommentManager } from '../commentManager';
 
+// 辅助函数：获取代码上下文（前后5行）
+export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
+    contextLines: string[];
+    contextStartLine: number;
+}> {
+    try {
+        const document = await vscode.workspace.openTextDocument(uri);
+        const totalLines = document.lineCount;
+        
+        // 计算上下文的开始和结束行
+        const startLine = Math.max(0, lineNumber - contextLines);
+        const endLine = Math.min(totalLines - 1, lineNumber + contextLines);
+        
+        // 获取上下文行的内容
+        const lines: string[] = [];
+        for (let i = startLine; i <= endLine; i++) {
+            try {
+                const lineText = document.lineAt(i).text;
+                lines.push(lineText);
+            } catch (error) {
+                // 如果某行无法读取，添加空行
+                lines.push('');
+            }
+        }
+        
+        return {
+            contextLines: lines,
+            contextStartLine: startLine
+        };
+    } catch (error) {
+        console.error('获取代码上下文失败:', error);
+        return {
+            contextLines: [],
+            contextStartLine: 0
+        };
+    }
+}
+
 export async function showWebViewInput(
     context: vscode.ExtensionContext,
     prompt: string, 
@@ -14,6 +52,8 @@ export async function showWebViewInput(
         lineNumber?: number;
         lineContent?: string;
         selectedText?: string;
+        contextLines?: string[]; // 前后5行的代码内容
+        contextStartLine?: number; // 上下文开始的行号
     },
     markedJsUri: string = ''
 ): Promise<string | undefined> {
@@ -96,6 +136,8 @@ function getWebviewContent(
         lineNumber?: number;
         lineContent?: string;
         selectedText?: string;
+        contextLines?: string[]; // 前后5行的代码内容
+        contextStartLine?: number; // 上下文开始的行号
     },
     markedJsUri: string = '',
     tagSuggestions: string = ''
@@ -135,6 +177,28 @@ function getWebviewContent(
                 <span class="context-label">选中:</span>
                 <div class="context-value">
                     <div class="code-preview">${escapeHtml(contextInfo.selectedText)}</div>
+                </div>
+            </div>`;
+        } else if (contextInfo.contextLines && contextInfo.contextLines.length > 0) {
+            // 显示扩展的上下文信息（前后5行）
+            contextHtml += `<div class="context-item">
+                <span class="context-label">代码上下文:</span>
+                <div class="context-value">
+                    <div class="code-context-preview">`;
+            
+            contextInfo.contextLines.forEach((line, index) => {
+                const currentLineNumber = (contextInfo.contextStartLine || 0) + index;
+                const isTargetLine = currentLineNumber === contextInfo.lineNumber;
+                const lineClass = isTargetLine ? 'target-line' : 'context-line';
+                const lineNumberDisplay = currentLineNumber + 1;
+                
+                contextHtml += `<div class="code-line ${lineClass}">
+                    <span class="line-number">${lineNumberDisplay}</span>
+                    <span class="line-content">${escapeHtml(line)}</span>
+                </div>`;
+            });
+            
+            contextHtml += `    </div>
                 </div>
             </div>`;
         } else if (contextInfo.lineContent) {

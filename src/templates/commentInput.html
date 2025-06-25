@@ -57,6 +57,48 @@
             white-space: pre-wrap;
             color: var(--vscode-textPreformat-foreground);
         }
+        .code-context-preview {
+            background-color: var(--vscode-textCodeBlock-background);
+            border: 1px solid var(--vscode-textBlockQuote-border);
+            border-radius: 3px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: var(--vscode-editor-font-size);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .code-line {
+            display: flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-bottom: 1px solid transparent;
+        }
+        .code-line:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+        .code-line.target-line {
+            background-color: var(--vscode-editor-selectionBackground);
+            border-color: var(--vscode-editor-selectionBorder);
+        }
+        .line-number {
+            color: var(--vscode-editorLineNumber-foreground);
+            font-size: 12px;
+            min-width: 35px;
+            text-align: right;
+            margin-right: 12px;
+            user-select: none;
+        }
+        .target-line .line-number {
+            color: var(--vscode-editorLineNumber-activeForeground);
+            font-weight: bold;
+        }
+        .line-content {
+            color: var(--vscode-textPreformat-foreground);
+            white-space: pre;
+            flex: 1;
+        }
+        .target-line .line-content {
+            font-weight: bold;
+        }
         .header {
             margin-bottom: 20px;
         }

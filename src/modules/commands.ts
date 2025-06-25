@@ -5,7 +5,7 @@ import { CommentManager } from '../commentManager';
 import { TagManager } from '../tagManager';
 import { CommentProvider } from '../providers/commentProvider';
 import { CommentTreeProvider } from '../providers/commentTreeProvider';
-import { showWebViewInput } from './webview';
+import { showWebViewInput, getCodeContext } from './webview';
 import { showQuickInputWithTagCompletion } from '../quickInput';
 
 export function registerCommands(
@@ -449,6 +449,9 @@ export function registerCommands(
             const document = await vscode.workspace.openTextDocument(documentUri);
             // 使用注释保存的原始代码内容，而不是当前行的代码
             const lineContent = comment.lineContent || document.lineAt(comment.line).text;
+            
+            // 获取代码上下文（前后5行）
+            const codeContext = await getCodeContext(documentUri, comment.line);
 
             const newContent = await showWebViewInput(
                 context,
@@ -458,7 +461,9 @@ export function registerCommands(
                 {
                     fileName,
                     lineNumber: comment.line,
-                    lineContent
+                    lineContent,
+                    contextLines: codeContext.contextLines,
+                    contextStartLine: codeContext.contextStartLine
                 }
             );
 
@@ -584,6 +589,9 @@ export function registerCommands(
             // 使用注释保存的原始代码内容，而不是当前行的代码
             const lineContent = comment.lineContent || document.lineAt(comment.line).text;
             
+            // 获取代码上下文（前后5行）
+            const codeContext = await getCodeContext(uri, comment.line);
+            
             // 使用新的WebView输入界面
             const newContent = await showWebViewInput(
                 context,
@@ -593,7 +601,9 @@ export function registerCommands(
                 {
                     fileName,
                     lineNumber: comment.line,
-                    lineContent
+                    lineContent,
+                    contextLines: codeContext.contextLines,
+                    contextStartLine: codeContext.contextStartLine
                 }
             );
             
@@ -619,6 +629,9 @@ export function registerCommands(
             // 使用注释保存的原始代码内容，而不是当前行的代码
             const lineContent = item.comment.lineContent || document.lineAt(item.comment.line).text;
             
+            // 获取代码上下文（前后5行）
+            const codeContext = await getCodeContext(uri, item.comment.line);
+            
             const newContent = await showWebViewInput(
                 context,
                 '修改注释内容',
@@ -627,7 +640,9 @@ export function registerCommands(
                 {
                     fileName,
                     lineNumber: item.comment.line,
-                    lineContent
+                    lineContent,
+                    contextLines: codeContext.contextLines,
+                    contextStartLine: codeContext.contextStartLine
                 }
             );
 
@@ -692,6 +707,9 @@ export function registerCommands(
         try {
             if (existingComment) {
                 // 如果有现有注释，进入编辑模式
+                // 获取代码上下文（前后5行）
+                const codeContext = await getCodeContext(editor.document.uri, line);
+                
                 const newContent = await showWebViewInput(
                     context,
                     '编辑多行本地注释',
@@ -700,7 +718,9 @@ export function registerCommands(
                     {
                         fileName,
                         lineNumber: line,
-                        lineContent
+                        lineContent,
+                        contextLines: codeContext.contextLines,
+                        contextStartLine: codeContext.contextStartLine
                     }
                 );
                 
@@ -714,6 +734,9 @@ export function registerCommands(
                 }
             } else {
                 // 如果没有现有注释，添加新注释
+                // 获取代码上下文（前后5行）
+                const codeContext = await getCodeContext(editor.document.uri, line);
+                
                 const content = await showWebViewInput(
                     context,
                     '添加多行本地注释',
@@ -722,7 +745,9 @@ export function registerCommands(
                     {
                         fileName,
                         lineNumber: line,
-                        lineContent
+                        lineContent,
+                        contextLines: codeContext.contextLines,
+                        contextStartLine: codeContext.contextStartLine
                     }
                 );
                 
