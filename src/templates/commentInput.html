@@ -17,6 +17,9 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .context-info {
             background-color: var(--vscode-editor-inactiveSelectionBackground);
@@ -25,6 +28,9 @@
             padding: 12px;
             margin-bottom: 20px;
             font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .context-title {
             font-weight: bold;
@@ -35,6 +41,8 @@
             margin: 4px 0;
             display: flex;
             align-items: flex-start;
+            width: 100%;
+            min-width: 0;
         }
         .context-label {
             color: var(--vscode-descriptionForeground);
@@ -46,6 +54,8 @@
             font-family: var(--vscode-editor-font-family);
             flex: 1;
             word-break: break-all;
+            min-width: 0;
+            overflow: hidden;
         }
         .code-preview {
             background-color: var(--vscode-textCodeBlock-background);
@@ -64,13 +74,18 @@
             font-family: var(--vscode-editor-font-family);
             font-size: var(--vscode-editor-font-size);
             max-height: 300px;
-            overflow-y: auto;
+            overflow: auto;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .code-line {
             display: flex;
             align-items: center;
             padding: 2px 8px;
             border-bottom: 1px solid transparent;
+            min-width: max-content;
+            white-space: nowrap;
         }
         .code-line:hover {
             background-color: var(--vscode-list-hoverBackground);
@@ -94,7 +109,8 @@
         .line-content {
             color: var(--vscode-textPreformat-foreground);
             white-space: pre;
-            flex: 1;
+            flex: none;
+            min-width: auto;
         }
         .target-line .line-content {
             font-weight: bold;

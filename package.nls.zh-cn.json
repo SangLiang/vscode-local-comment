@@ -19,5 +19,6 @@
   "exportComments": "导出注释数据",
   "importComments": "导入注释数据",
   "fuzzyMatchComment": "模糊匹配",
+  "updateCommentLine": "更新到新行号",
   "treeViewTitle": "本地注释"
 } 

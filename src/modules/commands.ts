@@ -1108,7 +1108,7 @@ export function registerCommands(
 
             // 显示选择对话框
             const selected = await vscode.window.showQuickPick(quickPickItems, {
-                placeHolder: `为注释 "${item.comment.content}" 选择匹配的代码行`,
+                placeHolder: `为注释 "${item.comment.content}" 选择匹配的代码行 (选择后立即执行)`,
                 ignoreFocusOut: true,
                 matchOnDescription: true,
                 matchOnDetail: true
@@ -1116,22 +1116,6 @@ export function registerCommands(
 
             if (!selected || !selected.candidate) {
                 return; // 用户取消或选择了取消选项
-            }
-
-            // 确认用户的选择
-            const confirmMessage = `确定要将注释匹配到第${selected.candidate.line + 1}行吗？\n\n` +
-                                 `原始代码: ${item.comment.lineContent}\n` +
-                                 `匹配代码: ${selected.candidate.content}\n` +
-                                 `相似度: ${Math.round(selected.candidate.similarity * 100)}%`;
-
-            const confirm = await vscode.window.showInformationMessage(
-                confirmMessage,
-                { modal: true },
-                '确定匹配', '取消'
-            );
-
-            if (confirm !== '确定匹配') {
-                return;
             }
 
             // 更新注释位置和代码快照
@@ -1159,7 +1143,7 @@ export function registerCommands(
                     editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
                     
                     vscode.window.showInformationMessage(
-                        `✅ 注释已成功匹配到第${selected.candidate.line + 1}行`
+                        `✅ 模糊匹配成功！注释已更新到第${selected.candidate.line + 1}行 (相似度: ${Math.round(selected.candidate.similarity * 100)}%)`
                     );
                 }
             }
@@ -1167,6 +1151,116 @@ export function registerCommands(
         } catch (error) {
             console.error('模糊匹配失败:', error);
             vscode.window.showErrorMessage(`模糊匹配失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+    });
+
+    // 更新注释行号命令
+    const updateCommentLineCommand = vscode.commands.registerCommand('localComment.updateCommentLine', async (item) => {
+        if (!item || !item.comment || !item.filePath) {
+            vscode.window.showErrorMessage('无效的注释项');
+            return;
+        }
+
+        try {
+            // 确保文档已打开
+            const uri = vscode.Uri.file(item.filePath);
+            const document = await vscode.workspace.openTextDocument(uri);
+            
+            // 获取当前注释信息
+            const comment = item.comment;
+            const currentLine = comment.line + 1; // 转换为1基索引显示给用户
+            
+            // 显示输入框让用户输入新的行号
+            const newLineInput = await vscode.window.showInputBox({
+                prompt: `请输入新的行号 (当前: 第${currentLine}行) - 输入后立即执行`,
+                placeHolder: '例如: 25',
+                value: currentLine.toString(),
+                validateInput: (value) => {
+                    const lineNumber = parseInt(value);
+                    if (isNaN(lineNumber)) {
+                        return '请输入有效的数字';
+                    }
+                    if (lineNumber < 1) {
+                        return '行号必须大于0';
+                    }
+                    if (lineNumber > document.lineCount) {
+                        return `行号不能超过文件总行数 (${document.lineCount})`;
+                    }
+                    return null;
+                }
+            });
+
+            if (!newLineInput) {
+                return; // 用户取消了输入
+            }
+
+            const newLine = parseInt(newLineInput) - 1; // 转换为0基索引
+            
+            if (newLine === comment.line) {
+                vscode.window.showInformationMessage('行号没有变化');
+                return;
+            }
+
+            // 获取新行的内容
+            const newLineContent = document.lineAt(newLine).text.trim();
+
+            // 检查新位置是否已经有其他注释
+            const allComments = commentManager.getAllComments();
+            const fileComments = allComments[item.filePath];
+            
+            if (fileComments) {
+                const existingComment = fileComments.find(c => c.line === newLine && c.id !== comment.id);
+                if (existingComment) {
+                    const replaceExisting = await vscode.window.showWarningMessage(
+                        `第${newLine + 1}行已经有注释了：\n"${existingComment.content}"\n\n是否要替换它？`,
+                        { modal: true },
+                        '替换现有注释', '取消操作'
+                    );
+                    
+                    if (replaceExisting !== '替换现有注释') {
+                        return;
+                    }
+                    
+                    // 删除现有注释
+                    const existingIndex = fileComments.findIndex(c => c.id === existingComment.id);
+                    if (existingIndex >= 0) {
+                        fileComments.splice(existingIndex, 1);
+                    }
+                }
+
+                // 更新注释位置和代码快照
+                const commentToUpdate = fileComments.find(c => c.id === comment.id);
+                if (commentToUpdate) {
+                    commentToUpdate.line = newLine;
+                    commentToUpdate.lineContent = newLineContent;
+                    commentToUpdate.isMatched = true;
+                    commentToUpdate.timestamp = Date.now(); // 更新时间戳
+                    
+                    // 保存更改
+                    await (commentManager as any).saveComments();
+                    
+                    // 更新标签系统
+                    tagManager.updateTags(commentManager.getAllComments());
+                    
+                    // 刷新界面
+                    commentProvider.refresh();
+                    commentTreeProvider.refresh();
+                    
+                    // 跳转到新的行
+                    const editor = await vscode.window.showTextDocument(document);
+                    const position = new vscode.Position(newLine, 0);
+                    editor.selection = new vscode.Selection(position, position);
+                    editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+                    
+                    vscode.window.showInformationMessage(
+                        `✅ 行号更新成功！注释从第${comment.line + 1}行移动到第${newLine + 1}行`
+                    );
+                }
+            }
+
+        } catch (error) {
+            console.error('更新注释行号失败:', error);
+            vscode.window.showErrorMessage(`更新失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
 
@@ -1194,6 +1288,7 @@ export function registerCommands(
         convertSelectionToCommentCommand,
         exportCommentsCommand,
         importCommentsCommand,
-        fuzzyMatchCommentCommand
+        fuzzyMatchCommentCommand,
+        updateCommentLineCommand
     ];
 } 

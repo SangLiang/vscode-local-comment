@@ -19,5 +19,6 @@
   "exportComments": "Export Comments Data",
   "importComments": "Import Comments Data",
   "fuzzyMatchComment": "Fuzzy Match",
+  "updateCommentLine": "Update to New Line",
   "treeViewTitle": "Local Comments"
 } 
