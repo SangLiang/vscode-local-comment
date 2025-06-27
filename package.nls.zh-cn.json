@@ -20,5 +20,6 @@
   "importComments": "导入注释数据",
   "fuzzyMatchComment": "模糊匹配",
   "updateCommentLine": "更新到新行号",
+  "goToFile": "跳转到文件",
   "treeViewTitle": "本地注释"
 } 

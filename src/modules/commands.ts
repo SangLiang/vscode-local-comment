@@ -1154,6 +1154,49 @@ export function registerCommands(
         }
     });
 
+    // 跳转到文件命令
+    const goToFileCommand = vscode.commands.registerCommand('localComment.goToFile', async (item) => {
+        if (!item || !item.filePath) {
+            vscode.window.showErrorMessage('无效的文件项');
+            return;
+        }
+
+        try {
+            const uri = vscode.Uri.file(item.filePath);
+            
+            // 检查文件是否已经在编辑器中打开
+            const existingEditor = vscode.window.visibleTextEditors.find(
+                editor => editor.document.uri.fsPath === item.filePath
+            );
+
+            if (existingEditor) {
+                // 文件已经打开，直接切换到该编辑器，保持原有的光标位置和选择
+                await vscode.window.showTextDocument(existingEditor.document, {
+                    viewColumn: existingEditor.viewColumn,
+                    preview: false,
+                    preserveFocus: false,
+                    // 不设置selection，保持用户原有的光标位置
+                });
+            } else {
+                // 文件未打开，打开文件并定位到顶部
+                const document = await vscode.workspace.openTextDocument(uri);
+                const editor = await vscode.window.showTextDocument(document, {
+                    preview: false, // 不使用预览模式，确保文件真正打开
+                    preserveFocus: false // 将焦点切换到编辑器
+                });
+
+                // 新打开的文件，定位到顶部
+                const position = new vscode.Position(0, 0);
+                editor.selection = new vscode.Selection(position, position);
+                editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.Default);
+            }
+
+        } catch (error) {
+            console.error('打开文件失败:', error);
+            vscode.window.showErrorMessage(`打开文件失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+    });
+
     // 更新注释行号命令
     const updateCommentLineCommand = vscode.commands.registerCommand('localComment.updateCommentLine', async (item) => {
         if (!item || !item.comment || !item.filePath) {
@@ -1289,6 +1332,7 @@ export function registerCommands(
         exportCommentsCommand,
         importCommentsCommand,
         fuzzyMatchCommentCommand,
-        updateCommentLineCommand
+        updateCommentLineCommand,
+        goToFileCommand
     ];
 } 

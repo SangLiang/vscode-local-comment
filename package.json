@@ -162,6 +162,12 @@
         "title": "%updateCommentLine%",
         "icon": "$(go-to-file)",
         "category": "Local Comment"
+      },
+      {
+        "command": "localComment.goToFile",
+        "title": "%goToFile%",
+        "icon": "$(arrow-right)",
+        "category": "Local Comment"
       }
     ],
     "views": {
@@ -205,6 +211,10 @@
         },
         {
           "command": "localComment.updateCommentLine",
+          "when": "false"
+        },
+        {
+          "command": "localComment.goToFile",
           "when": "false"
         }
       ],
@@ -272,6 +282,11 @@
           "command": "localComment.updateCommentLine",
           "when": "view == localComments && viewItem == hidden-comment",
           "group": "context"
+        },
+        {
+          "command": "localComment.goToFile",
+          "when": "view == localComments && viewItem == file",
+          "group": "inline"
         }
       ]
     },
