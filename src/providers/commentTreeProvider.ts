@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager, LocalComment, FileComments } from '../commentManager';
+import { FileHeatManager } from '../fileHeatManager';
 
 export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<CommentTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    constructor(private commentManager: CommentManager) {}
+    constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager) {}
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -34,13 +35,46 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         for (const [filePath, comments] of Object.entries(allComments)) {
             if (comments.length > 0) {
                 const fileName = path.basename(filePath);
+                
+                // 创建文件节点的显示名称，包含热度信息
+                let displayName = `${fileName} (${comments.length})`;
+                let tooltip = filePath;
+                
+                // 如果有文件热度管理器，添加热度信息
+                if (this.fileHeatManager) {
+                    const heatInfo = this.fileHeatManager.getFileHeatInfo(filePath);
+                    const heatScore = this.fileHeatManager.calculateHeatScore(filePath);
+                    
+                    if (heatInfo && heatScore > 0) {
+                        // 在tooltip中显示详细的热度信息
+                        const lastAccessTime = new Date(heatInfo.lastAccessTime).toLocaleString();
+                        const lastEditTime = heatInfo.lastEditTime > 0 ? 
+                            new Date(heatInfo.lastEditTime).toLocaleString() : '未编辑';
+                        const activeMinutes = Math.round(heatInfo.totalActiveTime / (60 * 1000));
+                        
+                        tooltip = `${filePath}\n\n📊 文件热度信息:\n` +
+                                `🔥 热度分数: ${heatScore.toFixed(1)}\n` +
+                                `👁️ 访问次数: ${heatInfo.accessCount}\n` +
+                                `✏️ 编辑次数: ${heatInfo.editCount}\n` +
+                                `🕒 最后访问: ${lastAccessTime}\n` +
+                                `📝 最后编辑: ${lastEditTime}\n` +
+                                `⏱️ 活跃时间: ${activeMinutes}分钟`;
+                        
+                        // 给当前正在编辑的文件添加特殊标识
+                        const currentEditor = vscode.window.activeTextEditor;
+                        if (currentEditor && currentEditor.document.uri.fsPath === filePath) {
+                            displayName = `🔥 ${displayName}`;
+                        }
+                    }
+                }
+                
                 const fileNode = new CommentTreeItem(
-                    `${fileName} (${comments.length})`,
+                    displayName,
                     vscode.TreeItemCollapsibleState.Expanded,
                     'file'
                 );
                 fileNode.filePath = filePath;
-                fileNode.tooltip = filePath;
+                fileNode.tooltip = tooltip;
                 fileNode.iconPath = new vscode.ThemeIcon('file-code');
                 fileNodes.push(fileNode);
             }
@@ -56,7 +90,28 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             return [emptyNode];
         }
 
-        return fileNodes;
+        // 按文件热度排序
+        if (this.fileHeatManager) {
+            const filePaths = fileNodes.map(node => node.filePath!);
+            const sortedFilePaths = this.fileHeatManager.getFilesByHeat(filePaths);
+            
+            // 重新排序文件节点
+            const sortedFileNodes: CommentTreeItem[] = [];
+            for (const filePath of sortedFilePaths) {
+                const node = fileNodes.find(n => n.filePath === filePath);
+                if (node) {
+                    sortedFileNodes.push(node);
+                }
+            }
+            return sortedFileNodes;
+        }
+
+        // 如果没有热度管理器，按文件名排序
+        return fileNodes.sort((a, b) => {
+            const nameA = path.basename(a.filePath || '');
+            const nameB = path.basename(b.filePath || '');
+            return nameA.localeCompare(nameB);
+        });
     }
 
     private getCommentNodes(filePath: string): CommentTreeItem[] {

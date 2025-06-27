@@ -5,6 +5,7 @@ import { CommentTreeProvider } from './providers/commentTreeProvider';
 import { TagManager } from './tagManager';
 import { TagCompletionProvider } from './providers/tagCompletionProvider';
 import { TagDefinitionProvider } from './providers/tagDefinitionProvider';
+import { FileHeatManager } from './fileHeatManager';
 import * as path from 'path';
 import * as fs from 'fs';
 import { registerCommands } from './modules/commands';
@@ -13,6 +14,7 @@ let commentManager: CommentManager;
 let commentProvider: CommentProvider;
 let commentTreeProvider: CommentTreeProvider;
 let tagManager: TagManager;
+let fileHeatManager: FileHeatManager;
 
 // 全局变量，用于跟踪最后一次键盘活动时间
 let lastKeyboardActivity = Date.now();
@@ -24,7 +26,8 @@ export function activate(context: vscode.ExtensionContext) {
     // 初始化管理器
     commentManager = new CommentManager(context);
     commentProvider = new CommentProvider(commentManager);
-    commentTreeProvider = new CommentTreeProvider(commentManager);
+    fileHeatManager = new FileHeatManager(context);
+    commentTreeProvider = new CommentTreeProvider(commentManager, fileHeatManager);
     tagManager = new TagManager();
 
     // 初始化标签数据
@@ -135,14 +138,25 @@ export function activate(context: vscode.ExtensionContext) {
         treeView,
         completionDisposable,
         definitionDisposable,
-        hoverDisposable
+        hoverDisposable,
+        fileHeatManager
     );
     
     console.log('✅ 本地注释插件激活完成');
 }
 
 export function deactivate() {
+    console.log('本地注释插件正在停用');
+    
+    // 保存文件热度数据
+    if (fileHeatManager) {
+        fileHeatManager.dispose();
+    }
+    
+    // 释放注释提供器
     if (commentProvider) {
         commentProvider.dispose();
     }
+    
+    console.log('✅ 本地注释插件停用完成');
 }

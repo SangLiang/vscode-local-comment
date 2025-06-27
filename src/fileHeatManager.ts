@@ -1,0 +1,245 @@
+import * as vscode from 'vscode';
+
+export interface FileHeatInfo {
+    filePath: string;
+    accessCount: number; // 访问次数
+    lastAccessTime: number; // 最后访问时间戳
+    editCount: number; // 编辑次数
+    lastEditTime: number; // 最后编辑时间戳
+    totalActiveTime: number; // 总活跃时间（毫秒）
+}
+
+export interface FileHeatData {
+    [filePath: string]: FileHeatInfo;
+}
+
+export class FileHeatManager implements vscode.Disposable {
+    private heatData: FileHeatData = {};
+    private context: vscode.ExtensionContext;
+    private activeFileStartTime: number = 0;
+    private currentActiveFile: string | undefined;
+    private saveTimer: NodeJS.Timeout | null = null;
+    private disposables: vscode.Disposable[] = [];
+
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
+        this.loadHeatData();
+        this.setupEventListeners();
+    }
+
+    private setupEventListeners(): void {
+        // 监听活动编辑器变化
+        const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor((editor) => {
+            this.handleEditorChange(editor);
+        });
+
+        // 监听文档变化（编辑活动）
+        const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((event) => {
+            this.handleDocumentEdit(event.document.uri.fsPath);
+        });
+
+        // 监听文档打开
+        const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument((document) => {
+            this.handleFileAccess(document.uri.fsPath);
+        });
+
+        this.disposables.push(
+            onDidChangeActiveTextEditor,
+            onDidChangeTextDocument,
+            onDidOpenTextDocument
+        );
+
+        // 初始化当前活动文件
+        if (vscode.window.activeTextEditor) {
+            this.handleEditorChange(vscode.window.activeTextEditor);
+        }
+    }
+
+    private handleEditorChange(editor: vscode.TextEditor | undefined): void {
+        // 记录前一个文件的活跃时间
+        if (this.currentActiveFile && this.activeFileStartTime > 0) {
+            const activeTime = Date.now() - this.activeFileStartTime;
+            this.updateActiveTime(this.currentActiveFile, activeTime);
+        }
+
+        // 开始跟踪新的活动文件
+        if (editor) {
+            const filePath = editor.document.uri.fsPath;
+            this.handleFileAccess(filePath);
+            this.currentActiveFile = filePath;
+            this.activeFileStartTime = Date.now();
+        } else {
+            this.currentActiveFile = undefined;
+            this.activeFileStartTime = 0;
+        }
+    }
+
+    private handleFileAccess(filePath: string): void {
+        const now = Date.now();
+        
+        if (!this.heatData[filePath]) {
+            this.heatData[filePath] = {
+                filePath,
+                accessCount: 0,
+                lastAccessTime: now,
+                editCount: 0,
+                lastEditTime: 0,
+                totalActiveTime: 0
+            };
+        }
+
+        const heatInfo = this.heatData[filePath];
+        heatInfo.accessCount++;
+        heatInfo.lastAccessTime = now;
+
+        this.scheduleHeatDataSave();
+    }
+
+    private handleDocumentEdit(filePath: string): void {
+        const now = Date.now();
+        
+        if (!this.heatData[filePath]) {
+            this.handleFileAccess(filePath); // 确保文件信息存在
+        }
+
+        const heatInfo = this.heatData[filePath];
+        heatInfo.editCount++;
+        heatInfo.lastEditTime = now;
+
+        this.scheduleHeatDataSave();
+    }
+
+    private updateActiveTime(filePath: string, activeTime: number): void {
+        if (this.heatData[filePath]) {
+            this.heatData[filePath].totalActiveTime += activeTime;
+            this.scheduleHeatDataSave();
+        }
+    }
+
+    private scheduleHeatDataSave(): void {
+        // 使用防抖机制，避免频繁保存
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+        }
+
+        this.saveTimer = setTimeout(() => {
+            this.saveHeatData();
+            this.saveTimer = null;
+        }, 2000); // 2秒后保存
+    }
+
+    private getStorageKey(): string {
+        // 使用项目特定的存储键
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspacePath = workspaceFolders[0].uri.fsPath;
+            return `fileHeat_${Buffer.from(workspacePath).toString('base64')}`;
+        }
+        return 'fileHeat_default';
+    }
+
+    private loadHeatData(): void {
+        try {
+            const storageKey = this.getStorageKey();
+            const data = this.context.globalState.get<FileHeatData>(storageKey, {});
+            this.heatData = data;
+        } catch (error) {
+            console.error('加载文件热度数据失败:', error);
+            this.heatData = {};
+        }
+    }
+
+    private saveHeatData(): void {
+        try {
+            const storageKey = this.getStorageKey();
+            this.context.globalState.update(storageKey, this.heatData);
+        } catch (error) {
+            console.error('保存文件热度数据失败:', error);
+        }
+    }
+
+    /**
+     * 计算文件热度分数
+     * 热度分数综合考虑：访问次数、编辑次数、最近访问时间、总活跃时间
+     */
+    public calculateHeatScore(filePath: string): number {
+        const heatInfo = this.heatData[filePath];
+        if (!heatInfo) {
+            return 0;
+        }
+
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+        
+        // 时间权重：最近访问的文件权重更高
+        const timeSinceLastAccess = now - heatInfo.lastAccessTime;
+        const timeWeight = Math.max(0, 1 - (timeSinceLastAccess / (7 * dayMs))); // 7天内的访问有权重
+        
+        // 编辑权重：最近编辑的文件权重更高
+        const timeSinceLastEdit = heatInfo.lastEditTime > 0 ? now - heatInfo.lastEditTime : Number.MAX_SAFE_INTEGER;
+        const editTimeWeight = Math.max(0, 1 - (timeSinceLastEdit / (3 * dayMs))); // 3天内的编辑有权重
+        
+        // 活跃时间权重（转换为分钟）
+        const activeTimeWeight = Math.min(heatInfo.totalActiveTime / (60 * 1000), 120) / 120; // 最大120分钟
+        
+        // 综合计算热度分数
+        const score = 
+            heatInfo.accessCount * 1 +           // 访问次数基础分
+            heatInfo.editCount * 3 +             // 编辑次数更重要
+            timeWeight * 10 +                    // 最近访问权重
+            editTimeWeight * 15 +                // 最近编辑权重
+            activeTimeWeight * 5;                // 活跃时间权重
+            
+        return score;
+    }
+
+    /**
+     * 获取文件热度信息
+     */
+    public getFileHeatInfo(filePath: string): FileHeatInfo | undefined {
+        return this.heatData[filePath];
+    }
+
+    /**
+     * 获取按热度排序的文件路径列表
+     */
+    public getFilesByHeat(filePaths: string[]): string[] {
+        return filePaths.sort((a, b) => {
+            const scoreA = this.calculateHeatScore(a);
+            const scoreB = this.calculateHeatScore(b);
+            return scoreB - scoreA; // 降序排列，热度高的在前
+        });
+    }
+
+    /**
+     * 清理过期数据（可选的维护方法）
+     */
+    public cleanupOldData(daysBefore: number = 30): void {
+        const cutoffTime = Date.now() - (daysBefore * 24 * 60 * 60 * 1000);
+        
+        for (const [filePath, heatInfo] of Object.entries(this.heatData)) {
+            if (heatInfo.lastAccessTime < cutoffTime) {
+                delete this.heatData[filePath];
+            }
+        }
+        
+        this.saveHeatData();
+    }
+
+    /**
+     * 销毁时保存数据
+     */
+    public dispose(): void {
+        // 记录当前活动文件的活跃时间
+        if (this.currentActiveFile && this.activeFileStartTime > 0) {
+            const activeTime = Date.now() - this.activeFileStartTime;
+            this.updateActiveTime(this.currentActiveFile, activeTime);
+        }
+        
+        // 立即保存数据
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+        }
+        this.saveHeatData();
+    }
+} 
