@@ -202,6 +202,13 @@ npm run compile
 
 ### Version History
 
+## [1.0.10] - 2025-06-28
+- ✨ Add the function of users manually matching comments to codes
+- ✨ The file items in the local comment panel will be sorted according to the user's frequency of use
+- ✨ The file items in the local comment panel add the function of jumping to files, which can be used as an auxiliary jump of the file tab
+- 🔨 Fix some known issues
+
+
 ## [1.0.9] - 2025-06-25 
 -  ✨  When using the markdown editor, it will display in split screen mode
 -  ✨  The import and export functions of user data have more flexible options (import and export through project path, import and export through annotation content)
@@ -506,6 +513,13 @@ npm run compile
 ## 📝 更新日志
 
 ### 变更日志
+
+## [1.0.10] - 2025-06-28 
+- ✨ 加入用户手动匹配注释到代码的功能
+- ✨ 本地注释面板中的文件项，会根据用户的使用频率来排序
+- ✨ 本地注释面板中的文件项加入跳转到文件的功能，可以作为文件tab的一个辅助跳转
+- 🔨 修复一些已知问题
+
 
 ## [1.0.9] - 2025-06-25 
 - ✨ 使用markdown编辑器时，会分屏显示
