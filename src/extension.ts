@@ -82,16 +82,18 @@ export function activate(context: vscode.ExtensionContext) {
     // 监听编辑器变化
     const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-            // 编辑器切换时刷新
+            // 编辑器切换时刷新注释显示，但不刷新注释树排序
             commentProvider.refresh();
+            // 注释树只刷新内容，不刷新排序（排序由热度更新事件触发）
             commentTreeProvider.refresh();
         }
     });
 
     // 监听文档打开
     const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument(() => {
-        // 文档打开时刷新
+        // 文档打开时刷新注释显示，但不刷新注释树排序
         commentProvider.refresh();
+        // 注释树只刷新内容，不刷新排序
         commentTreeProvider.refresh();
     });
 
@@ -106,6 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
         commentManager.handleDocumentChange(event, hasRecentKeyboardActivity);
         tagManager.updateTags(commentManager.getAllComments());
         commentProvider.refresh();
+        // 文档变化时只刷新注释内容，不刷新排序（排序由热度更新事件触发）
         commentTreeProvider.refresh();
     });
 
@@ -135,6 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
         onDidChangeTextEditorVisibleRanges,
         onDidOpenTextDocument,
         commentProvider,
+        commentTreeProvider,
         treeView,
         completionDisposable,
         definitionDisposable,

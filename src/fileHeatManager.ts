@@ -20,6 +20,11 @@ export class FileHeatManager implements vscode.Disposable {
     private currentActiveFile: string | undefined;
     private saveTimer: NodeJS.Timeout | null = null;
     private disposables: vscode.Disposable[] = [];
+    
+    // 新增：延迟更新相关变量
+    private pendingUpdates: Map<string, {accessCount: number, editCount: number}> = new Map();
+    private onHeatUpdated: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+    public readonly onDidUpdateHeat: vscode.Event<void> = this.onHeatUpdated.event;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -33,20 +38,32 @@ export class FileHeatManager implements vscode.Disposable {
             this.handleEditorChange(editor);
         });
 
-        // 监听文档变化（编辑活动）
+        // 监听文档变化（编辑活动）- 仅记录到pending，不立即更新热度
         const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((event) => {
-            this.handleDocumentEdit(event.document.uri.fsPath);
+            this.recordDocumentEdit(event.document.uri.fsPath);
         });
 
-        // 监听文档打开
+        // 监听文档打开 - 仅记录到pending，不立即更新热度
         const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument((document) => {
-            this.handleFileAccess(document.uri.fsPath);
+            this.recordFileAccess(document.uri.fsPath);
+        });
+
+        // 监听文档保存 - 在保存时应用pending的更新
+        const onDidSaveTextDocument = vscode.workspace.onDidSaveTextDocument((document) => {
+            this.applyPendingUpdates(document.uri.fsPath);
+        });
+
+        // 监听文档关闭 - 在关闭时应用pending的更新
+        const onDidCloseTextDocument = vscode.workspace.onDidCloseTextDocument((document) => {
+            this.applyPendingUpdates(document.uri.fsPath);
         });
 
         this.disposables.push(
             onDidChangeActiveTextEditor,
             onDidChangeTextDocument,
-            onDidOpenTextDocument
+            onDidOpenTextDocument,
+            onDidSaveTextDocument,
+            onDidCloseTextDocument
         );
 
         // 初始化当前活动文件
@@ -107,6 +124,63 @@ export class FileHeatManager implements vscode.Disposable {
         heatInfo.lastEditTime = now;
 
         this.scheduleHeatDataSave();
+    }
+
+    // 新增：记录文件访问到pending（不立即更新热度）
+    private recordFileAccess(filePath: string): void {
+        const existing = this.pendingUpdates.get(filePath) || { accessCount: 0, editCount: 0 };
+        existing.accessCount++;
+        this.pendingUpdates.set(filePath, existing);
+    }
+
+    // 新增：记录文档编辑到pending（不立即更新热度）
+    private recordDocumentEdit(filePath: string): void {
+        const existing = this.pendingUpdates.get(filePath) || { accessCount: 0, editCount: 0 };
+        existing.editCount++;
+        this.pendingUpdates.set(filePath, existing);
+    }
+
+    // 新增：应用pending的更新到实际热度数据
+    private applyPendingUpdates(filePath: string): void {
+        const pending = this.pendingUpdates.get(filePath);
+        if (!pending) {
+            return;
+        }
+
+        const now = Date.now();
+        
+        // 确保文件信息存在
+        if (!this.heatData[filePath]) {
+            this.heatData[filePath] = {
+                filePath,
+                accessCount: 0,
+                lastAccessTime: now,
+                editCount: 0,
+                lastEditTime: 0,
+                totalActiveTime: 0
+            };
+        }
+
+        const heatInfo = this.heatData[filePath];
+        
+        // 应用访问次数更新
+        if (pending.accessCount > 0) {
+            heatInfo.accessCount += pending.accessCount;
+            heatInfo.lastAccessTime = now;
+        }
+        
+        // 应用编辑次数更新
+        if (pending.editCount > 0) {
+            heatInfo.editCount += pending.editCount;
+            heatInfo.lastEditTime = now;
+        }
+
+        // 清除pending更新
+        this.pendingUpdates.delete(filePath);
+        
+        // 保存数据并触发热度更新事件
+        this.scheduleHeatDataSave();
+        this.onHeatUpdated.fire();
     }
 
     private updateActiveTime(filePath: string, activeTime: number): void {
@@ -236,10 +310,22 @@ export class FileHeatManager implements vscode.Disposable {
             this.updateActiveTime(this.currentActiveFile, activeTime);
         }
         
+        // 应用所有pending的更新
+        for (const filePath of this.pendingUpdates.keys()) {
+            this.applyPendingUpdates(filePath);
+        }
+        
         // 立即保存数据
         if (this.saveTimer) {
             clearTimeout(this.saveTimer);
         }
         this.saveHeatData();
+        
+        // 清理事件监听器
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [];
+        
+        // 清理事件发射器
+        this.onHeatUpdated.dispose();
     }
 } 

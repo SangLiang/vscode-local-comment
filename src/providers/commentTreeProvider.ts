@@ -3,11 +3,20 @@ import * as path from 'path';
 import { CommentManager, LocalComment, FileComments } from '../commentManager';
 import { FileHeatManager } from '../fileHeatManager';
 
-export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem> {
+export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<CommentTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+    private disposables: vscode.Disposable[] = [];
 
-    constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager) {}
+    constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager) {
+        // 监听文件热度更新事件，只有在热度更新时才刷新排序
+        if (this.fileHeatManager) {
+            const heatUpdateDisposable = this.fileHeatManager.onDidUpdateHeat(() => {
+                this.refresh();
+            });
+            this.disposables.push(heatUpdateDisposable);
+        }
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -180,6 +189,12 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             return lineA - lineB;
         });
     }
+
+    dispose(): void {
+        // 清理所有disposables
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [];
+    }
 }
 
 export class CommentTreeItem extends vscode.TreeItem {
@@ -193,4 +208,9 @@ export class CommentTreeItem extends vscode.TreeItem {
 
     filePath?: string;
     comment?: LocalComment;
-} 
+}
+
+// 为CommentTreeProvider添加dispose方法
+export interface CommentTreeProviderDisposable {
+    dispose(): void;
+}
