@@ -57,19 +57,13 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         for (const filePath of allFiles) {
             const comments = allComments[filePath] || [];
             const bookmarks = allBookmarks[filePath] || [];
-            const totalItems = comments.length + bookmarks.length;
+            const totalCount = comments.length + bookmarks.length;
             
-            if (totalItems > 0) {
+            if (totalCount > 0) {
                 const fileName = path.basename(filePath);
                 
-                // 创建文件节点的显示名称，只标记书签数量
-                let displayName = `${fileName}`;
-                if (comments.length > 0) {
-                    displayName += ` (${comments.length})`;
-                }
-                if (bookmarks.length > 0) {
-                    displayName += ` 📖${bookmarks.length}`;
-                }
+                // 创建文件节点的显示名称，统一显示风格
+                let displayName = `${fileName} (${totalCount})`;
                 
                 let tooltip = filePath;
                 
