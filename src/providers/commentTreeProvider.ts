@@ -13,6 +13,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         // 监听文件热度更新事件，只有在热度更新时才刷新排序
         if (this.fileHeatManager) {
             const heatUpdateDisposable = this.fileHeatManager.onDidUpdateHeat(() => {
+                console.log('🔥 [CommentTreeProvider] 文件热度更新，触发注释树刷新');
                 this.refresh(); // 热度更新时刷新注释树排序
             });
             this.disposables.push(heatUpdateDisposable);
@@ -21,6 +22,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         // 监听书签变化事件
         if (this.bookmarkManager) {
             const bookmarkUpdateDisposable = this.bookmarkManager.onDidChangeBookmarks(() => {
+                console.log('🔖 [CommentTreeProvider] 书签变化，触发注释树刷新');
                 this.refresh();
             });
             this.disposables.push(bookmarkUpdateDisposable);
@@ -28,11 +30,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
     }
 
     refresh(): void {
-        this._onDidChangeTreeData.fire();
-    }
-
-    // 新增：只刷新内容，不重新排序的轻量级刷新
-    refreshContent(): void {
+        console.log('🔄 [CommentTreeProvider] 执行完整刷新 - 触发树数据变更事件');
         this._onDidChangeTreeData.fire();
     }
 

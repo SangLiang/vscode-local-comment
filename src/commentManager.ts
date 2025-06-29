@@ -412,9 +412,6 @@ export class CommentManager {
             await this.saveComments();
             console.log(`✅ 直接更新完成，共更新 ${directUpdates} 个注释`);
         }
-        
-        // 其他行的输入不做任何处理，不影响注释位置
-        // 位置匹配将在文件保存时进行
     }
 
     /**

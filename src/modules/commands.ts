@@ -188,8 +188,8 @@ export function registerCommands(
     });
 
     const refreshCommentsCommand = vscode.commands.registerCommand('localComment.refreshComments', () => {
-        commentProvider.refresh();
-        commentTreeProvider.refreshContent(); // 智能更新完成后刷新注释树内容
+        commentProvider.refresh();  // 更新编辑器里的本地注释内容
+        commentTreeProvider.refresh(); // 刷新注释树
     });
 
     const refreshTreeCommand = vscode.commands.registerCommand('localComment.refreshTree', () => {
