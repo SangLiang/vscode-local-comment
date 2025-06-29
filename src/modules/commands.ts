@@ -5,6 +5,7 @@ import { CommentManager } from '../commentManager';
 import { TagManager } from '../tagManager';
 import { CommentProvider } from '../providers/commentProvider';
 import { CommentTreeProvider } from '../providers/commentTreeProvider';
+import { BookmarkManager } from '../bookmarkManager';
 import { showWebViewInput, getCodeContext } from './webview';
 import { showQuickInputWithTagCompletion } from '../quickInput';
 
@@ -13,7 +14,8 @@ export function registerCommands(
     commentManager: CommentManager,
     tagManager: TagManager,
     commentProvider: CommentProvider,
-    commentTreeProvider: CommentTreeProvider
+    commentTreeProvider: CommentTreeProvider,
+    bookmarkManager?: BookmarkManager
 ) {
     const showStorageLocationCommand = vscode.commands.registerCommand('localComment.showStorageLocation', () => {
         const projectInfo = commentManager.getProjectInfo();
@@ -1307,6 +1309,105 @@ export function registerCommands(
         }
     });
 
+    // 书签相关命令
+    const addBookmarkCommand = vscode.commands.registerCommand('localComment.addBookmark', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('请先打开一个文件');
+            return;
+        }
+
+        const line = editor.selection.active.line;
+        await bookmarkManager.addBookmark(editor.document.uri, line);
+    });
+
+    const toggleBookmarkCommand = vscode.commands.registerCommand('localComment.toggleBookmark', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('请先打开一个文件');
+            return;
+        }
+
+        const line = editor.selection.active.line;
+        await bookmarkManager.toggleBookmark(editor.document.uri, line);
+    });
+
+    const removeBookmarkCommand = vscode.commands.registerCommand('localComment.removeBookmark', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('请先打开一个文件');
+            return;
+        }
+
+        const line = editor.selection.active.line;
+        await bookmarkManager.removeBookmark(editor.document.uri, line);
+    });
+
+    const goToBookmarkCommand = vscode.commands.registerCommand('localComment.goToBookmark', async (filePath: string, line: number) => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        await bookmarkManager.goToBookmark(filePath, line);
+    });
+
+    const deleteBookmarkFromTreeCommand = vscode.commands.registerCommand('localComment.deleteBookmarkFromTree', async (item) => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        if (item.contextValue === 'bookmark' && item.bookmark) {
+            await bookmarkManager.removeBookmarkById(item.bookmark.id);
+        }
+    });
+
+    const clearFileBookmarksCommand = vscode.commands.registerCommand('localComment.clearFileBookmarks', async (item) => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        if (item.contextValue === 'file' && item.filePath) {
+            const uri = vscode.Uri.file(item.filePath);
+            await bookmarkManager.clearFileBookmarks(uri);
+        }
+    });
+
+    const goToNextBookmarkCommand = vscode.commands.registerCommand('localComment.goToNextBookmark', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        await bookmarkManager.goToNextBookmark();
+    });
+
+    const goToPreviousBookmarkCommand = vscode.commands.registerCommand('localComment.goToPreviousBookmark', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        await bookmarkManager.goToPreviousBookmark();
+    });
+
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
         showStorageLocationCommand,
@@ -1333,6 +1434,14 @@ export function registerCommands(
         importCommentsCommand,
         fuzzyMatchCommentCommand,
         updateCommentLineCommand,
-        goToFileCommand
+        goToFileCommand,
+        addBookmarkCommand,
+        toggleBookmarkCommand,
+        removeBookmarkCommand,
+        goToBookmarkCommand,
+        deleteBookmarkFromTreeCommand,
+        clearFileBookmarksCommand,
+        goToNextBookmarkCommand,
+        goToPreviousBookmarkCommand
     ];
 } 

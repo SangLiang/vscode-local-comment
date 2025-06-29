@@ -2,19 +2,28 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager, LocalComment, FileComments } from '../commentManager';
 import { FileHeatManager } from '../fileHeatManager';
+import { BookmarkManager, Bookmark } from '../bookmarkManager';
 
 export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<CommentTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
     private disposables: vscode.Disposable[] = [];
 
-    constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager) {
+    constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager, private bookmarkManager?: BookmarkManager) {
         // 监听文件热度更新事件，只有在热度更新时才刷新排序
         if (this.fileHeatManager) {
             const heatUpdateDisposable = this.fileHeatManager.onDidUpdateHeat(() => {
                 this.refresh();
             });
             this.disposables.push(heatUpdateDisposable);
+        }
+        
+        // 监听书签变化事件
+        if (this.bookmarkManager) {
+            const bookmarkUpdateDisposable = this.bookmarkManager.onDidChangeBookmarks(() => {
+                this.refresh();
+            });
+            this.disposables.push(bookmarkUpdateDisposable);
         }
     }
 
@@ -31,22 +40,37 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             // 根节点，返回所有有注释的文件
             return Promise.resolve(this.getFileNodes());
         } else if (element.contextValue === 'file') {
-            // 文件节点，返回该文件的所有注释
-            return Promise.resolve(this.getCommentNodes(element.filePath!));
+            // 文件节点，返回该文件的所有注释和书签
+            return Promise.resolve(this.getCommentAndBookmarkNodes(element.filePath!));
         }
         return Promise.resolve([]);
     }
 
     private getFileNodes(): CommentTreeItem[] {
         const allComments = this.commentManager.getAllComments();
+        const allBookmarks = this.bookmarkManager?.getAllBookmarks() || {};
         const fileNodes: CommentTreeItem[] = [];
 
-        for (const [filePath, comments] of Object.entries(allComments)) {
-            if (comments.length > 0) {
+        // 获取所有有注释或书签的文件
+        const allFiles = new Set([...Object.keys(allComments), ...Object.keys(allBookmarks)]);
+
+        for (const filePath of allFiles) {
+            const comments = allComments[filePath] || [];
+            const bookmarks = allBookmarks[filePath] || [];
+            const totalItems = comments.length + bookmarks.length;
+            
+            if (totalItems > 0) {
                 const fileName = path.basename(filePath);
                 
-                // 创建文件节点的显示名称，包含热度信息
-                let displayName = `${fileName} (${comments.length})`;
+                // 创建文件节点的显示名称，只标记书签数量
+                let displayName = `${fileName}`;
+                if (comments.length > 0) {
+                    displayName += ` (${comments.length})`;
+                }
+                if (bookmarks.length > 0) {
+                    displayName += ` 📖${bookmarks.length}`;
+                }
+                
                 let tooltip = filePath;
                 
                 // 如果有文件热度管理器，添加热度信息
@@ -91,7 +115,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
 
         if (fileNodes.length === 0) {
             const emptyNode = new CommentTreeItem(
-                '暂无本地注释',
+                '暂无本地注释和书签',
                 vscode.TreeItemCollapsibleState.None,
                 'empty'
             );
@@ -190,6 +214,78 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         });
     }
 
+    private getCommentAndBookmarkNodes(filePath: string): CommentTreeItem[] {
+        const commentNodes = this.getCommentNodes(filePath);
+        const bookmarkNodes = this.getBookmarkNodes(filePath);
+        
+        // 合并注释和书签节点，按行号排序
+        const allNodes = [...commentNodes, ...bookmarkNodes];
+        return allNodes.sort((a, b) => {
+            const lineA = a.comment?.line ?? a.bookmark?.line ?? Number.MAX_SAFE_INTEGER;
+            const lineB = b.comment?.line ?? b.bookmark?.line ?? Number.MAX_SAFE_INTEGER;
+            return lineA - lineB;
+        });
+    }
+
+    private getBookmarkNodes(filePath: string): CommentTreeItem[] {
+        if (!this.bookmarkManager) {
+            return [];
+        }
+
+        const uri = vscode.Uri.file(filePath);
+        const bookmarks = this.bookmarkManager.getBookmarks(uri);
+        const bookmarkNodes: CommentTreeItem[] = [];
+
+        for (const bookmark of bookmarks) {
+            // 构建书签显示标签，包含行内容
+            let label = `第${bookmark.line + 1}行: `;
+            
+            // 如果有自定义标签，优先显示标签
+            if (bookmark.label) {
+                label += ` - ${bookmark.label}`;
+            }
+            // 如果有行内容，显示行内容（截断过长的内容）
+            else if (bookmark.lineContent) {
+                const maxLength = 50; // 最大显示长度
+                const content = bookmark.lineContent.length > maxLength 
+                    ? bookmark.lineContent.substring(0, maxLength) + '...'
+                    : bookmark.lineContent;
+                label += ` - ${content}`;
+            }
+            
+            const bookmarkNode = new CommentTreeItem(
+                label,
+                vscode.TreeItemCollapsibleState.None,
+                'bookmark'
+            );
+            
+            bookmarkNode.filePath = filePath;
+            bookmarkNode.bookmark = bookmark;
+            bookmarkNode.iconPath = new vscode.ThemeIcon('bookmark');
+            
+            // 创建tooltip
+            const markdownTooltip = new vscode.MarkdownString();
+            markdownTooltip.appendMarkdown(`📖 **书签**\n\n`);
+            markdownTooltip.appendMarkdown(`📍 位置: 第 ${bookmark.line + 1} 行\n\n`);
+            if (bookmark.label) {
+                markdownTooltip.appendMarkdown(`🏷️ 标签: ${bookmark.label}\n\n`);
+            }
+            markdownTooltip.appendMarkdown(`🕒 创建时间: ${new Date(bookmark.timestamp).toLocaleString()}`);
+            bookmarkNode.tooltip = markdownTooltip;
+            
+            // 添加命令，点击时跳转到对应位置
+            bookmarkNode.command = {
+                command: 'localComment.goToBookmark',
+                title: '跳转到书签',
+                arguments: [filePath, bookmark.line]
+            };
+
+            bookmarkNodes.push(bookmarkNode);
+        }
+
+        return bookmarkNodes;
+    }
+
     dispose(): void {
         // 清理所有disposables
         this.disposables.forEach(d => d.dispose());
@@ -208,6 +304,7 @@ export class CommentTreeItem extends vscode.TreeItem {
 
     filePath?: string;
     comment?: LocalComment;
+    bookmark?: Bookmark;
 }
 
 // 为CommentTreeProvider添加dispose方法

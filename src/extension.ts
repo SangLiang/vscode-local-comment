@@ -6,6 +6,8 @@ import { TagManager } from './tagManager';
 import { TagCompletionProvider } from './providers/tagCompletionProvider';
 import { TagDefinitionProvider } from './providers/tagDefinitionProvider';
 import { FileHeatManager } from './fileHeatManager';
+import { BookmarkManager } from './bookmarkManager';
+import { BookmarkDecorationProvider } from './providers/bookmarkDecorationProvider';
 import * as path from 'path';
 import * as fs from 'fs';
 import { registerCommands } from './modules/commands';
@@ -15,6 +17,8 @@ let commentProvider: CommentProvider;
 let commentTreeProvider: CommentTreeProvider;
 let tagManager: TagManager;
 let fileHeatManager: FileHeatManager;
+let bookmarkManager: BookmarkManager;
+let bookmarkDecorationProvider: BookmarkDecorationProvider;
 
 // 全局变量，用于跟踪最后一次键盘活动时间
 let lastKeyboardActivity = Date.now();
@@ -27,14 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
     commentManager = new CommentManager(context);
     commentProvider = new CommentProvider(commentManager);
     fileHeatManager = new FileHeatManager(context);
-    commentTreeProvider = new CommentTreeProvider(commentManager, fileHeatManager);
+    bookmarkManager = new BookmarkManager(context);
+    bookmarkDecorationProvider = new BookmarkDecorationProvider(bookmarkManager);
+    commentTreeProvider = new CommentTreeProvider(commentManager, fileHeatManager, bookmarkManager);
     tagManager = new TagManager();
 
     // 初始化标签数据
     tagManager.updateTags(commentManager.getAllComments());
 
     // 注册命令
-    const commandDisposables = registerCommands(context, commentManager, tagManager, commentProvider, commentTreeProvider);
+    const commandDisposables = registerCommands(context, commentManager, tagManager, commentProvider, commentTreeProvider, bookmarkManager);
 
     // 注册用于修改树视图样式的CSS
     const decorationProvider = vscode.window.registerFileDecorationProvider({
@@ -106,6 +112,8 @@ export function activate(context: vscode.ExtensionContext) {
         
         // 传递键盘活动信息给commentManager
         commentManager.handleDocumentChange(event, hasRecentKeyboardActivity);
+        // 更新书签行号
+        bookmarkManager.handleDocumentChange(event);
         tagManager.updateTags(commentManager.getAllComments());
         commentProvider.refresh();
         // 文档变化时只刷新注释内容，不刷新排序（排序由热度更新事件触发）
@@ -143,7 +151,9 @@ export function activate(context: vscode.ExtensionContext) {
         completionDisposable,
         definitionDisposable,
         hoverDisposable,
-        fileHeatManager
+        fileHeatManager,
+        bookmarkManager,
+        bookmarkDecorationProvider
     );
     
     console.log('✅ 本地注释插件激活完成');
@@ -155,6 +165,16 @@ export function deactivate() {
     // 保存文件热度数据
     if (fileHeatManager) {
         fileHeatManager.dispose();
+    }
+    
+    // 释放书签管理器
+    if (bookmarkManager) {
+        bookmarkManager.dispose();
+    }
+    
+    // 释放书签装饰器提供者
+    if (bookmarkDecorationProvider) {
+        bookmarkDecorationProvider.dispose();
     }
     
     // 释放注释提供器

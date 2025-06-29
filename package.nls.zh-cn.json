@@ -21,5 +21,13 @@
   "fuzzyMatchComment": "模糊匹配",
   "updateCommentLine": "更新到新行号",
   "goToFile": "跳转到文件",
+  "addBookmark": "添加书签",
+  "toggleBookmark": "切换书签",
+  "removeBookmark": "删除书签",
+  "goToBookmark": "跳转到书签",
+  "deleteBookmarkFromTree": "删除书签",
+  "clearFileBookmarks": "清除文件所有书签",
+  "goToNextBookmark": "跳转到下一个书签",
+  "goToPreviousBookmark": "跳转到上一个书签",
   "treeViewTitle": "本地注释"
 } 

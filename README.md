@@ -37,6 +37,16 @@ This extension allows you to add local comments, markdown notes, and file naviga
 - **Smart Position Tracking**: Automatically adjust comment positions when code changes
 - **Multi-line Editor**: Professional multi-line comment editing interface with rich editing features
 
+### 📖 Bookmarks
+- **Quick Bookmarks**: Use `Ctrl+Alt+K` to quickly add/remove bookmarks on the current line
+- **Cross-file Navigation**: Use `Ctrl+Alt+J` to jump to next bookmark, `Ctrl+Alt+Shift+J` for previous
+- **Line-based Marking**: Simple line-based bookmarks without content matching requirements
+- **Visual Indicators**: Bookmarks are displayed with icons in the editor gutter and markers on the scrollbar
+- **Tree View Integration**: Bookmarks are displayed alongside comments in the sidebar panel with line content
+- **Auto Line Tracking**: Bookmark line numbers automatically update when code changes
+- **Hover Information**: Hover over bookmark icons to see detailed information including code content
+- **Per-project Storage**: Each project maintains its own independent bookmark data
+
 ### 🏷️ Tag System
 - **Tag Declaration**: Use `$tagName` to declare tags
 - **Tag Reference**: Use `@tagName` to reference tags
@@ -103,6 +113,9 @@ function loadConfig() {// Local comment: This loads the @userConfig configuratio
 - `Ctrl+Shift+M`: Add Markdown local comment (multi-line editor)
 - `Ctrl+Shift+E`: Edit current line comment
 - `Ctrl+Shift+D`: Delete current line comment
+- `Ctrl+Alt+K`: Toggle bookmark (add/remove bookmark)
+- `Ctrl+Alt+J`: Go to next bookmark (cross-file navigation)
+- `Ctrl+Alt+Shift+J`: Go to previous bookmark (cross-file navigation)
 
 ### Tag Features
 - **Declare Tags**: `$tagName` - Declare a tag in a comment

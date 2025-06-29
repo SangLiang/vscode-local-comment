@@ -168,6 +168,48 @@
         "title": "%goToFile%",
         "icon": "$(arrow-right)",
         "category": "Local Comment"
+      },
+      {
+        "command": "localComment.addBookmark",
+        "title": "%addBookmark%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.toggleBookmark",
+        "title": "%toggleBookmark%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.removeBookmark",
+        "title": "%removeBookmark%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.goToBookmark",
+        "title": "%goToBookmark%",
+        "category": "Local Comment",
+        "when": false
+      },
+      {
+        "command": "localComment.deleteBookmarkFromTree",
+        "title": "%deleteBookmarkFromTree%",
+        "icon": "$(trash)",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.clearFileBookmarks",
+        "title": "%clearFileBookmarks%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.goToNextBookmark",
+        "title": "%goToNextBookmark%",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.goToPreviousBookmark",
+        "title": "%goToPreviousBookmark%",
+        "category": "Local Comment"
       }
     ],
     "views": {
@@ -216,6 +258,10 @@
         {
           "command": "localComment.goToFile",
           "when": "false"
+        },
+        {
+          "command": "localComment.goToBookmark",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -231,6 +277,11 @@
         },
         {
           "command": "localComment.removeComment",
+          "group": "localComment",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "localComment.toggleBookmark",
           "group": "localComment",
           "when": "editorTextFocus"
         }
@@ -287,6 +338,16 @@
           "command": "localComment.goToFile",
           "when": "view == localComments && viewItem == file",
           "group": "inline"
+        },
+        {
+          "command": "localComment.deleteBookmarkFromTree",
+          "when": "view == localComments && viewItem == bookmark",
+          "group": "inline"
+        },
+        {
+          "command": "localComment.clearFileBookmarks",
+          "when": "view == localComments && viewItem == file",
+          "group": "context"
         }
       ]
     },
@@ -320,6 +381,24 @@
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t",
         "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "localComment.toggleBookmark",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "localComment.goToNextBookmark",
+        "key": "ctrl+alt+j",
+        "mac": "cmd+alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "localComment.goToPreviousBookmark",
+        "key": "ctrl+alt+shift+j",
+        "mac": "cmd+alt+shift+j",
+        "when": "editorTextFocus"
       }
     ]
   },

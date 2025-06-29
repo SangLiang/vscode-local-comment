@@ -21,5 +21,13 @@
   "fuzzyMatchComment": "Fuzzy Match",
   "updateCommentLine": "Update to New Line",
   "goToFile": "Go to File",
+  "addBookmark": "Add Bookmark",
+  "toggleBookmark": "Toggle Bookmark",
+  "removeBookmark": "Remove Bookmark",
+  "goToBookmark": "Go to Bookmark",
+  "deleteBookmarkFromTree": "Delete Bookmark",
+  "clearFileBookmarks": "Clear All File Bookmarks",
+  "goToNextBookmark": "Go to Next Bookmark",
+  "goToPreviousBookmark": "Go to Previous Bookmark",
   "treeViewTitle": "Local Comments"
 } 
