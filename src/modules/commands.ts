@@ -1408,6 +1408,72 @@ export function registerCommands(
         await bookmarkManager.goToPreviousBookmark();
     });
 
+    const showCurrentFileBookmarksCommand = vscode.commands.registerCommand('localComment.showCurrentFileBookmarks', async () => {
+        if (!bookmarkManager) {
+            vscode.window.showErrorMessage('书签管理器未初始化');
+            return;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('请先打开一个文件');
+            return;
+        }
+
+        const currentUri = editor.document.uri;
+        const bookmarks = bookmarkManager.getBookmarks(currentUri);
+
+        if (bookmarks.length === 0) {
+            vscode.window.showInformationMessage('当前文件没有书签');
+            return;
+        }
+
+        // 按行号排序
+        const sortedBookmarks = bookmarks.sort((a, b) => a.line - b.line);
+
+        // 创建快速选择项
+        const quickPickItems: vscode.QuickPickItem[] = sortedBookmarks.map(bookmark => {
+            let label = `第${bookmark.line + 1}行`;
+            let description = '';
+            let detail = '';
+
+            // 如果有自定义标签，优先显示标签
+            if (bookmark.label) {
+                label += `: ${bookmark.label}`;
+            }
+
+            // 如果有行内容，显示为描述
+            if (bookmark.lineContent) {
+                description = bookmark.lineContent.length > 60 
+                    ? bookmark.lineContent.substring(0, 60) + '...'
+                    : bookmark.lineContent;
+            }
+
+            // 显示创建时间
+            detail = `创建于 ${new Date(bookmark.timestamp).toLocaleString()}`;
+
+            return {
+                label,
+                description,
+                detail,
+                // 将书签对象存储在用户数据中，以便后续使用
+                userData: bookmark
+            } as vscode.QuickPickItem & { userData: any };
+        });
+
+        // 显示快速选择器
+        const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
+            placeHolder: `选择要跳转的书签 (共 ${bookmarks.length} 个)`,
+            matchOnDescription: true,
+            matchOnDetail: false
+        });
+
+        if (selectedItem && (selectedItem as any).userData) {
+            const bookmark = (selectedItem as any).userData;
+            await bookmarkManager.goToBookmark(bookmark.filePath, bookmark.line);
+        }
+    });
+
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
         showStorageLocationCommand,
@@ -1442,6 +1508,7 @@ export function registerCommands(
         deleteBookmarkFromTreeCommand,
         clearFileBookmarksCommand,
         goToNextBookmarkCommand,
-        goToPreviousBookmarkCommand
+        goToPreviousBookmarkCommand,
+        showCurrentFileBookmarksCommand
     ];
 } 

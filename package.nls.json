@@ -29,5 +29,6 @@
   "clearFileBookmarks": "Clear All File Bookmarks",
   "goToNextBookmark": "Go to Next Bookmark",
   "goToPreviousBookmark": "Go to Previous Bookmark",
+  "showCurrentFileBookmarks": "Show Current File Bookmarks",
   "treeViewTitle": "Local Comments"
 } 

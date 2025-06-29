@@ -29,5 +29,6 @@
   "clearFileBookmarks": "清除文件所有书签",
   "goToNextBookmark": "跳转到下一个书签",
   "goToPreviousBookmark": "跳转到上一个书签",
+  "showCurrentFileBookmarks": "显示当前文件书签列表",
   "treeViewTitle": "本地注释"
 } 
