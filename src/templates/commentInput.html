@@ -67,6 +67,19 @@
             white-space: pre-wrap;
             color: var(--vscode-textPreformat-foreground);
         }
+        .code-preview.original-code {
+            background-color: var(--vscode-diffEditor-removedTextBackground, var(--vscode-textCodeBlock-background));
+            border-left: 3px solid var(--vscode-gitDecoration-deletedResourceForeground, #ff6b6b);
+            position: relative;
+        }
+        .code-preview.original-code::before {
+            content: "📷 创建注释时的代码快照";
+            display: block;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
         .code-context-preview {
             background-color: var(--vscode-textCodeBlock-background);
             border: 1px solid var(--vscode-textBlockQuote-border);

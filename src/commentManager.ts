@@ -10,7 +10,7 @@ export interface LocalComment {
     content: string; // 注释内容
     timestamp: number; // 时间戳
     originalLine: number; // 原始行号，用于跟踪位置变化
-    lineContent: string; // 该行的内容，用于智能定位
+    lineContent: string; // 该行的内容，用于智能定位和作为代码快照
     isMatched?: boolean; // 标记注释是否匹配到代码
 }
 
@@ -133,7 +133,8 @@ export class CommentManager {
             // 筛选出属于当前项目的注释
             for (const [filePath, comments] of Object.entries(allComments)) {
                 if (filePath.startsWith(workspacePath)) {
-                    projectComments[filePath] = comments;
+                    const migratedComments = comments;
+                    projectComments[filePath] = migratedComments;
                 }
             }
             

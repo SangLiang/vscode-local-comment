@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import * as fs from 'fs';
 import { TagManager } from '../tagManager';
 import { CommentManager } from '../commentManager';
@@ -50,7 +49,8 @@ export async function showWebViewInput(
     contextInfo?: {
         fileName?: string;
         lineNumber?: number;
-        lineContent?: string;
+        lineContent?: string; // 当前行的实际内容
+        originalLineContent?: string; // 注释保存的代码快照
         selectedText?: string;
         contextLines?: string[]; // 前后5行的代码内容
         contextStartLine?: number; // 上下文开始的行号
@@ -149,7 +149,8 @@ function getWebviewContent(
     contextInfo?: {
         fileName?: string;
         lineNumber?: number;
-        lineContent?: string;
+        lineContent?: string; // 当前行的实际内容
+        originalLineContent?: string; // 注释保存的代码快照
         selectedText?: string;
         contextLines?: string[]; // 前后5行的代码内容
         contextStartLine?: number; // 上下文开始的行号
@@ -195,7 +196,7 @@ function getWebviewContent(
                 </div>
             </div>`;
         } else if (contextInfo.contextLines && contextInfo.contextLines.length > 0) {
-            // 显示扩展的上下文信息（前后5行）
+            // 显示扩展的上下文信息（前后5行） - 仅当注释能匹配到代码时
             contextHtml += `<div class="context-item">
                 <span class="context-label">代码上下文:</span>
                 <div class="context-value">
@@ -216,11 +217,30 @@ function getWebviewContent(
             contextHtml += `    </div>
                 </div>
             </div>`;
-        } else if (contextInfo.lineContent) {
+            
+            // 如果当前代码与快照不同，额外显示当前代码
+            if (contextInfo.lineContent && contextInfo.lineContent !== contextInfo.originalLineContent) {
+                contextHtml += `<div class="context-item">
+                    <span class="context-label">当前代码:</span>
+                    <div class="context-value">
+                        <div class="code-preview current-code">${escapeHtml(contextInfo.lineContent)}</div>
+                    </div>
+                </div>`;
+            }
+        } else if (contextInfo.lineContent && !contextInfo.originalLineContent) {
+            // 如果没有快照但有当前内容，显示当前内容（新注释场景）
             contextHtml += `<div class="context-item">
-                <span class="context-label">代码:</span>
+                <span class="context-label">当前代码:</span>
                 <div class="context-value">
-                    <div class="code-preview">${escapeHtml(contextInfo.lineContent)}</div>
+                    <div class="code-preview current-code">${escapeHtml(contextInfo.lineContent)}</div>
+                </div>
+            </div>`;
+        } else if (contextInfo.originalLineContent && !contextInfo.contextLines) {
+            // 注释无法匹配到代码时，只显示注释保存的代码快照
+            contextHtml += `<div class="context-item">
+                <span class="context-label">注释快照:</span>
+                <div class="context-value">
+                    <div class="code-preview original-code">${escapeHtml(contextInfo.originalLineContent)}</div>
                 </div>
             </div>`;
         }

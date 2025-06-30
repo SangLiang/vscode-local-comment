@@ -448,24 +448,33 @@ export function registerCommands(
             // 获取上下文信息
             const fileName = documentUri.fsPath.split(/[/\\]/).pop() || '';
             const document = await vscode.workspace.openTextDocument(documentUri);
-            // 使用注释保存的原始代码内容，而不是当前行的代码
-            const lineContent = comment.lineContent || document.lineAt(comment.line).text;
             
-            // 获取代码上下文（前后5行）
-            const codeContext = await getCodeContext(documentUri, comment.line);
+            // 检查注释是否能匹配到当前代码
+            const matchedComments = commentManager.getComments(documentUri);
+            const isMatched = matchedComments.some(c => c.id === comment.id);
+            
+            let contextInfo: any = {
+                fileName,
+                lineNumber: comment.line,
+                originalLineContent: comment.lineContent // 注释保存的代码快照
+            };
+
+            if (isMatched) {
+                // 注释能匹配到代码，显示完整的上下文信息
+                const lineContent = document.lineAt(comment.line).text;
+                const codeContext = await getCodeContext(documentUri, comment.line);
+                
+                contextInfo.lineContent = lineContent; // 当前行的实际内容
+                contextInfo.contextLines = codeContext.contextLines;
+                contextInfo.contextStartLine = codeContext.contextStartLine;
+            }
 
             const newContent = await showWebViewInput(
                 context,
                 '修改注释内容',
                 '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
                 comment.content,
-                {
-                    fileName,
-                    lineNumber: comment.line,
-                    lineContent,
-                    contextLines: codeContext.contextLines,
-                    contextStartLine: codeContext.contextStartLine
-                }
+                contextInfo
             );
 
             if (newContent !== undefined && newContent !== comment.content) {
@@ -586,11 +595,26 @@ export function registerCommands(
             // 获取上下文信息
             const fileName = uri.fsPath.split(/[/\\]/).pop() || '';
             const document = await vscode.workspace.openTextDocument(uri);
-            // 使用注释保存的原始代码内容，而不是当前行的代码
-            const lineContent = comment.lineContent || document.lineAt(comment.line).text;
             
-            // 获取代码上下文（前后5行）
-            const codeContext = await getCodeContext(uri, comment.line);
+            // 检查注释是否能匹配到当前代码
+            const matchedComments = commentManager.getComments(uri);
+            const isMatched = matchedComments.some(c => c.id === comment.id);
+            
+            let contextInfo: any = {
+                fileName,
+                lineNumber: comment.line,
+                originalLineContent: comment.lineContent // 注释保存的代码快照
+            };
+
+            if (isMatched) {
+                // 注释能匹配到代码，显示完整的上下文信息
+                const lineContent = document.lineAt(comment.line).text;
+                const codeContext = await getCodeContext(uri, comment.line);
+                
+                contextInfo.lineContent = lineContent; // 当前行的实际内容
+                contextInfo.contextLines = codeContext.contextLines;
+                contextInfo.contextStartLine = codeContext.contextStartLine;
+            }
             
             // 使用新的WebView输入界面
             const newContent = await showWebViewInput(
@@ -598,13 +622,7 @@ export function registerCommands(
                 '编辑本地注释',
                 '请修改注释内容...',
                 comment.content,
-                {
-                    fileName,
-                    lineNumber: comment.line,
-                    lineContent,
-                    contextLines: codeContext.contextLines,
-                    contextStartLine: codeContext.contextStartLine
-                }
+                contextInfo
             );
             
             if (newContent !== undefined && newContent.trim() !== '') {
@@ -626,24 +644,33 @@ export function registerCommands(
             const fileName = item.filePath.split(/[/\\]/).pop() || '';
             const uri = vscode.Uri.file(item.filePath);
             const document = await vscode.workspace.openTextDocument(uri);
-            // 使用注释保存的原始代码内容，而不是当前行的代码
-            const lineContent = item.comment.lineContent || document.lineAt(item.comment.line).text;
             
-            // 获取代码上下文（前后5行）
-            const codeContext = await getCodeContext(uri, item.comment.line);
+            // 检查注释是否能匹配到当前代码
+            const matchedComments = commentManager.getComments(uri);
+            const isMatched = matchedComments.some(c => c.id === item.comment.id);
+            
+            let contextInfo: any = {
+                fileName,
+                lineNumber: item.comment.line,
+                originalLineContent: item.comment.lineContent // 注释保存的代码快照
+            };
+
+            if (isMatched) {
+                // 注释能匹配到代码，显示完整的上下文信息
+                const lineContent = document.lineAt(item.comment.line).text;
+                const codeContext = await getCodeContext(uri, item.comment.line);
+                
+                contextInfo.lineContent = lineContent; // 当前行的实际内容
+                contextInfo.contextLines = codeContext.contextLines;
+                contextInfo.contextStartLine = codeContext.contextStartLine;
+            }
             
             const newContent = await showWebViewInput(
                 context,
                 '修改注释内容',
                 '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
                 item.comment.content,
-                {
-                    fileName,
-                    lineNumber: item.comment.line,
-                    lineContent,
-                    contextLines: codeContext.contextLines,
-                    contextStartLine: codeContext.contextStartLine
-                }
+                contextInfo
             );
 
             if (newContent !== undefined && newContent !== item.comment.content) {
@@ -707,21 +734,31 @@ export function registerCommands(
         try {
             if (existingComment) {
                 // 如果有现有注释，进入编辑模式
-                // 获取代码上下文（前后5行）
-                const codeContext = await getCodeContext(editor.document.uri, line);
+                // 检查注释是否能匹配到当前代码
+                const matchedComments = commentManager.getComments(editor.document.uri);
+                const isMatched = matchedComments.some(c => c.id === existingComment.id);
+                
+                let contextInfo: any = {
+                    fileName,
+                    lineNumber: line,
+                    originalLineContent: existingComment.lineContent // 注释保存的代码快照
+                };
+
+                if (isMatched) {
+                    // 注释能匹配到代码，显示完整的上下文信息
+                    const codeContext = await getCodeContext(editor.document.uri, line);
+                    
+                    contextInfo.lineContent = lineContent; // 当前行的实际内容
+                    contextInfo.contextLines = codeContext.contextLines;
+                    contextInfo.contextStartLine = codeContext.contextStartLine;
+                }
                 
                 const newContent = await showWebViewInput(
                     context,
                     '编辑多行本地注释',
                     '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
                     existingComment.content,
-                    {
-                        fileName,
-                        lineNumber: line,
-                        lineContent,
-                        contextLines: codeContext.contextLines,
-                        contextStartLine: codeContext.contextStartLine
-                    }
+                    contextInfo
                 );
                 
                 if (newContent !== undefined && newContent !== existingComment.content) {
