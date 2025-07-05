@@ -213,6 +213,7 @@ If you encounter problems during use, please provide feedback through:
 
 ## [1.1.0] - 2025-06-29 
 - ✨ Added bookmark functionality, use shortcut Ctrl+Alt+K to add bookmarks, use Ctrl+Alt+J to jump to next bookmark position
+- ✨ for unmatched code, the initial snapshot content can also be seen in the markdown editor
 - 🔨 Fixed some known issues
 
 ## [1.0.10] - 2025-06-28 
@@ -539,6 +540,7 @@ emitter.on('data', handler);  // 本地注释: 监听@EventEmitter的data事件
 
 ## [1.1.0] - 2025-06-29 
 - ✨ 加入书签功能，使用快捷键ctrl+alt+k可以添加书签，使用ctrl+alt+j可以跳转到下一个书签位置
+- ✨ 对于未匹配到的代码，也能在markdown编辑器中看到其初始快照内容
 - 🔨 修复一些已知问题
 
 ## [1.0.10] - 2025-06-28 
