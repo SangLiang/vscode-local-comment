@@ -321,8 +321,9 @@ export class CommentManager {
             return [];
         }
 
-        // 使用批量匹配功能，确保不会有多个注释匹配到同一行
-        const matchResults = this.commentMatcher.batchMatchComments(document, fileComments);
+        // 文件首次加载场景：使用支持全文搜索的批量匹配功能
+        console.log(`🔍 文件首次加载场景，使用全文搜索进行智能匹配`);
+        const matchResults = this.commentMatcher.batchMatchCommentsWithFullSearch(document, fileComments);
         
         const matchedComments: LocalComment[] = [];
         let needsSave = false;
@@ -384,7 +385,42 @@ export class CommentManager {
             return;
         }
 
-        // 如果是用户编辑，只检查是否直接编辑了有注释的行
+        // 检测是否为多行变化或大块操作
+        let isMultiLineChange = false;
+        let totalLinesChanged = 0;
+        let affectedLineCount = 0;
+        
+        for (const change of event.contentChanges) {
+            const startLine = change.range.start.line;
+            const endLine = change.range.end.line;
+            const linesSpanned = endLine - startLine;
+            
+            // 检测多行变化的条件：
+            // 1. 跨越多行的变化（起始行和结束行不同）
+            // 2. 插入的内容包含换行符
+            // 3. 单次变化影响的行数超过阈值
+            const newLineCount = (change.text.match(/\n/g) || []).length;
+            
+            if (linesSpanned > 0 || newLineCount > 0 || change.text.length > 100) {
+                isMultiLineChange = true;
+                totalLinesChanged += Math.max(linesSpanned, newLineCount);
+                affectedLineCount += linesSpanned + newLineCount + 1;
+            }
+        }
+
+        // 如果检测到多行变化（复制粘贴大块代码），立即执行智能匹配
+        if (isMultiLineChange) {
+            console.log(`🔄 检测到多行变化操作 (影响${affectedLineCount}行，变化${totalLinesChanged}行)，立即执行扩展范围智能匹配`);
+            await this.performSmartMatchingForFileWithExtendedRange(event.document);
+            
+            // 刷新注释显示
+            setTimeout(() => {
+                vscode.commands.executeCommand('localComment.refreshComments');
+            }, 10);
+            return;
+        }
+
+        // 如果是单行编辑，只检查是否直接编辑了有注释的行
         let hasDirectLineEdit = false;
         let directUpdates = 0;
         
@@ -431,7 +467,7 @@ export class CommentManager {
         // 执行智能匹配
         let fileUpdates = 0;
         
-        // 使用批量匹配功能，确保不会有多个注释匹配到同一行
+        // 文件保存场景：使用常规匹配，确保不会有多个注释匹配到同一行
         const matchResults = this.commentMatcher.batchMatchComments(document, fileComments);
         
         for (const comment of fileComments) {
@@ -485,8 +521,9 @@ export class CommentManager {
 
         let fileUpdates = 0;
         
-        // 使用批量匹配功能，确保不会有多个注释匹配到同一行
-        const matchResults = this.commentMatcher.batchMatchComments(document, fileComments);
+        // Git分支切换场景：使用支持全文搜索的批量匹配功能
+        console.log(`🔍 Git分支切换场景，使用全文搜索进行智能匹配`);
+        const matchResults = this.commentMatcher.batchMatchCommentsWithFullSearch(document, fileComments);
         
         for (const comment of fileComments) {
             const matchedLine = matchResults.get(comment.id) ?? -1;
@@ -518,6 +555,55 @@ export class CommentManager {
             console.log(`✅ Git分支切换智能匹配完成，更新了 ${fileUpdates} 个注释`);
         } else {
             console.log(`✅ Git分支切换智能匹配完成，注释位置无需更新`);
+        }
+    }
+
+    /**
+     * 为单个文件执行智能匹配（专门用于大块代码插入场景，使用扩展搜索范围）
+     */
+    private async performSmartMatchingForFileWithExtendedRange(document: vscode.TextDocument): Promise<void> {
+        const filePath = document.uri.fsPath;
+        const fileComments = this.comments[filePath];
+        
+        if (!fileComments || fileComments.length === 0) {
+            return;
+        }
+
+        let fileUpdates = 0;
+        
+        // 使用专门的大块变化匹配功能，使用扩展搜索范围
+        const matchResults = this.commentMatcher.batchMatchCommentsForLargeChanges(document, fileComments);
+        
+        for (const comment of fileComments) {
+            const matchedLine = matchResults.get(comment.id) ?? -1;
+            
+            if (matchedLine !== -1) {
+                // 注释找到了匹配位置，检查是否需要更新
+                try {
+                    const currentLineContent = document.lineAt(matchedLine).text.trim();
+                    const storedLineContent = (comment.lineContent || '').trim();
+                    
+                    // 更新行号和代码快照
+                    if (currentLineContent !== storedLineContent && currentLineContent.length > 0) {
+                        comment.lineContent = currentLineContent;
+                        comment.line = matchedLine;
+                        fileUpdates++;
+                    } else if (comment.line !== matchedLine) {
+                        // 只是位置变化，代码内容没变
+                        comment.line = matchedLine;
+                        fileUpdates++;
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ 大块代码变化时无法更新注释 ${comment.id}:`, error);
+                }
+            }
+        }
+        
+        if (fileUpdates > 0) {
+            await this.saveComments();
+            console.log(`✅ 大块代码变化智能匹配完成，更新了 ${fileUpdates} 个注释`);
+        } else {
+            console.log(`✅ 大块代码变化智能匹配完成，注释位置无需更新`);
         }
     }
 

@@ -112,6 +112,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 监听文档变化
     const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((event) => {
+        // 文档变化时更新键盘活动时间（确保复制粘贴等操作被识别为用户活动）
+        updateKeyboardActivityOnChange();
+        
         // 获取当前时间
         const now = Date.now();
         // 只有在最近有键盘活动的情况下才更新代码快照
@@ -146,6 +149,11 @@ export function activate(context: vscode.ExtensionContext) {
         // 更新最后一次键盘活动时间
         lastKeyboardActivity = Date.now();
     });
+
+    // 监听文档内容变化时也更新键盘活动时间（确保复制粘贴等操作被识别为用户活动）
+    const updateKeyboardActivityOnChange = () => {
+        lastKeyboardActivity = Date.now();
+    };
 
     // 在注册自动补全和定义提供器的部分后添加
     const hoverDisposable = vscode.languages.registerHoverProvider(
