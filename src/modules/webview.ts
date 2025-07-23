@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { TagManager } from '../tagManager';
-import { CommentManager } from '../commentManager';
+import { TagManager } from '../managers/tagManager';
+import { CommentManager } from '../managers/commentManager';
 
 // 模板缓存，避免重复读取文件
 let templateCache: string | null = null;

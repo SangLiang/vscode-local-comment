@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { CommentManager } from '../commentManager';
-import { TagManager } from '../tagManager';
+import { CommentManager } from '../managers/commentManager';
+import { TagManager } from '../managers/tagManager';
 import { CommentProvider } from '../providers/commentProvider';
 import { CommentTreeProvider } from '../providers/commentTreeProvider';
-import { BookmarkManager } from '../bookmarkManager';
+import { BookmarkManager } from '../managers/bookmarkManager';
 import { showWebViewInput, getCodeContext } from './webview';
-import { showQuickInputWithTagCompletion } from '../quickInput';
+import { showQuickInputWithTagCompletion } from '../utils/quickInput';
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -51,11 +51,11 @@ export function registerCommands(
         const projectInfo = commentManager.getProjectInfo();
         const storageFile = commentManager.getStorageFilePath();
         
-        let message = `📂 项目注释存储信息:\n\n`;
-        message += `🏷️ 项目名称: ${projectInfo.name}\n`;
-        message += `📁 项目路径: ${projectInfo.path}\n`;
-        message += `💾 存储文件: ${storageFile}\n\n`;
-        message += `ℹ️ 注意: 每个项目的注释数据独立存储`;
+        let message = `项目注释存储信息:\n\n`;
+        message += `项目名称: ${projectInfo.name}\n`;
+        message += `项目路径: ${projectInfo.path}\n`;
+        message += `存储文件: ${storageFile}\n\n`;
+        message += `️注意: 每个项目的注释数据独立存储`;
         
         vscode.window.showInformationMessage(
             message,
@@ -90,7 +90,7 @@ export function registerCommands(
         message += `标签引用: ${tagReferences.length} 个\n\n`;
         
         if (fileCount > 0) {
-            message += `📋 详细信息:\n`;
+            message += `详细信息:\n`;
             for (const [filePath, comments] of Object.entries(allComments)) {
                 const fileName = filePath.split(/[/\\]/).pop();
                 message += `• ${fileName}: ${comments.length} 条注释\n`;
@@ -1105,12 +1105,12 @@ export function registerCommands(
                 // 构建成功消息
                 let successMessage = result.message;
                 if (result.remappedFiles && result.remappedFiles > 0) {
-                    successMessage += `\n🔄 已重映射 ${result.remappedFiles} 个文件的路径`;
+                    successMessage += `\n 已重映射 ${result.remappedFiles} 个文件的路径`;
                 }
-
+                
                 // 显示成功消息
                 vscode.window.showInformationMessage(
-                    `✅ ${successMessage}`,
+                    `${successMessage}`,
                     '查看注释列表', '显示统计'
                 ).then(selection => {
                     if (selection === '查看注释列表') {
@@ -1239,7 +1239,7 @@ export function registerCommands(
                     editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
                     
                     vscode.window.showInformationMessage(
-                        `✅ 模糊匹配成功！注释已更新到第${selected.candidate.line + 1}行 (相似度: ${Math.round(selected.candidate.similarity * 100)}%)`
+                        `模糊匹配成功！注释已更新到第${selected.candidate.line + 1}行 (相似度: ${Math.round(selected.candidate.similarity * 100)}%)`
                     );
                 }
             }
@@ -1391,7 +1391,7 @@ export function registerCommands(
                     editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
                     
                     vscode.window.showInformationMessage(
-                        `✅ 行号更新成功！注释从第${comment.line + 1}行移动到第${newLine + 1}行`
+                        `行号更新成功！注释从第${comment.line + 1}行移动到第${newLine + 1}行`
                     );
                 }
             }

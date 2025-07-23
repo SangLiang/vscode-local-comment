@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { CommentManager } from './commentManager';
+import { CommentManager } from './managers/commentManager';
 import { CommentProvider } from './providers/commentProvider';
 import { CommentTreeProvider } from './providers/commentTreeProvider';
-import { TagManager } from './tagManager';
+import { TagManager } from './managers/tagManager';
 import { TagCompletionProvider } from './providers/tagCompletionProvider';
 import { TagDefinitionProvider } from './providers/tagDefinitionProvider';
-import { FileHeatManager } from './fileHeatManager';
-import { BookmarkManager } from './bookmarkManager';
+import { FileHeatManager } from './managers/fileHeatManager';
+import { BookmarkManager } from './managers/bookmarkManager';
 import { BookmarkDecorationProvider } from './providers/bookmarkDecorationProvider';
 import * as path from 'path';
 import * as fs from 'fs';

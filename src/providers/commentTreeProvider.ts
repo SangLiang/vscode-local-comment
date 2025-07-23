@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { CommentManager, LocalComment, FileComments } from '../commentManager';
-import { FileHeatManager } from '../fileHeatManager';
-import { BookmarkManager, Bookmark } from '../bookmarkManager';
+import { CommentManager, LocalComment, FileComments } from '../managers/commentManager';
+import { FileHeatManager } from '../managers/fileHeatManager';
+import { BookmarkManager, Bookmark } from '../managers/bookmarkManager';
 
 export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();

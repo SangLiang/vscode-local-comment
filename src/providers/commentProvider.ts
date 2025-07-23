@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { CommentManager, LocalComment } from '../commentManager';
-import { createDataUri } from '../utils';
+import { CommentManager, LocalComment } from '../managers/commentManager';
+import { createDataUri } from '../utils/utils';
 
 export class CommentProvider implements vscode.Disposable {
     private decorationType: vscode.TextEditorDecorationType;

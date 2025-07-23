@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BookmarkManager } from '../bookmarkManager';
+import { BookmarkManager } from '../managers/bookmarkManager';
 
 export class BookmarkDecorationProvider implements vscode.Disposable {
     private decorationType: vscode.TextEditorDecorationType;
