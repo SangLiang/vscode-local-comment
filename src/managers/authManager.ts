@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
+import axios, { AxiosInstance } from 'axios';
+import { ApiRoutes } from '../apiService';
 
 export interface UserInfo {
     id: string;
@@ -28,11 +29,34 @@ export class AuthManager {
     private sessionFile: string;
     private currentSession: AuthSession | null = null;
     private isAuthenticated = false;
+    private apiClient: AxiosInstance;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         this.sessionFile = path.join(context.globalStorageUri?.fsPath || context.extensionPath, 'auth-session.json');
+
+        const config = vscode.workspace.getConfiguration('local-comment');
+        const apiUrl = config.get<string>('server.apiUrl');
+
+        this.apiClient = axios.create({
+            baseURL: apiUrl,
+            timeout: 10000,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
         this.loadSession();
+
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('local-comment.server.apiUrl')) {
+                const newApiUrl = vscode.workspace.getConfiguration('local-comment').get<string>('server.apiUrl');
+                if (this.apiClient) {
+                    this.apiClient.defaults.baseURL = newApiUrl;
+                    console.log(`API URL updated to: ${newApiUrl}`);
+                }
+            }
+        });
     }
 
     /**
@@ -48,7 +72,19 @@ export class AuthManager {
                 if (session.expiresAt > Date.now()) {
                     this.currentSession = session;
                     this.isAuthenticated = true;
-                    console.log('已加载有效会话');
+                    this.apiClient.defaults.headers.common['Authorization'] = `Bearer ${session.token}`;
+                    
+                    // 验证用户信息是否仍然有效
+                    try {
+                        const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
+                        // 更新用户信息
+                        this.currentSession.user = userResponse.data;
+                        await this.saveSession(this.currentSession);
+                        console.log('已加载有效会话');
+                    } catch (error) {
+                        console.error('验证用户信息失败:', error);
+                        this.clearSession();
+                    }
                 } else {
                     // 会话过期，清除
                     this.clearSession();
@@ -81,6 +117,7 @@ export class AuthManager {
     private clearSession(): void {
         this.currentSession = null;
         this.isAuthenticated = false;
+        delete this.apiClient.defaults.headers.common['Authorization'];
         if (fs.existsSync(this.sessionFile)) {
             fs.unlinkSync(this.sessionFile);
         }
@@ -91,51 +128,55 @@ export class AuthManager {
      */
     public async login(credentials: LoginCredentials): Promise<{ success: boolean; message: string; user?: UserInfo }> {
         try {
-            // 这里应该调用实际的登录API
-            // 目前使用模拟登录
-            const result = await this.mockLoginAPI(credentials);
+            // 调用实际的登录API
+            const response = await this.apiClient.post<{ access_token: string; token_type: string }>(
+                ApiRoutes.auth.login, 
+                credentials,
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                }
+            );
             
-            if (result.success) {
-                const session: AuthSession = {
-                    token: result.token!,
-                    user: result.user!,
-                    expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24小时过期
-                };
-                
-                this.currentSession = session;
-                this.isAuthenticated = true;
-                await this.saveSession(session);
-                
-                return { success: true, message: '登录成功', user: result.user };
-            } else {
-                return { success: false, message: result.message };
-            }
+            const { access_token, token_type } = response.data;
+
+            // 设置认证头
+            this.apiClient.defaults.headers.common['Authorization'] = `${token_type} ${access_token}`;
+            
+            // 获取用户信息
+            const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
+            const user = userResponse.data;
+
+            const session: AuthSession = {
+                token: access_token,
+                user,
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 默认24小时过期
+            };
+            
+            this.currentSession = session;
+            this.isAuthenticated = true;
+            await this.saveSession(session);
+            
+            return { success: true, message: '登录成功', user };
         } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                return { success: false, message: error.response.data.message || '用户名或密码错误' };
+            }
             return { success: false, message: '登录失败: ' + (error as Error).message };
         }
     }
 
-    /**
-     * 用户注册
-     */
-    public async register(userInfo: { username: string; email: string; password: string }): Promise<{ success: boolean; message: string }> {
-        try {
-            // 这里应该调用实际的注册API
-            const result = await this.mockRegisterAPI(userInfo);
-            return result;
-        } catch (error) {
-            return { success: false, message: '注册失败: ' + (error as Error).message };
-        }
-    }
+
 
     /**
      * 用户登出
      */
     public async logout(): Promise<void> {
         try {
-            // 这里应该调用登出API
+            // 调用登出API
             if (this.currentSession) {
-                await this.mockLogoutAPI(this.currentSession.token);
+                await this.apiClient.post(ApiRoutes.auth.logout);
             }
         } catch (error) {
             console.error('登出API调用失败:', error);
@@ -174,90 +215,28 @@ export class AuthManager {
         }
 
         try {
-            // 这里应该调用刷新token的API
-            const result = await this.mockRefreshTokenAPI(this.currentSession.token);
-            if (result.success) {
-                this.currentSession.token = result.token!;
-                this.currentSession.expiresAt = Date.now() + (24 * 60 * 60 * 1000);
-                await this.saveSession(this.currentSession);
-                return true;
+            // 调用刷新token的API
+            const response = await this.apiClient.post<{ access_token: string; token_type: string }>(ApiRoutes.auth.refreshToken);
+            const { access_token, token_type } = response.data;
+
+            this.currentSession.token = access_token;
+            this.currentSession.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 默认24小时过期
+            this.apiClient.defaults.headers.common['Authorization'] = `${token_type} ${access_token}`;
+            
+            // 更新用户信息
+            try {
+                const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
+                this.currentSession.user = userResponse.data;
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
             }
+            
+            await this.saveSession(this.currentSession);
+            return true;
         } catch (error) {
             console.error('刷新会话失败:', error);
+            await this.logout();
+            return false;
         }
-        
-        return false;
-    }
-
-    /**
-     * 模拟登录API
-     */
-    private async mockLoginAPI(credentials: LoginCredentials): Promise<{ success: boolean; message: string; token?: string; user?: UserInfo }> {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // 简单的验证逻辑
-        if (credentials.username === 'demo' && credentials.password === 'password') {
-            const user: UserInfo = {
-                id: '1',
-                username: credentials.username,
-                email: 'demo@example.com',
-                createdAt: Date.now(),
-                lastLoginAt: Date.now()
-            };
-            
-            return {
-                success: true,
-                message: '登录成功',
-                token: crypto.randomBytes(32).toString('hex'),
-                user
-            };
-        } else {
-            return {
-                success: false,
-                message: '用户名或密码错误'
-            };
-        }
-    }
-
-    /**
-     * 模拟注册API
-     */
-    private async mockRegisterAPI(userInfo: { username: string; email: string; password: string }): Promise<{ success: boolean; message: string }> {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // 简单的验证逻辑
-        if (userInfo.username.length < 3) {
-            return { success: false, message: '用户名至少需要3个字符' };
-        }
-        
-        if (userInfo.password.length < 6) {
-            return { success: false, message: '密码至少需要6个字符' };
-        }
-        
-        return { success: true, message: '注册成功' };
-    }
-
-    /**
-     * 模拟登出API
-     */
-    private async mockLogoutAPI(token: string): Promise<void> {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log('已登出，token:', token);
-    }
-
-    /**
-     * 模拟刷新token API
-     */
-    private async mockRefreshTokenAPI(token: string): Promise<{ success: boolean; token?: string }> {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        return {
-            success: true,
-            token: crypto.randomBytes(32).toString('hex')
-        };
     }
 } 

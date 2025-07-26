@@ -55,9 +55,6 @@ export class AuthWebview {
                     case 'login':
                         await this.handleLogin(message.credentials);
                         break;
-                    case 'register':
-                        await this.handleRegister(message.userInfo);
-                        break;
                     case 'logout':
                         await this.handleLogout();
                         break;
@@ -105,24 +102,6 @@ export class AuthWebview {
                 command: 'loginResult',
                 success: false,
                 message: '登录失败: ' + (error as Error).message
-            });
-        }
-    }
-
-    private async handleRegister(userInfo: { username: string; email: string; password: string }) {
-        try {
-            const result = await this._authManager.register(userInfo);
-            
-            this._panel?.webview.postMessage({
-                command: 'registerResult',
-                success: result.success,
-                message: result.message
-            });
-        } catch (error) {
-            this._panel?.webview.postMessage({
-                command: 'registerResult',
-                success: false,
-                message: '注册失败: ' + (error as Error).message
             });
         }
     }
@@ -235,34 +214,6 @@ export class AuthWebview {
             background: var(--vscode-button-secondaryHoverBackground);
         }
         
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--vscode-input-border);
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: border-color 0.2s;
-        }
-        
-        .tab.active {
-            border-bottom-color: var(--vscode-focusBorder);
-            color: var(--vscode-focusBorder);
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
         .message {
             padding: 10px;
             border-radius: 4px;
@@ -311,12 +262,7 @@ export class AuthWebview {
             <p>请登录以使用完整功能</p>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">登录</div>
-            <div class="tab" onclick="switchTab('register')">注册</div>
-        </div>
-        
-        <div id="login-tab" class="tab-content active">
+        <div id="login-content">
             <div id="login-message" class="message"></div>
             <div id="login-loading" class="loading">
                 <div class="spinner"></div>
@@ -339,42 +285,14 @@ export class AuthWebview {
                 <p>演示账号: demo / password</p>
             </div>
         </div>
-        
-        <div id="register-tab" class="tab-content">
-            <div id="register-message" class="message"></div>
-            <div id="register-loading" class="loading">
-                <div class="spinner"></div>
-                <p>正在注册...</p>
-            </div>
-            
-            <form id="register-form">
-                <div class="form-group">
-                    <label for="register-username">用户名</label>
-                    <input type="text" id="register-username" required>
-                </div>
-                <div class="form-group">
-                    <label for="register-email">邮箱</label>
-                    <input type="email" id="register-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="register-password">密码</label>
-                    <input type="password" id="register-password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">注册</button>
-            </form>
-        </div>
+
     </div>
     
     <script>
         const vscode = acquireVsCodeApi();
         
         function switchTab(tabName) {
-            // 更新标签页状态
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-tab').classList.add('active');
+            // 现在只有一个标签页，不需要切换逻辑
         }
         
         function showMessage(elementId, message, type) {
@@ -412,23 +330,6 @@ export class AuthWebview {
             });
         });
         
-        // 注册表单处理
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('register-username').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            
-            hideMessage('register-message');
-            showLoading('register-loading');
-            
-            vscode.postMessage({
-                command: 'register',
-                userInfo: { username, email, password }
-            });
-        });
-        
         // 监听来自扩展的消息
         window.addEventListener('message', event => {
             const message = event.data;
@@ -440,20 +341,6 @@ export class AuthWebview {
                         showMessage('login-message', message.message, 'success');
                     } else {
                         showMessage('login-message', message.message, 'error');
-                    }
-                    break;
-                    
-                case 'registerResult':
-                    hideLoading('register-loading');
-                    if (message.success) {
-                        showMessage('register-message', message.message, 'success');
-                        // 注册成功后切换到登录标签
-                        setTimeout(() => {
-                            switchTab('login');
-                            hideMessage('register-message');
-                        }, 2000);
-                    } else {
-                        showMessage('register-message', message.message, 'error');
                     }
                     break;
             }
