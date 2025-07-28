@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息</title>
+    <link rel="stylesheet" href="${cssUri}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>用户信息面板</h1>
+        </div>
+        
+        <div id="user-info-content">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>正在加载用户信息...</p>
+            </div>
+            
+            <div id="user-profile" class="user-profile" style="display: none;">
+                <!-- 用户基本信息 -->
+                <div class="profile-section">
+                    <div class="avatar-container">
+                        <img id="user-avatar" src="" alt="用户头像" class="avatar">
+                        <div class="avatar-placeholder" id="avatar-placeholder">
+                            <span id="avatar-initial"></span>
+                        </div>
+                    </div>
+                    <div class="basic-info">
+                        <h2 id="user-name" class="user-name"></h2>
+                        <p id="user-email" class="user-email"></p>
+                        <div class="user-status">
+                            <span class="status-dot"></span>
+                            <span>在线</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 账户信息 -->
+                <div class="info-section">
+                    <h3 class="section-title">账户信息</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>用户ID</label>
+                            <span id="user-id"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>创建时间</label>
+                            <span id="user-created-at"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>最后登录</label>
+                            <span id="user-last-login"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 项目信息 -->
+                <div class="info-section">
+                    <h3 class="section-title">当前项目</h3>
+                    <div class="project-info">
+                        <div class="project-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 7V4C4 2.89543 4.89543 2 6 2H18C19.1046 2 20 2.89543 20 4V7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M4 7H20L19 21H5L4 7Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M9 11V7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M15 11V7" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="project-details">
+                            <h4 id="project-name" class="project-name"></h4>
+                            <p id="project-path" class="project-path"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="info-section">
+                    <h3 class="section-title">使用统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="comments-count">--</div>
+                            <div class="stat-label">注释数量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="bookmarks-count">--</div>
+                            <div class="stat-label">书签数量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="tags-count">--</div>
+                            <div class="stat-label">标签数量</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="actions">
+                    <button class="btn btn-secondary" id="refresh-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        刷新信息
+                    </button>
+                    <button class="btn btn-danger" id="logout-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H9" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2"/>
+                            <path d="M21 12H9" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        退出登录
+                    </button>
+                </div>
+            </div>
+            
+            <div id="error-message" class="error-message" style="display: none;">
+                <h3>加载失败</h3>
+                <p id="error-text"></p>
+                <button class="btn btn-primary" id="retry-btn">重试</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="${jsUri}"></script>
+</body>
+</html> 

@@ -1,0 +1,351 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+
+/* 加载动画 */
+.loading {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--vscode-progressBar-background);
+    border-radius: 50%;
+    border-top-color: var(--vscode-progressBar-foreground);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 用户资料 */
+.user-profile {
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(135deg, var(--vscode-button-background) 0%, var(--vscode-button-hoverBackground) 100%);
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.avatar-container {
+    position: relative;
+    margin-right: 20px;
+}
+
+.avatar, .avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--vscode-editor-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.avatar {
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    font-size: 32px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.basic-info {
+    flex: 1;
+}
+
+.user-name {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--vscode-button-foreground);
+}
+
+.user-email {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: var(--vscode-button-foreground);
+    opacity: 0.8;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: var(--vscode-button-foreground);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4CAF50;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+/* 信息部分 */
+.info-section {
+    padding: 25px 30px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.info-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.info-item span {
+    font-size: 14px;
+    color: var(--vscode-editor-foreground);
+    font-weight: 500;
+}
+
+/* 项目信息 */
+.project-info {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: var(--vscode-list-hoverBackground);
+    border-radius: 6px;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.project-icon {
+    margin-right: 16px;
+    color: var(--vscode-symbolIcon-folderForeground);
+}
+
+.project-details {
+    flex: 1;
+}
+
+.project-name {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+
+.project-path {
+    margin: 0;
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-editor-font-family);
+}
+
+/* 统计信息 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: var(--vscode-list-hoverBackground);
+    border-radius: 6px;
+    border: 1px solid var(--vscode-panel-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--vscode-button-background);
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* 操作按钮 */
+.actions {
+    padding: 30px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    background: var(--vscode-list-hoverBackground);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    gap: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.btn-primary:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.btn-secondary {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.btn-secondary:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.btn-danger {
+    background: var(--vscode-errorForeground);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+/* 错误消息 */
+.error-message {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.error-message h3 {
+    margin: 0 0 10px 0;
+    color: var(--vscode-errorForeground);
+}
+
+.error-message p {
+    margin: 0 0 20px 0;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .profile-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .avatar-container {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+    
+    .actions {
+        flex-direction: column;
+        padding: 20px;
+    }
+} 

@@ -1605,17 +1605,15 @@ export function registerCommands(
             return;
         }
         
-        // 如果已登录，显示用户信息
-        const user = authManager.getCurrentUser();
-        if (user) {
-            const message = `用户信息:\n\n` +
-                `用户名: ${user.username}\n` +
-                `邮箱: ${user.email}\n` +
-                `创建时间: ${new Date(user.createdAt).toLocaleString()}\n` +
-                `最后登录: ${new Date(user.lastLoginAt).toLocaleString()}`;
-            
-            vscode.window.showInformationMessage(message);
-        }
+        // 如果已登录，显示用户信息面板
+        const { UserInfoWebview } = require('../modules/userInfoWebview');
+        UserInfoWebview.createOrShow(
+            context.extensionUri, 
+            authManager, 
+            commentManager, 
+            bookmarkManager, 
+            tagManager
+        );
     });
 
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
