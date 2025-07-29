@@ -8,7 +8,9 @@ export const ApiRoutes = {
         logout: '/auth/logout', // 用户退出
         refreshToken: '/auth/refresh-token', // 刷新token
     },
-    comment: {},
+    comment: {
+        uploadComments: `${BASE_URL}/comments`, // 上传注释
+    },
     project: {
         getMyProject: `${BASE_URL}/projects/me`, // 获取当前用户所属的项目信息
     },

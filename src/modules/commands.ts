@@ -9,6 +9,9 @@ import { BookmarkManager } from '../managers/bookmarkManager';
 import { showMarkdownWebviewInput, getCodeContext } from './markdownWebview';
 import { showQuickInputWithTagCompletion } from '../utils/quickInput';
 import { AuthWebview } from './authWebview';
+import { ApiRoutes } from '../apiService';
+import { ProjectManager } from '../managers/projectManager';
+import { normalizeFilePath, normalizeFileComments } from '../utils/utils';
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -915,41 +918,37 @@ export function registerCommands(
                 return;
             }
 
-            // 生成默认文件名
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-            const defaultFileName = `${projectInfo.name}-comments-${timestamp}.json`;
-
-            // 让用户选择保存位置
-            const saveUri = await vscode.window.showSaveDialog({
-                defaultUri: vscode.Uri.file(defaultFileName),
-                filters: {
-                    'JSON文件': ['json'],
-                    '所有文件': ['*']
+            // 让用户选择导出方式
+            const exportOptions = [
+                {
+                    label: '$(save) 保存到本地',
+                    description: '将注释数据保存到本地文件',
+                    detail: '选择保存位置并下载到本地计算机',
+                    value: 'local'
                 },
-                saveLabel: '导出注释数据'
+                {
+                    label: '$(cloud-upload) 上传到云端',
+                    description: '将注释数据上传到云端服务器',
+                    detail: '需要登录账户，数据将安全存储在云端',
+                    value: 'cloud'
+                }
+            ];
+
+            const selectedOption = await vscode.window.showQuickPick(exportOptions, {
+                placeHolder: '选择导出方式',
+                ignoreFocusOut: true
             });
 
-            if (!saveUri) {
+            if (!selectedOption) {
                 return; // 用户取消了操作
             }
 
-            // 执行导出
-            const success = await commentManager.exportComments(saveUri.fsPath);
-            
-            if (success) {
-                const fileCount = Object.keys(allComments).length;
-                vscode.window.showInformationMessage(
-                    `导出成功！已导出 ${fileCount} 个文件的 ${totalComments} 条注释`,
-                    '打开文件位置', '查看文件'
-                ).then(selection => {
-                    if (selection === '打开文件位置') {
-                        vscode.commands.executeCommand('revealFileInOS', saveUri);
-                    } else if (selection === '查看文件') {
-                        vscode.commands.executeCommand('vscode.open', saveUri);
-                    }
-                });
-            } else {
-                vscode.window.showErrorMessage('导出失败，请检查文件路径和权限');
+            if (selectedOption.value === 'local') {
+                // 本地保存流程
+                await handleLocalExport(projectInfo, allComments, totalComments);
+            } else if (selectedOption.value === 'cloud') {
+                // 云端上传流程
+                await handleCloudUpload(projectInfo, allComments, totalComments, authManager);
             }
 
         } catch (error) {
@@ -957,6 +956,185 @@ export function registerCommands(
             vscode.window.showErrorMessage(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
+
+    // 处理本地导出
+    async function handleLocalExport(projectInfo: any, allComments: any, totalComments: number) {
+        // 生成默认文件名
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const defaultFileName = `${projectInfo.name}-comments-${timestamp}.json`;
+
+        // 让用户选择保存位置
+        const saveUri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(defaultFileName),
+            filters: {
+                'JSON文件': ['json'],
+                '所有文件': ['*']
+            },
+            saveLabel: '导出注释数据'
+        });
+
+        if (!saveUri) {
+            return; // 用户取消了操作
+        }
+
+        // 执行导出
+        const success = await commentManager.exportComments(saveUri.fsPath);
+        
+        if (success) {
+            const fileCount = Object.keys(allComments).length;
+            vscode.window.showInformationMessage(
+                `导出成功！已导出 ${fileCount} 个文件的 ${totalComments} 条注释`,
+                '打开文件位置', '查看文件'
+            ).then(selection => {
+                if (selection === '打开文件位置') {
+                    vscode.commands.executeCommand('revealFileInOS', saveUri);
+                } else if (selection === '查看文件') {
+                    vscode.commands.executeCommand('vscode.open', saveUri);
+                }
+            });
+        } else {
+            vscode.window.showErrorMessage('导出失败，请检查文件路径和权限');
+        }
+    }
+
+    // 处理云端上传
+    async function handleCloudUpload(projectInfo: any, allComments: any, totalComments: number, authManager?: any) {
+        // 检查用户是否已登录
+        if (!authManager || !authManager.isLoggedIn()) {
+            const loginChoice = await vscode.window.showWarningMessage(
+                '上传到云端需要先登录账户',
+                '立即登录', '取消'
+            );
+            
+            if (loginChoice === '立即登录') {
+                // 显示登录界面
+                const { AuthWebview } = require('./authWebview');
+                AuthWebview.createOrShow(context, authManager);
+                return;
+            } else {
+                return; // 用户取消
+            }
+        }
+
+        // 获取项目管理器实例
+        const projectManager = new ProjectManager(context);
+        
+        // 获取关联的项目ID
+        const associatedProjectId = projectManager.getAssociatedProject();
+        if (!associatedProjectId) {
+            const associateChoice = await vscode.window.showWarningMessage(
+                '当前项目未关联云端项目，需要先关联项目才能上传',
+                '关联项目', '取消'
+            );
+            
+            if (associateChoice === '关联项目') {
+                // 显示用户信息面板，让用户关联项目
+                const { UserInfoWebview } = require('./userInfoWebview');
+                UserInfoWebview.createOrShow(context.extensionUri, authManager, projectManager, commentManager, bookmarkManager, tagManager);
+                return;
+            } else {
+                return; // 用户取消
+            }
+        }
+
+        // 显示上传进度
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: '正在上传注释数据到云端...',
+            cancellable: false
+        }, async (progress) => {
+            try {
+                progress.report({ increment: 0, message: '准备数据...' });
+                
+                // 准备导出数据（使用标准化的路径）
+                const normalizedComments = normalizeFileComments(allComments);
+                
+                const exportData = {
+                    version: '1.0.0',
+                    exportTime: new Date().toISOString(),
+                    projectInfo: {
+                        name: projectInfo.name,
+                        path: normalizeFilePath(projectInfo.path)
+                    },
+                    comments: normalizedComments,
+                    metadata: {
+                        totalFiles: Object.keys(allComments).length,
+                        totalComments: totalComments
+                    }
+                };
+
+                progress.report({ increment: 30, message: '数据准备完成，正在上传...' });
+
+                // 调用真实的API接口上传数据
+                const uploadPayload = {
+                    content: exportData,
+                    project_id: parseInt(associatedProjectId)
+                };
+
+                // 获取认证token
+                const token = authManager.getAuthToken();
+                if (!token) {
+                    throw new Error('认证token无效');
+                }
+
+                // 获取API基础URL
+                const config = vscode.workspace.getConfiguration('local-comment');
+                const apiUrl = config.get<string>('server.apiUrl');
+                if (!apiUrl) {
+                    throw new Error('API服务器地址未配置');
+                }
+
+                // 构建完整的API URL
+                const fullApiUrl = `${apiUrl}${ApiRoutes.comment.uploadComments}`;
+
+                // 发送API请求
+                const response = await fetch(fullApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(uploadPayload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`上传失败: ${response.status} ${response.statusText} - ${errorData.message || '未知错误'}`);
+                }
+
+                const result = await response.json();
+                
+                progress.report({ increment: 70, message: '上传完成，正在验证...' });
+                
+                // 验证上传结果
+                if (!result.id) {
+                    throw new Error('上传验证失败：服务器未返回有效的记录ID');
+                }
+                
+                progress.report({ increment: 100, message: '上传成功！' });
+
+                // 显示成功消息
+                const fileCount = Object.keys(allComments).length;
+                const uploadTime = new Date(result.created_at).toLocaleString('zh-CN');
+                vscode.window.showInformationMessage(
+                    `云端上传成功！已上传 ${fileCount} 个文件的 ${totalComments} 条注释\n上传时间：${uploadTime}`,
+                    '查看云端数据', '分享链接'
+                ).then(selection => {
+                    if (selection === '查看云端数据') {
+                        // TODO: 打开云端数据查看界面
+                        vscode.window.showInformationMessage('云端数据查看功能即将推出');
+                    } else if (selection === '分享链接') {
+                        // TODO: 生成分享链接
+                        vscode.window.showInformationMessage('分享功能即将推出');
+                    }
+                });
+
+            } catch (error) {
+                console.error('云端上传失败:', error);
+                vscode.window.showErrorMessage(`云端上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            }
+        });
+    }
 
     // 导入注释数据命令
     const importCommentsCommand = vscode.commands.registerCommand('localComment.importComments', async () => {

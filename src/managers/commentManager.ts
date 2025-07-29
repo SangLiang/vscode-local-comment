@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { CommentMatcher } from './commentMatcher';
+import { normalizeFilePath, denormalizeFilePath, normalizeFileComments } from '../utils/utils';
 
 export interface LocalComment {
     id: string;
@@ -737,6 +738,8 @@ export class CommentManager {
         }
     }
 
+
+
     /**
      * 导出注释数据到指定文件
      * @param exportPath 导出文件路径
@@ -745,14 +748,18 @@ export class CommentManager {
     public async exportComments(exportPath: string): Promise<boolean> {
         try {
             const projectInfo = this.getProjectInfo();
+            
+            // 标准化注释数据中的文件路径
+            const normalizedComments = normalizeFileComments(this.comments);
+            
             const exportData = {
                 version: '1.0.0',
                 exportTime: new Date().toISOString(),
                 projectInfo: {
                     name: projectInfo.name,
-                    path: projectInfo.path
+                    path: normalizeFilePath(projectInfo.path)
                 },
-                comments: this.comments,
+                comments: normalizedComments,
                 metadata: {
                     totalFiles: Object.keys(this.comments).length,
                     totalComments: Object.values(this.comments).reduce((sum, comments) => sum + comments.length, 0)
@@ -839,23 +846,25 @@ export class CommentManager {
                 if (pathMapping) {
                     const { oldBasePath, newBasePath } = pathMapping;
                     
-                    // 标准化路径分隔符
-                    const normalizedOldPath = originalFilePath.replace(/\\/g, '/');
-                    const normalizedOldBase = oldBasePath.replace(/\\/g, '/');
-                    const normalizedNewBase = newBasePath.replace(/\\/g, '/');
+                    // 使用新的路径标准化方法
+                    const normalizedOldPath = normalizeFilePath(originalFilePath);
+                    const normalizedOldBase = normalizeFilePath(oldBasePath);
+                    const normalizedNewBase = normalizeFilePath(newBasePath);
                     
                     if (normalizedOldPath.startsWith(normalizedOldBase)) {
                         // 计算相对路径
                         const relativePath = normalizedOldPath.substring(normalizedOldBase.length);
-                        // 构建新的完整路径
-                        targetFilePath = path.join(normalizedNewBase, relativePath).replace(/\\/g, '/');
-                        
-                        // 转换回系统路径格式
-                        targetFilePath = path.resolve(targetFilePath);
+                        // 使用反标准化方法构建新路径
+                        targetFilePath = denormalizeFilePath(relativePath, newBasePath);
                         remappedFiles++;
                         
                         console.log(`🔄 路径重映射: ${originalFilePath} -> ${targetFilePath}`);
                     }
+                } else {
+                    // 如果没有路径映射，尝试将标准化路径转换为当前系统路径
+                    // 假设导入的路径是相对于项目根目录的标准化路径
+                    const currentProjectPath = this.getProjectInfo().path;
+                    targetFilePath = denormalizeFilePath(originalFilePath, currentProjectPath);
                 }
 
                 if (!this.comments[targetFilePath]) {
