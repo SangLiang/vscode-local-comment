@@ -280,8 +280,10 @@ export class UserInfoWebview {
                 projectId: projectId
             });
 
-            // 关联成功后，立即重新获取项目列表以更新状态
-            this.handleGetProjects();
+            // 延迟重新获取项目列表，让前端先完成状态更新动画
+            setTimeout(() => {
+                this.handleGetProjects();
+            }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
         } catch (error) {
             console.error('关联项目失败:', error);
             vscode.window.showErrorMessage('关联项目失败: ' + (error as Error).message);
@@ -307,8 +309,10 @@ export class UserInfoWebview {
                 projectId: projectId
             });
 
-            // 取消关联成功后，立即重新获取项目列表以更新状态
-            this.handleGetProjects();
+            // 延迟重新获取项目列表，让前端先完成状态更新动画
+            setTimeout(() => {
+                this.handleGetProjects();
+            }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
         } catch (error) {
             console.error('取消关联项目失败:', error);
             vscode.window.showErrorMessage('取消关联项目失败: ' + (error as Error).message);

@@ -1,6 +1,9 @@
 // VS Code WebView API
 const vscode = acquireVsCodeApi();
 
+// 常量定义
+const ANIMATION_DELAY = 800; // 按钮状态动画延迟时间（毫秒）
+
 // DOM元素
 const loadingEl = document.getElementById('loading');
 const userProfileEl = document.getElementById('user-profile');
@@ -376,16 +379,19 @@ window.addEventListener('message', event => {
             if (btn) {
                 const projectItem = btn.closest('.project-item');
                 if (message.success) {
-                    btn.textContent = '已关联';
-                    btn.disabled = false;
-                    btn.dataset.associated = 'true';
-                    btn.className = 'btn btn-secondary btn-sm';
-                    // 添加高亮显示类
-                    if (projectItem) {
-                        projectItem.classList.add('associated');
-                    }
-                    // 可以考虑更新UI，例如高亮显示已关联的项目
+                    // 延迟更新按钮状态，让用户看到"关联中..."的状态
+                    setTimeout(() => {
+                        btn.textContent = '已关联';
+                        btn.disabled = false;
+                        btn.dataset.associated = 'true';
+                        btn.className = 'btn btn-secondary btn-sm';
+                        // 添加高亮显示类
+                        if (projectItem) {
+                            projectItem.classList.add('associated');
+                        }
+                    }, ANIMATION_DELAY); // 使用常量定义的延迟时间
                 } else {
+                    // 失败时立即恢复状态
                     btn.textContent = '关联';
                     btn.disabled = false;
                     btn.dataset.associated = 'false';
@@ -406,15 +412,19 @@ window.addEventListener('message', event => {
             if (disassociateBtn) {
                 const projectItem = disassociateBtn.closest('.project-item');
                 if (message.success) {
-                    disassociateBtn.textContent = '关联';
-                    disassociateBtn.disabled = false;
-                    disassociateBtn.dataset.associated = 'false';
-                    disassociateBtn.className = 'btn btn-primary btn-sm';
-                    // 移除高亮显示类
-                    if (projectItem) {
-                        projectItem.classList.remove('associated');
-                    }
+                    // 延迟更新按钮状态，让用户看到"取消关联中..."的状态
+                    setTimeout(() => {
+                        disassociateBtn.textContent = '关联';
+                        disassociateBtn.disabled = false;
+                        disassociateBtn.dataset.associated = 'false';
+                        disassociateBtn.className = 'btn btn-primary btn-sm';
+                        // 移除高亮显示类
+                        if (projectItem) {
+                            projectItem.classList.remove('associated');
+                        }
+                    }, ANIMATION_DELAY); // 使用常量定义的延迟时间
                 } else {
+                    // 失败时立即恢复状态
                     disassociateBtn.textContent = '已关联';
                     disassociateBtn.disabled = false;
                     disassociateBtn.dataset.associated = 'true';
