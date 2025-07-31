@@ -128,6 +128,9 @@ export class UserInfoWebview {
                     case 'associateProject':
                         this.handleAssociateProject(message.projectId);
                         return;
+                    case 'disassociateProject':
+                        this.handleDisassociateProject(message.projectId);
+                        return;
                     case 'close':
                         this.dispose();
                         return;
@@ -289,6 +292,33 @@ export class UserInfoWebview {
                 success: false,
                 projectId: projectId,
                 message: '关联项目失败: ' + (error as Error).message
+            });
+        }
+    }
+
+    private async handleDisassociateProject(projectId: string) {
+        try {
+            await this._projectManager.disassociateProject();
+
+            // 通知webview取消关联成功
+            this._panel.webview.postMessage({
+                command: 'disassociateProjectResult',
+                success: true,
+                projectId: projectId
+            });
+
+            // 取消关联成功后，立即重新获取项目列表以更新状态
+            this.handleGetProjects();
+        } catch (error) {
+            console.error('取消关联项目失败:', error);
+            vscode.window.showErrorMessage('取消关联项目失败: ' + (error as Error).message);
+            
+            // 通知webview取消关联失败
+            this._panel.webview.postMessage({
+                command: 'disassociateProjectResult',
+                success: false,
+                projectId: projectId,
+                message: '取消关联项目失败: ' + (error as Error).message
             });
         }
     }

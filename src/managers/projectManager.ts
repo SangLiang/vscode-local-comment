@@ -62,6 +62,42 @@ export class ProjectManager {
     }
     
     /**
+     * 取消当前工作区与项目的关联
+     */
+    public async disassociateProject(): Promise<void> {
+        const workspaceFolder = this.getCurrentWorkspaceFolder();
+        if (!workspaceFolder) {
+            throw new Error('没有打开的工作区，无法取消关联项目。');
+        }
+        
+        const workspacePath = workspaceFolder.uri.fsPath;
+        const associations = this.getAssociations();
+        
+        if (!associations[workspacePath]) {
+            throw new Error('当前工作区没有关联任何项目。');
+        }
+        
+        // 删除关联
+        delete associations[workspacePath];
+
+        try {
+            await this._context.workspaceState.update(ProjectManager.MEMENTO_KEY, associations);
+            
+            // 验证保存是否成功
+            const savedAssociations = this.getAssociations();
+            
+            if (!savedAssociations[workspacePath]) {
+                vscode.window.showInformationMessage(`项目关联已取消`);
+            } else {
+                throw new Error('数据保存验证失败');
+            }
+        } catch (error) {
+            console.error('取消关联项目 - 保存失败:', error);
+            throw new Error(`保存数据失败: ${error}`);
+        }
+    }
+    
+    /**
      * 获取所有项目关联
      */
     private getAssociations(): { [workspacePath: string]: string } {

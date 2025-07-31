@@ -220,6 +220,16 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.project-item.associated {
+    border-color: var(--vscode-button-background);
+    box-shadow: 0 0 0 1px var(--vscode-button-background);
+}
+
+.project-item.associated:hover {
+    border-color: var(--vscode-button-hoverBackground);
+    box-shadow: 0 0 0 1px var(--vscode-button-hoverBackground), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .project-info-wrapper {
     display: flex;
     align-items: center;

@@ -210,7 +210,13 @@ function populateProjectsList(projects, associatedProjectId) {
         // 检查这个项目是否已经关联（转换为字符串进行比较，避免类型不匹配）
         const isAssociated = String(associatedProjectId) === String(project.id);
         const buttonText = isAssociated ? '已关联' : '关联';
-        const buttonDisabled = isAssociated ? 'disabled' : '';
+        const buttonClass = isAssociated ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
+        const buttonDisabled = isAssociated ? '' : '';
+        
+        // 为已关联的项目添加高亮类
+        if (isAssociated) {
+            projectItem.classList.add('associated');
+        }
         
         projectItem.innerHTML = `
             <div class="project-info-wrapper">
@@ -232,7 +238,7 @@ function populateProjectsList(projects, associatedProjectId) {
                 </div>
             </div>
             <div class="project-actions">
-                <button class="btn btn-secondary btn-sm" data-project-id="${project.id}" ${buttonDisabled}>${buttonText}</button>
+                <button class="${buttonClass}" data-project-id="${project.id}" data-associated="${isAssociated}" ${buttonDisabled}>${buttonText}</button>
             </div>
         `;
         
@@ -240,18 +246,32 @@ function populateProjectsList(projects, associatedProjectId) {
     });
 
     // 为所有关联按钮添加事件监听
-    const associateButtons = projectsListEl.querySelectorAll('.btn[data-project-id]:not([disabled])');
+    const associateButtons = projectsListEl.querySelectorAll('.btn[data-project-id]');
     associateButtons.forEach(button => {
         button.addEventListener('click', (event) => {
             event.stopPropagation(); // 防止触发 project-item 的点击事件
             const projectId = button.dataset.projectId;
-            button.textContent = '关联中...';
-            button.disabled = true;
-
-            vscode.postMessage({
-                command: 'associateProject',
-                projectId: projectId
-            });
+            const isAssociated = button.dataset.associated === 'true';
+            
+            if (isAssociated) {
+                // 取消关联
+                button.textContent = '取消关联中...';
+                button.disabled = true;
+                
+                vscode.postMessage({
+                    command: 'disassociateProject',
+                    projectId: projectId
+                });
+            } else {
+                // 关联项目
+                button.textContent = '关联中...';
+                button.disabled = true;
+                
+                vscode.postMessage({
+                    command: 'associateProject',
+                    projectId: projectId
+                });
+            }
         });
     });
 }
@@ -354,16 +374,58 @@ window.addEventListener('message', event => {
         case 'associateProjectResult':
             const btn = document.querySelector(`.btn[data-project-id="${message.projectId}"]`);
             if (btn) {
+                const projectItem = btn.closest('.project-item');
                 if (message.success) {
                     btn.textContent = '已关联';
-                    btn.disabled = true;
+                    btn.disabled = false;
+                    btn.dataset.associated = 'true';
+                    btn.className = 'btn btn-secondary btn-sm';
+                    // 添加高亮显示类
+                    if (projectItem) {
+                        projectItem.classList.add('associated');
+                    }
                     // 可以考虑更新UI，例如高亮显示已关联的项目
                 } else {
                     btn.textContent = '关联';
                     btn.disabled = false;
+                    btn.dataset.associated = 'false';
+                    btn.className = 'btn btn-primary btn-sm';
+                    // 移除高亮显示类
+                    if (projectItem) {
+                        projectItem.classList.remove('associated');
+                    }
                     // 显示错误信息（如果有的话）
                     if (message.message) {
                         console.error('关联失败:', message.message);
+                    }
+                }
+            }
+            break;
+        case 'disassociateProjectResult':
+            const disassociateBtn = document.querySelector(`.btn[data-project-id="${message.projectId}"]`);
+            if (disassociateBtn) {
+                const projectItem = disassociateBtn.closest('.project-item');
+                if (message.success) {
+                    disassociateBtn.textContent = '关联';
+                    disassociateBtn.disabled = false;
+                    disassociateBtn.dataset.associated = 'false';
+                    disassociateBtn.className = 'btn btn-primary btn-sm';
+                    // 移除高亮显示类
+                    if (projectItem) {
+                        projectItem.classList.remove('associated');
+                    }
+                } else {
+                    disassociateBtn.textContent = '已关联';
+                    disassociateBtn.disabled = false;
+                    disassociateBtn.dataset.associated = 'true';
+                    disassociateBtn.className = 'btn btn-secondary btn-sm';
+                    // 添加高亮显示类
+                    if (projectItem) {
+                        projectItem.classList.add('associated');
+                    }
+                    // 显示错误信息（如果有的话）
+                    if (message.message) {
+                        console.error('取消关联失败:', message.message);
                     }
                 }
             }
