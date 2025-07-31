@@ -3,6 +3,7 @@ import { CommentProvider } from '../../providers/commentProvider';
 import { CommentTreeProvider } from '../../providers/commentTreeProvider';
 import { CommentManager } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
+import { AuthManager } from '../../managers/authManager';
 import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 
@@ -151,7 +152,9 @@ export function registerCommentCommands(
                 comment.content,
                 contextInfo,
                 '',
-                createSaveAndContinueCallback('edit', documentUri, commentId, comment.line, comment.content)
+                createSaveAndContinueCallback('edit', documentUri, commentId, comment.line, comment.content),
+                new AuthManager(context!).isLoggedIn(),
+                comment.isShared || false
             );
 
             // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
@@ -244,12 +247,36 @@ export function registerCommentCommands(
         // 获取上下文信息
         const fileName = editor.document.uri.fsPath.split(/[/\\]/).pop() || '';
         const lineContent = editor.document.lineAt(line).text;
+        
+        let contextInfo: any = {
+            fileName,
+            lineNumber: comment.line,
+            originalLineContent: comment.lineContent // 注释保存的代码快照
+        };
 
-        const newContent = await showQuickInputWithTagCompletion(
-            '编辑注释内容',
-            '请修改注释内容... (支持 @标签名 引用标签)',
+        // 检查注释是否能匹配到当前代码
+        const matchedComments = commentManager.getComments(editor.document.uri);
+        const isMatched = matchedComments.some(c => c.id === comment.id);
+        
+        if (isMatched) {
+            // 注释能匹配到代码，显示完整的上下文信息
+            const codeContext = await getCodeContext(editor.document.uri, comment.line);
+            
+            contextInfo.lineContent = lineContent; // 当前行的实际内容
+            contextInfo.contextLines = codeContext.contextLines;
+            contextInfo.contextStartLine = codeContext.contextStartLine;
+        }
+
+        const newContent = await showMarkdownWebviewInput(
+            context!,
+            '编辑本地注释',
+            '请修改注释内容...',
             comment.content,
-            tagManager
+            contextInfo,
+            '',
+            createSaveAndContinueCallback('edit', editor.document.uri, comment.id, comment.line, comment.content),
+            new AuthManager(context!).isLoggedIn(),
+            comment.isShared || false
         );
 
         if (newContent !== undefined && newContent !== comment.content) {
@@ -302,7 +329,9 @@ export function registerCommentCommands(
                 comment.content,
                 contextInfo,
                 '',
-                createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content)
+                createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
+                new AuthManager(context!).isLoggedIn(),
+                comment.isShared || false
             );
             
             // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
@@ -374,7 +403,9 @@ export function registerCommentCommands(
                     item.comment.content,
                     contextInfo,
                     '',
-                    createSaveAndContinueCallback('edit', uri, item.comment.id, item.comment.line, item.comment.content)
+                    createSaveAndContinueCallback('edit', uri, item.comment.id, item.comment.line, item.comment.content),
+                    new AuthManager(context!).isLoggedIn(),
+                    item.comment.isShared || false
                 );
 
                 // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
@@ -798,6 +829,10 @@ export function registerCommentCommands(
         const comments = commentManager.getComments(editor.document.uri);
         const existingComment = comments.find(c => c.line === line);
         
+        // 获取用户登录状态
+        const authManager = new AuthManager(context!);
+        const isUserLoggedIn = authManager.isLoggedIn();
+        
         try {
             if (existingComment) {
                 // 如果有现有注释，进入编辑模式
@@ -827,7 +862,9 @@ export function registerCommentCommands(
                     existingComment.content,
                     contextInfo,
                     '',
-                    createSaveAndContinueCallback('edit', editor.document.uri, existingComment.id, existingComment.line, existingComment.content)
+                    createSaveAndContinueCallback('edit', editor.document.uri, existingComment.id, existingComment.line, existingComment.content),
+                    isUserLoggedIn,
+                    existingComment.isShared || false
                 );
                 
                 // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
@@ -853,7 +890,9 @@ export function registerCommentCommands(
                         // 暂时不包含上下文，让webview先显示
                     },
                     '',
-                    createSaveAndContinueCallback('add', editor.document.uri, '', line, '')
+                    createSaveAndContinueCallback('add', editor.document.uri, '', line, ''),
+                    isUserLoggedIn,
+                    false // 新注释默认未分享
                 );
                 
                 // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存

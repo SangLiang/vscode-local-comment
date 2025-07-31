@@ -59,7 +59,9 @@ export async function showMarkdownWebviewInput(
         contextStartLine?: number; // 上下文开始的行号
     },
     markedJsUri: string = '',
-    onSaveAndContinue?: (content: string) => void
+    onSaveAndContinue?: (content: string) => void,
+    isUserLoggedIn: boolean = false,
+    isCommentShared: boolean = false
 ): Promise<string | undefined> {
     // 保存当前活动编辑器的引用，以便稍后恢复焦点
     const activeEditor = vscode.window.activeTextEditor;
@@ -106,7 +108,7 @@ export async function showMarkdownWebviewInput(
         const tagSuggestions = ''; // 先使用空字符串，后续异步更新
 
         // HTML内容
-        panel.webview.html = getMarkdownWebviewContent(context, prompt, placeholder, existingContent, contextInfo, markedJsUri.toString(), cssUri.toString(), jsUri.toString(), tagSuggestions);
+        panel.webview.html = getMarkdownWebviewContent(context, prompt, placeholder, existingContent, contextInfo, markedJsUri.toString(), cssUri.toString(), jsUri.toString(), tagSuggestions, isUserLoggedIn, isCommentShared);
 
         // 异步加载标签建议和代码上下文，避免阻塞界面显示
         setTimeout(async () => {
@@ -172,6 +174,10 @@ export async function showMarkdownWebviewInput(
                         // 显示保存成功提示
                         vscode.window.showInformationMessage('保存成功');
                         break;
+                    case 'share':
+                        // 处理分享功能
+                        vscode.window.showInformationMessage('分享功能开发中...');
+                        break;
                     case 'cancel':
                         resolve(undefined);
                         panel.dispose();
@@ -224,7 +230,9 @@ function getMarkdownWebviewContent(
     markedJsUri: string = '',
     cssUri: string = '',
     jsUri: string = '',
-    tagSuggestions: string = ''
+    tagSuggestions: string = '',
+    isUserLoggedIn: boolean = false,
+    isCommentShared: boolean = false
 ): string {
     // HTML转义函数
     const escapeHtml = (text: string): string => {
@@ -365,7 +373,14 @@ function getMarkdownWebviewContent(
         markedJsUri: markedJsUri || '',
         cssUri: cssUri || '',
         jsUri: jsUri || '',
-        tagSuggestions: tagSuggestions
+        tagSuggestions: tagSuggestions,
+        shareButtonHtml: (isUserLoggedIn && !isCommentShared) ? 
+            `<button class="share-btn" onclick="share()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                </svg>
+                分享
+            </button>` : ''
     };
 
     // 优化：使用缓存避免重复读取模板文件
