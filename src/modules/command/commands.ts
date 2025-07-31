@@ -7,10 +7,9 @@ import { CommentProvider } from '../../providers/commentProvider';
 import { CommentTreeProvider } from '../../providers/commentTreeProvider';
 import { BookmarkManager } from '../../managers/bookmarkManager';
 
-import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { ApiRoutes } from '../../apiService';
 import { ProjectManager } from '../../managers/projectManager';
-import { normalizeFilePath, normalizeFileComments, buildExportData } from '../../utils/utils';
+import { buildExportData } from '../../utils/utils';
 import { registerCommentCommands } from './comment';
 import { registerBookmarkCommands } from './bookmark';
 import { AuthWebview } from '../authWebview';
@@ -196,109 +195,6 @@ export function registerCommands(
     const toggleCommentsCommand = vscode.commands.registerCommand('localComment.toggleComments', () => {
         commentProvider.toggleVisibility();
     });
-
-    const removeCommentCommand = vscode.commands.registerCommand('localComment.removeComment', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
-        const selection = editor.selection;
-        const line = selection.active.line;
-        
-        await commentManager.removeComment(editor.document.uri, line);
-        tagManager.updateTags(commentManager.getAllComments());
-        commentProvider.refresh();
-        commentTreeProvider.refresh();
-    });
-
-    const removeCommentFromHoverCommand = vscode.commands.registerCommand('localComment.removeCommentFromHover', async (args) => {
-        try {
-            let parsedArgs;
-            
-            // 检查参数是否已经是对象
-            if (typeof args === 'object') {
-                parsedArgs = args;
-            } else if (typeof args === 'string') {
-                try {
-                    parsedArgs = JSON.parse(args);
-                } catch (parseError) {
-                    console.error('参数解析失败:', parseError);
-                    vscode.window.showErrorMessage('参数格式错误');
-                    return;
-                }
-            } else {
-                vscode.window.showErrorMessage('参数类型不正确');
-                return;
-            }
-
-            const { uri, commentId, line } = parsedArgs;
-            
-            if (!uri || !commentId || line === undefined) {
-                vscode.window.showErrorMessage('参数不完整');
-                return;
-            }
-
-            const documentUri = vscode.Uri.parse(uri);
-            
-            // 通过commentId直接查找注释，不依赖光标位置
-            const comment = commentManager.getCommentById(documentUri, commentId);
-            
-            if (!comment) {
-                vscode.window.showWarningMessage(`找不到指定的注释`);
-                return;
-            }
-
-            // 删除注释
-            await commentManager.removeCommentById(documentUri, commentId);
-            tagManager.updateTags(commentManager.getAllComments());
-            commentProvider.refresh();
-            commentTreeProvider.refresh();
-            // 删除注释无需提示，用户可以直接看到结果
-        } catch (error) {
-            console.error('从hover删除注释时发生错误:', error);
-            vscode.window.showErrorMessage(`删除注释时发生错误: ${error}`);
-        }
-    });
-
-
-
-
-
-    // 添加单行注释命令
-    const addCommentCommand = vscode.commands.registerCommand('localComment.addComment', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
-        const line = editor.selection.active.line;
-        
-        try {
-            // 使用单行快速输入界面
-            const content = await showQuickInputWithTagCompletion(
-                '添加本地注释',
-                '请输入注释内容... (支持 @标签名 引用标签)',
-                '',
-                tagManager
-            );
-            
-            if (content !== undefined && content.trim() !== '') {
-                await commentManager.addComment(editor.document.uri, line, content);
-                // 刷新标签和界面
-                tagManager.updateTags(commentManager.getAllComments());
-                commentProvider.refresh();
-                commentTreeProvider.refresh();
-            }
-        } catch (error) {
-            console.error('添加注释时出错:', error);
-            vscode.window.showErrorMessage(`添加注释失败: ${error}`);
-        }
-    });
-
-
 
     // 导出注释数据命令
     const exportCommentsCommand = vscode.commands.registerCommand('localComment.exportComments', async () => {
@@ -925,8 +821,6 @@ export function registerCommands(
         }
     }
 
-
-
     // 认证相关命令
     const logoutCommand = vscode.commands.registerCommand('localComment.logout', async () => {
         if (!authManager) {
@@ -963,9 +857,6 @@ export function registerCommands(
         showStorageStatsCommand,
         manageProjectsCommand,
         toggleCommentsCommand,
-        removeCommentCommand,
-        removeCommentFromHoverCommand,
-        addCommentCommand,
         exportCommentsCommand,
         importCommentsCommand,
         // 认证相关命令

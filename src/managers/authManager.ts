@@ -146,7 +146,7 @@ export class AuthManager {
             const session: AuthSession = {
                 token: access_token,
                 user: null as any, // 临时设置为null
-                expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 默认24小时过期
+                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 默认1周过期
             };
             
             this.currentSession = session;
