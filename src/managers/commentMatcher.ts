@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LocalComment } from './commentManager';
+import { LocalComment, SharedComment } from './commentManager';
 
 /**
  * 注释匹配器 - 负责在文档内容变化时智能匹配注释位置
@@ -28,7 +28,7 @@ export class CommentMatcher {
      * 
      * 特点：使用受限的搜索范围，避免性能消耗，严格匹配以避免误匹配
      */
-    public batchMatchComments(document: vscode.TextDocument, comments: LocalComment[]): Map<string, number> {
+    public batchMatchComments(document: vscode.TextDocument, comments: (LocalComment | SharedComment)[]): Map<string, number> {
         // 重置匹配状态
         this.matchedLines.clear();
         const results = new Map<string, number>();
@@ -72,7 +72,7 @@ export class CommentMatcher {
      * 
      * 特点：使用扩展的搜索范围，平衡性能和匹配精度
      */
-    public batchMatchCommentsForLargeChanges(document: vscode.TextDocument, comments: LocalComment[]): Map<string, number> {
+    public batchMatchCommentsForLargeChanges(document: vscode.TextDocument, comments: (LocalComment | SharedComment)[]): Map<string, number> {
         // 重置匹配状态
         this.matchedLines.clear();
         const results = new Map<string, number>();
@@ -119,7 +119,7 @@ export class CommentMatcher {
      * 特点：先进行局部搜索，失败后进行全文搜索，确保最大的匹配成功率
      * 性能：比常规匹配慢，但在非实时场景下可以接受
      */
-    public batchMatchCommentsWithFullSearch(document: vscode.TextDocument, comments: LocalComment[]): Map<string, number> {
+    public batchMatchCommentsWithFullSearch(document: vscode.TextDocument, comments: (LocalComment | SharedComment)[]): Map<string, number> {
         // 重置匹配状态
         this.matchedLines.clear();
         const results = new Map<string, number>();
@@ -156,7 +156,7 @@ export class CommentMatcher {
     /**
      * 内部匹配逻辑
      */
-    private findMatchingLineInternal(document: vscode.TextDocument, comment: LocalComment): number {
+    private findMatchingLineInternal(document: vscode.TextDocument, comment: LocalComment | SharedComment): number {
         const lineContent = comment.lineContent?.trim();
         
         // 如果没有保存的行内容，严格隐藏注释
@@ -224,7 +224,7 @@ export class CommentMatcher {
     /**
      * 支持全文搜索的匹配逻辑，用于文件首次加载和Git更新等场景
      */
-    private findMatchingLineWithFullSearch(document: vscode.TextDocument, comment: LocalComment): number {
+    private findMatchingLineWithFullSearch(document: vscode.TextDocument, comment: LocalComment | SharedComment): number {
         const lineContent = comment.lineContent?.trim();
         
         // 如果没有保存的行内容，严格隐藏注释
@@ -309,7 +309,7 @@ export class CommentMatcher {
     /**
      * 检查是否为精确匹配
      */
-    private isExactMatch(document: vscode.TextDocument, comment: LocalComment, lineIndex: number): boolean {
+    private isExactMatch(document: vscode.TextDocument, comment: LocalComment | SharedComment, lineIndex: number): boolean {
         if (lineIndex < 0 || lineIndex >= document.lineCount) {
             return false;
         }
@@ -471,7 +471,7 @@ export class CommentMatcher {
      * @param maxCandidates - 最大候选结果数量，默认5个
      * @returns 返回匹配候选结果数组，按相似度降序排列
      */
-    public fuzzyMatchComment(document: vscode.TextDocument, comment: LocalComment, maxCandidates: number = 5): Array<{
+    public fuzzyMatchComment(document: vscode.TextDocument, comment: LocalComment | SharedComment, maxCandidates: number = 5): Array<{
         line: number;
         content: string;
         similarity: number;
@@ -600,7 +600,7 @@ export class CommentMatcher {
     /**
      * 专门用于大块代码插入场景的匹配逻辑，使用更大的搜索范围
      */
-    private findMatchingLineForLargeChanges(document: vscode.TextDocument, comment: LocalComment): number {
+    private findMatchingLineForLargeChanges(document: vscode.TextDocument, comment: LocalComment | SharedComment): number {
         const lineContent = comment.lineContent?.trim();
         
         // 如果没有保存的行内容，严格隐藏注释

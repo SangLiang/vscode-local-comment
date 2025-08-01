@@ -12,6 +12,8 @@
   "refreshTree": "Refresh",
   "deleteCommentFromTree": "Delete Comment",
   "clearFileComments": "Clear All File Comments",
+  "clearAllSharedComments": "Clear All Shared Comments",
+  "clearFileSharedComments": "Clear File Shared Comments",
   "editCommentFromTree": "Edit Comment From Tree",
   "showStorageLocation": "Show Storage Location",
   "showStorageStats": "Show Comment Statistics",

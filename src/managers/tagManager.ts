@@ -1,4 +1,4 @@
-import { LocalComment } from './commentManager';
+import { LocalComment, SharedComment } from './commentManager';
 
 export interface TagDeclaration {
     tagName: string;
@@ -21,7 +21,7 @@ export class TagManager {
     private tagDeclarations: Map<string, TagDeclaration> = new Map();
     private tagReferences: TagReference[] = [];
 
-    public updateTags(allComments: { [filePath: string]: LocalComment[] }): void {
+    public updateTags(allComments: { [filePath: string]: (LocalComment | SharedComment)[] }): void {
         // 清空现有标签
         this.tagDeclarations.clear();
         this.tagReferences = [];
@@ -34,7 +34,7 @@ export class TagManager {
         }
     }
 
-    private extractTagsFromComment(filePath: string, comment: LocalComment): void {
+    private extractTagsFromComment(filePath: string, comment: LocalComment | SharedComment): void {
         const content = comment.content;
 
         // 提取标签声明 ($标签名)

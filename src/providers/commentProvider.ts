@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { CommentManager, LocalComment } from '../managers/commentManager';
+import { CommentManager, LocalComment, SharedComment } from '../managers/commentManager';
 import { createDataUri } from '../utils/utils';
 
 export class CommentProvider implements vscode.Disposable {
@@ -135,20 +135,37 @@ export class CommentProvider implements vscode.Disposable {
         editor.setDecorations(this.tagDecorationType, tagDecorations);
     }
 
-    private createSegmentedDecorations(comment: LocalComment, line: vscode.TextLine, editor: vscode.TextEditor): {normal: vscode.DecorationOptions[], tags: vscode.DecorationOptions[]} {
+    private createSegmentedDecorations(comment: LocalComment | SharedComment, line: vscode.TextLine, editor: vscode.TextEditor): {normal: vscode.DecorationOptions[], tags: vscode.DecorationOptions[]} {
         const normal: vscode.DecorationOptions[] = [];
         const tags: vscode.DecorationOptions[] = [];
         const lineLength = line.text.length;
+        
+        // 判断是否为共享注释
+        const isSharedComment = 'userId' in comment;
+        
+        // 根据注释类型设置不同的样式
+        let contentText = ` ${comment.content}`;
+        let color = '#6B7283'; // 默认灰蓝色
+        let fontStyle = 'italic';
+        let margin = '0 0 0 0.8em';
+        
+        if (isSharedComment) {
+            // 共享注释使用不同的样式
+            contentText = ` 🔗 ${comment.content}`; // 添加共享图标
+            color = '#3B82F6'; // 蓝色，表示共享
+            fontStyle = 'italic';
+            margin = '0 0 0 0.8em';
+        }
         
         // 创建装饰选项
         const decoration: vscode.DecorationOptions = {
             range: new vscode.Range(comment.line, lineLength, comment.line, lineLength),
             renderOptions: {
                 after: {
-                    contentText: ` ${comment.content}`, // 显示注释内容
-                    color: '#6B7283', // 灰蓝色
-                    fontStyle: 'italic',
-                    margin: '0 0 0 0.8em' 
+                    contentText: contentText,
+                    color: color,
+                    fontStyle: fontStyle,
+                    margin: margin
                 }
             }
         };
@@ -274,8 +291,23 @@ export class CommentProvider implements vscode.Disposable {
             // 处理用户输入的转义字符
             const processedContent = this.processMarkdownContent(comment.content);
             
+            // 判断是否为共享注释
+            const isSharedComment = 'userId' in comment;
+            
             // 构建Markdown内容
-            markdownContent.appendMarkdown(`**本地注释**\n\n`);
+            if (isSharedComment) {
+                const sharedComment = comment as SharedComment;
+                markdownContent.appendMarkdown(`**共享注释**\n\n`);
+                
+                // 显示用户信息
+                if (sharedComment.username) {
+                    markdownContent.appendMarkdown(`**用户**: ${sharedComment.username}\n\n`);
+                } else {
+                    markdownContent.appendMarkdown(`**用户ID**: ${sharedComment.userId}\n\n`);
+                }
+            } else {
+                markdownContent.appendMarkdown(`**本地注释**\n\n`);
+            }
             
             // 将注释内容中的@标签转换为可点击的链接
             const segments = this.parseCommentIntoSegments(processedContent);
@@ -329,26 +361,32 @@ export class CommentProvider implements vscode.Disposable {
             markdownContent.appendMarkdown(`---\n`);
             markdownContent.appendMarkdown(`*${new Date(comment.timestamp).toLocaleString()}*\n\n`);
             
-            // 添加操作按钮
-            const editArgs = JSON.stringify({
-                uri: document.uri.toString(),
-                commentId: comment.id,
-                line: comment.line
-            });
-            
-            const removeArgs = JSON.stringify({
-                uri: document.uri.toString(),
-                commentId: comment.id,
-                line: comment.line
-            });
+            // 根据注释类型添加不同的操作按钮
+            if (isSharedComment) {
+                // 共享注释只显示查看信息，不提供编辑功能
+                markdownContent.appendMarkdown(` **共享注释** - 此注释来自其他用户`);
+            } else {
+                // 本地注释显示完整的操作按钮
+                const editArgs = JSON.stringify({
+                    uri: document.uri.toString(),
+                    commentId: comment.id,
+                    line: comment.line
+                });
+                
+                const removeArgs = JSON.stringify({
+                    uri: document.uri.toString(),
+                    commentId: comment.id,
+                    line: comment.line
+                });
 
-            const editIcon = `<img src="${editIconUri}" width="16" height="16" alt="编辑" style="vertical-align: middle; " />`;
-            const deleteIcon = `<img src="${deleteIconUri}" width="16" height="16" alt="删除" style="vertical-align: middle;" />`;
-            const markDownIcon = `<img src="${markDownIconUri}" width="16" height="16" alt="Markdown编辑" style="vertical-align: middle;" />`;
+                const editIcon = `<img src="${editIconUri}" width="16" height="16" alt="编辑" style="vertical-align: middle; " />`;
+                const deleteIcon = `<img src="${deleteIconUri}" width="16" height="16" alt="删除" style="vertical-align: middle;" />`;
+                const markDownIcon = `<img src="${markDownIconUri}" width="16" height="16" alt="Markdown编辑" style="vertical-align: middle;" />`;
 
-            markdownContent.appendMarkdown(`[${editIcon} 编辑](command:localComment.quickEditCommentFromHover?${encodeURIComponent(editArgs)} "快速编辑注释") | `);
-            markdownContent.appendMarkdown(`[${markDownIcon} Markdown编辑](command:localComment.editCommentFromHover?${encodeURIComponent(editArgs)} "多行编辑注释") | `);
-            markdownContent.appendMarkdown(`[${deleteIcon} 删除](command:localComment.removeCommentFromHover?${encodeURIComponent(removeArgs)} "删除注释")`);
+                markdownContent.appendMarkdown(`[${editIcon} 编辑](command:localComment.quickEditCommentFromHover?${encodeURIComponent(editArgs)} "快速编辑注释") | `);
+                markdownContent.appendMarkdown(`[${markDownIcon} Markdown编辑](command:localComment.editCommentFromHover?${encodeURIComponent(editArgs)} "多行编辑注释") | `);
+                markdownContent.appendMarkdown(`[${deleteIcon} 删除](command:localComment.removeCommentFromHover?${encodeURIComponent(removeArgs)} "删除注释")`);
+            }
             
             return new vscode.Hover(markdownContent);
         }

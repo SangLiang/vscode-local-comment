@@ -4,6 +4,7 @@ import { TagManager } from '../managers/tagManager';
 import { CommentManager } from '../managers/commentManager';
 import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
+import { normalizeFilePath } from '../utils/utils';
 
 // 模板缓存，避免重复读取文件
 let templateCache: string | null = null;
@@ -59,6 +60,7 @@ export async function showMarkdownWebviewInput(
         selectedText?: string;
         contextLines?: string[]; // 前后5行的代码内容
         contextStartLine?: number; // 上下文开始的行号
+        filePath?: string; // 文件路径
     },
     markedJsUri: string = '',
     onSaveAndContinue?: (content: string) => void,
@@ -182,20 +184,36 @@ export async function showMarkdownWebviewInput(
                             // 获取当前活动的编辑器和文档信息
                             const activeEditor = vscode.window.activeTextEditor;
                             let filePath = '';
+
+                            console.log('activeEditor:', activeEditor);
+                            console.log('contextInfo:', contextInfo);
                             
                             // 优先从contextInfo获取文件路径，如果没有则尝试从活动编辑器获取
-                            // 注意：contextInfo类型定义中没有filePath，但在实际使用中可能存在
-                            if (contextInfo && Object.prototype.hasOwnProperty.call(contextInfo, 'filePath') && (contextInfo as any).filePath) {
-                                filePath = (contextInfo as any).filePath;
-                            } else if (contextInfo?.fileName && vscode.workspace.workspaceFolders?.length) {
-                                // 尝试在工作区中查找该文件
-                                const workspaceFolder = vscode.workspace.workspaceFolders[0];
-                                filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.fileName).fsPath;
+                            if (contextInfo?.filePath) {
+                                filePath = contextInfo.filePath;
+                                console.log('从contextInfo获取文件路径:', filePath);
                             } else if (activeEditor) {
+                                // 优先使用活动编辑器的文档路径，这样可以保持完整的路径结构
                                 const documentUri = activeEditor.document.uri;
                                 filePath = documentUri.fsPath;
+                                console.log('从activeEditor获取文件路径:', filePath);
+                            } else if (contextInfo?.fileName && vscode.workspace.workspaceFolders?.length) {
+                                // 如果只有文件名，尝试在工作区中查找该文件
+                                // 修复：优先使用contextInfo中的完整路径信息，而不是简单拼接
+                                const workspaceFolder = vscode.workspace.workspaceFolders[0];
+                                
+                                // 检查contextInfo是否有完整的相对路径信息
+                                if (contextInfo.filePath) {
+                                    filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.filePath).fsPath;
+                                } else {
+                                    // 如果确实只有文件名，尝试在项目中搜索完整路径
+                                    filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.fileName).fsPath;
+                                    console.warn('使用文件名构建路径，可能丢失中间目录信息:', contextInfo.fileName);
+                                }
+                                console.log('从工作区构建文件路径:', filePath);
                             } else {
                                 console.warn('无法获取当前文档信息，将使用空路径');
+                                vscode.window.showWarningMessage('无法获取文件路径信息，分享功能可能无法正常工作');
                             }
 
                             // 获取项目ID（从项目管理器获取实际关联的项目ID）
@@ -232,11 +250,12 @@ export async function showMarkdownWebviewInput(
                             // 构造要分享的数据
                             const shareData = {
                                 content: commentData, // 完整的LocalComment对象
-                                file_path: filePath || '', // 使用空字符串而不是undefined
+                                file_path: normalizeFilePath(filePath), // 使用相对路径，便于跨项目迁移
                                 project_id: projectId,
                                 is_public: true // 默认设为公开
                             };
 
+                            console.log('[filePath]', filePath);
                             // 调用API服务分享注释
                             const apiService = ApiService.getInstance();
                             // 修复API路径拼写错误（sharedCommnets -> sharedComments）

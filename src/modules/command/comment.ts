@@ -83,6 +83,51 @@ export function registerCommentCommands(
         }
     });
 
+    // 清空所有共享注释命令
+    const clearAllSharedCommentsCommand = vscode.commands.registerCommand('localComment.clearAllSharedComments', async () => {
+        // 显示确认对话框
+        const confirm = await vscode.window.showWarningMessage(
+            '确定要清空所有共享注释吗？此操作不可恢复！',
+            '确定清空', '取消'
+        );
+        
+        if (confirm === '确定清空') {
+            const removedCount = await commentManager.clearAllSharedComments();
+            if (removedCount > 0) {
+                tagManager.updateTags(commentManager.getAllComments());
+                commentProvider.refresh();
+                commentTreeProvider.refresh();
+            }
+        }
+    });
+
+    // 清空当前文件的共享注释命令
+    const clearFileSharedCommentsCommand = vscode.commands.registerCommand('localComment.clearFileSharedComments', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('请先打开一个文件');
+            return;
+        }
+
+        const uri = editor.document.uri;
+        const fileName = uri.fsPath.split(/[/\\]/).pop() || '';
+        
+        // 显示确认对话框
+        const confirm = await vscode.window.showWarningMessage(
+            `确定要清空文件 "${fileName}" 的所有共享注释吗？此操作不可恢复！`,
+            '确定清空', '取消'
+        );
+        
+        if (confirm === '确定清空') {
+            const removedCount = await commentManager.clearFileSharedComments(uri);
+            if (removedCount > 0) {
+                tagManager.updateTags(commentManager.getAllComments());
+                commentProvider.refresh();
+                commentTreeProvider.refresh();
+            }
+        }
+    });
+
     // 添加editCommentFromHover命令
     const editCommentFromHoverCommand = vscode.commands.registerCommand('localComment.editCommentFromHover', async (args) => {
         try {
@@ -391,7 +436,6 @@ export function registerCommentCommands(
                 } else {
                     // 文件不存在时，在上下文信息中添加说明
                     contextInfo.fileNotFound = true;
-                    contextInfo.filePath = item.filePath;
                 }
                 
                 const newContent = await showMarkdownWebviewInput(
@@ -843,7 +887,8 @@ export function registerCommentCommands(
                 let contextInfo: any = {
                     fileName,
                     lineNumber: line,
-                    originalLineContent: existingComment.lineContent // 注释保存的代码快照
+                    originalLineContent: existingComment.lineContent, // 注释保存的代码快照
+                    filePath: editor.document.uri.fsPath // 始终设置完整的文件路径
                 };
 
                 if (isMatched) {
@@ -1048,6 +1093,8 @@ export function registerCommentCommands(
         refreshTreeCommand,
         deleteCommentFromTreeCommand,
         clearFileCommentsCommand,
+        clearAllSharedCommentsCommand,
+        clearFileSharedCommentsCommand,
         fuzzyMatchCommentCommand,
         goToFileCommand,
         updateCommentLineCommand,
