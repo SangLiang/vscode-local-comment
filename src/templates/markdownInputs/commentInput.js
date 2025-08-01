@@ -582,4 +582,51 @@
             content: textarea.value
         });
     };
-})(); 
+    
+    // 添加分享函数
+    window.share = function() {
+        // 获取当前注释内容
+        const content = textarea.value;
+        
+        // 发送分享消息到扩展，包含内容和其它可能的信息
+        vscode.postMessage({
+            command: 'share',
+            content: content,
+            comment: {
+                content: content,
+                timestamp: Date.now()
+            }
+        });
+    };
+    
+    // 监听来自扩展的消息
+    window.addEventListener('message', event => {
+        const message = event.data;
+        switch (message.command) {
+            case 'shareSuccess':
+                // 分享成功后可以更新UI状态
+                console.log('注释分享成功，sharedId:', message.sharedId);
+                // 可以在这里添加更新UI的代码，比如禁用分享按钮或改变其文本
+                // 例如：显示"已分享"状态
+                const shareButton = document.querySelector('.share-btn');
+                if (shareButton) {
+                    shareButton.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                        已分享
+                    `;
+                    shareButton.disabled = true;
+                    shareButton.style.backgroundColor = 'var(--vscode-button-secondaryBackground)';
+                    shareButton.style.borderColor = 'var(--vscode-button-secondaryBorder)';
+                }
+                break;
+            case 'shareError':
+                // 处理分享错误
+                console.error('分享失败:', message.error);
+                // 显示错误消息
+                alert('分享失败: ' + message.error);
+                break;
+        }
+    });
+})();

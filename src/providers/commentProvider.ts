@@ -8,7 +8,7 @@ export class CommentProvider implements vscode.Disposable {
     private commentManager: CommentManager;
     private isVisible: boolean = true;
     private disposables: vscode.Disposable[] = [];
-    private updateTimer: NodeJS.Timeout | null = null; // 添加防抖定时器
+    private updateTimer: NodeJS.Timeout | null = null; // 防抖定时器
     
     // 预加载的图标URIs
     private commentIconUri: string | null = null;
@@ -30,10 +30,10 @@ export class CommentProvider implements vscode.Disposable {
             rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
         });
 
-        // 标签装饰器现在不再使用，但保留以避免错误
+        // 标签装饰器（当前未使用，但保留以避免错误）
         this.tagDecorationType = vscode.window.createTextEditorDecorationType({});
 
-        // 监听编辑器变化 - 优化：减少选择变化的更新频率
+        // 监听编辑器变化
         this.disposables.push(
             vscode.window.onDidChangeActiveTextEditor(() => this.updateDecorations()),
             vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
@@ -53,10 +53,10 @@ export class CommentProvider implements vscode.Disposable {
         try {
             const context = this.commentManager.getContext();
             const [commentIcon, editIcon, deleteIcon, markdownIcon] = await Promise.all([
-                createDataUri(context, 'src/resources/pin.svg'), // 使用markdown图标作为注释图标
-                createDataUri(context, 'src/resources/edit.svg'),
-                createDataUri(context, 'src/resources/delete.svg'),
-                createDataUri(context, 'src/resources/markdown.svg')
+                createDataUri(context, 'src/resources/pin.svg'), // 注释图标
+                createDataUri(context, 'src/resources/edit.svg'), // 编辑图标
+                createDataUri(context, 'src/resources/delete.svg'), // 删除图标
+                createDataUri(context, 'src/resources/markdown.svg') // Markdown图标
             ]);
 
             this.commentIconUri = commentIcon;
@@ -77,7 +77,7 @@ export class CommentProvider implements vscode.Disposable {
         this.decorationType = vscode.window.createTextEditorDecorationType({
             // 在行号区域显示注释图标
             gutterIconPath: this.commentIconUri ? vscode.Uri.parse(this.commentIconUri) : undefined,
-            gutterIconSize: 'contain', // 使图标适应行号区域大小，更小更协调
+            gutterIconSize: 'contain', // 使图标适应行号区域大小
             
             // 行内显示注释内容（不包含图标）
             after: {
@@ -140,20 +140,20 @@ export class CommentProvider implements vscode.Disposable {
         const tags: vscode.DecorationOptions[] = [];
         const lineLength = line.text.length;
         
-        // 使用优雅的Unicode图标系统 - 可配置和现代化
+        // 创建装饰选项
         const decoration: vscode.DecorationOptions = {
             range: new vscode.Range(comment.line, lineLength, comment.line, lineLength),
             renderOptions: {
                 after: {
-                    contentText: ` ${comment.content}`, // 移除Unicode图标，图标现在显示在行号区域
-                    color: '#6B7283', // 更现代的灰蓝色
+                    contentText: ` ${comment.content}`, // 显示注释内容
+                    color: '#6B7283', // 灰蓝色
                     fontStyle: 'italic',
-                    margin: '0 0 0 0.8em' // 微调边距使其更紧凑
+                    margin: '0 0 0 0.8em' 
                 }
             }
         };
         
-        // 所有注释都放到normal数组中，保持一致的显示效果
+        // 所有注释都放到normal数组中
         normal.push(decoration);
         
         return { normal, tags };
@@ -251,6 +251,7 @@ export class CommentProvider implements vscode.Disposable {
             .replace(/\\'/g, "'");      // \' -> '
     }
 
+    // 提供悬浮提示
     public async provideHover(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined> {
         if (!this.isVisible) {
             return;
@@ -295,7 +296,7 @@ export class CommentProvider implements vscode.Disposable {
             markdownContent.appendMarkdown(enhancedContent);
             markdownContent.appendMarkdown(`\n\n`);
             
-            // 添加标签信息部分（保留原有功能作为备用）并进行去重
+            // 添加标签信息部分并进行去重
             const tags = this.extractTagsFromContent(comment.content);
             if (tags.length > 0) {
                 // 使用Set进行去重
@@ -343,7 +344,7 @@ export class CommentProvider implements vscode.Disposable {
 
             const editIcon = `<img src="${editIconUri}" width="16" height="16" alt="编辑" style="vertical-align: middle; " />`;
             const deleteIcon = `<img src="${deleteIconUri}" width="16" height="16" alt="删除" style="vertical-align: middle;" />`;
-            const markDownIcon = `<img src="${markDownIconUri}" width="16" height="16" alt="删除" style="vertical-align: middle;" />`;
+            const markDownIcon = `<img src="${markDownIconUri}" width="16" height="16" alt="Markdown编辑" style="vertical-align: middle;" />`;
 
             markdownContent.appendMarkdown(`[${editIcon} 编辑](command:localComment.quickEditCommentFromHover?${encodeURIComponent(editArgs)} "快速编辑注释") | `);
             markdownContent.appendMarkdown(`[${markDownIcon} Markdown编辑](command:localComment.editCommentFromHover?${encodeURIComponent(editArgs)} "多行编辑注释") | `);
@@ -355,7 +356,7 @@ export class CommentProvider implements vscode.Disposable {
         return undefined;
     }
 
-    // 添加防抖更新方法
+    // 防抖更新方法，避免频繁更新装饰
     private debouncedUpdateDecorations(): void {
         if (this.updateTimer) {
             clearTimeout(this.updateTimer);

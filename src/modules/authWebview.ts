@@ -86,7 +86,8 @@ export class AuthWebview {
     private async handleLogin(credentials: LoginCredentials) {
         try {
             const result = await this._authManager.login(credentials);
-            
+            console.log("result ===============");
+            console.log(result)
             if (result.success) {
                 vscode.window.showInformationMessage(`登录成功！欢迎 ${result.user?.username}`);
                 this.dispose();

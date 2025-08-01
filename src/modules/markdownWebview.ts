@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { TagManager } from '../managers/tagManager';
 import { CommentManager } from '../managers/commentManager';
+import { ApiService, ApiRoutes } from '../apiService';
+import { ProjectManager } from '../managers/projectManager';
 
 // 模板缓存，避免重复读取文件
 let templateCache: string | null = null;
@@ -158,7 +160,7 @@ export async function showMarkdownWebviewInput(
 
         // 处理WebView消息
         panel.webview.onDidReceiveMessage(
-            message => {
+            async message => {
                 switch (message.command) {
                     case 'save':
                         resolve(message.content);
@@ -176,7 +178,93 @@ export async function showMarkdownWebviewInput(
                         break;
                     case 'share':
                         // 处理分享功能
-                        vscode.window.showInformationMessage('分享功能开发中...');
+                        try {
+                            // 获取当前活动的编辑器和文档信息
+                            const activeEditor = vscode.window.activeTextEditor;
+                            let filePath = '';
+                            
+                            // 优先从contextInfo获取文件路径，如果没有则尝试从活动编辑器获取
+                            // 注意：contextInfo类型定义中没有filePath，但在实际使用中可能存在
+                            if (contextInfo && Object.prototype.hasOwnProperty.call(contextInfo, 'filePath') && (contextInfo as any).filePath) {
+                                filePath = (contextInfo as any).filePath;
+                            } else if (contextInfo?.fileName && vscode.workspace.workspaceFolders?.length) {
+                                // 尝试在工作区中查找该文件
+                                const workspaceFolder = vscode.workspace.workspaceFolders[0];
+                                filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.fileName).fsPath;
+                            } else if (activeEditor) {
+                                const documentUri = activeEditor.document.uri;
+                                filePath = documentUri.fsPath;
+                            } else {
+                                console.warn('无法获取当前文档信息，将使用空路径');
+                            }
+
+                            // 获取项目ID（从项目管理器获取实际关联的项目ID）
+                            const projectManager = new ProjectManager(context);
+                            const associatedProjectId = projectManager.getAssociatedProject();
+                            const projectId = associatedProjectId ? parseInt(associatedProjectId, 10) : 0;
+                            
+                            // 如果没有关联项目，提示用户
+                            if (!projectId) {
+                                vscode.window.showWarningMessage('请先关联项目再分享注释');
+                                panel.webview.postMessage({
+                                    command: 'shareError',
+                                    error: '请先关联项目再分享注释'
+                                });
+                                return;
+                            }
+                            
+                            // 构造完整的LocalComment对象
+                            const commentData: any = {
+                                content: message.content,
+                                timestamp: Date.now(),
+                                line: contextInfo?.lineNumber ?? 0,
+                                originalLine: contextInfo?.lineNumber ?? 0,
+                                lineContent: contextInfo?.lineContent ?? ''
+                            };
+                            
+                            // 如果有ID信息则添加
+                            if (message.comment?.id) {
+                                commentData.id = message.comment.id;
+                            } else {
+                                commentData.id = 'temp_' + Date.now(); // 生成临时ID
+                            }
+                            
+                            // 构造要分享的数据
+                            const shareData = {
+                                content: commentData, // 完整的LocalComment对象
+                                file_path: filePath || '', // 使用空字符串而不是undefined
+                                project_id: projectId,
+                                is_public: true // 默认设为公开
+                            };
+
+                            // 调用API服务分享注释
+                            const apiService = ApiService.getInstance();
+                            // 修复API路径拼写错误（sharedCommnets -> sharedComments）
+                            const response = await apiService.post<any>(ApiRoutes.comment.sharedCommnets, shareData);
+                            
+                            console.log('[shareData]', shareData);
+                            console.log('[response]', response);
+                            // 分享成功后更新注释状态
+                            if (response && response.id) {
+                                vscode.window.showInformationMessage('注释分享成功！');
+                                // 更新界面显示分享状态
+                                panel.webview.postMessage({
+                                    command: 'shareSuccess',
+                                    sharedId: response.data.id?.toString(), // 使用返回数据中的id
+                                    message: '分享成功'
+                                });
+                            } else {
+                                throw new Error(response?.error || '分享失败');
+                            }
+                        } catch (error) {
+                            console.error('分享注释失败:', error);
+                            const errorMessage = error instanceof Error ? error.message : '未知错误';
+                            vscode.window.showErrorMessage(`注释分享失败: ${errorMessage}`);
+                            panel.webview.postMessage({
+                                command: 'shareError',
+                                error: errorMessage
+                            });
+                        }
                         break;
                     case 'cancel':
                         resolve(undefined);

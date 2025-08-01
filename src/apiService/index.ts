@@ -15,6 +15,7 @@ export const ApiRoutes = {
         uploadComments: `${BASE_URL}/comments`, // 上传注释
         importComments: `${BASE_URL}/comments/me`, // 导入注释
         getSharedComments: (comment_shared_id: string) => `${BASE_URL}/comment-shared/${comment_shared_id}`, // 获取共享注释
+        sharedCommnets: `${BASE_URL}/comment-shared`, // 共享注释
     },
     project: {
         getMyProject: `${BASE_URL}/projects/me`, // 获取当前用户所属的项目信息
