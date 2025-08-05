@@ -204,6 +204,23 @@ button {
 .save-continue-btn:hover {
     background-color: var(--vscode-button-secondaryHoverBackground);
 }
+.share-btn {
+    background-color: var(--vscode-textLink-foreground);
+    color: var(--vscode-button-foreground);
+    border: 1px solid var(--vscode-textLink-foreground);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.share-btn:hover {
+    background-color: var(--vscode-textLink-activeForeground);
+    border-color: var(--vscode-textLink-activeForeground);
+}
+.share-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
 .autocomplete {
     position: relative;
 }

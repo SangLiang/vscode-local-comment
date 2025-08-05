@@ -120,6 +120,18 @@
         "category": "Local Comment"
       },
       {
+        "command": "localComment.clearAllSharedComments",
+        "title": "%clearAllSharedComments%",
+        "icon": "$(clear-all)",
+        "category": "Local Comment"
+      },
+      {
+        "command": "localComment.clearFileSharedComments",
+        "title": "%clearFileSharedComments%",
+        "icon": "$(clear-all)",
+        "category": "Local Comment"
+      },
+      {
         "command": "localComment.editCommentFromTree",
         "title": "%editCommentFromTree%",
         "icon": "$(edit)",

@@ -1,0 +1,760 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+
+/* 加载动画 */
+.loading {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--vscode-progressBar-background);
+    border-radius: 50%;
+    border-top-color: var(--vscode-progressBar-foreground);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 用户资料 */
+.user-profile {
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(135deg, var(--vscode-button-background) 0%, var(--vscode-button-hoverBackground) 100%);
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.avatar-container {
+    position: relative;
+    margin-right: 20px;
+}
+
+.avatar, .avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--vscode-editor-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.avatar {
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    font-size: 32px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.basic-info {
+    flex: 1;
+}
+
+.user-name {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--vscode-button-foreground);
+}
+
+.user-email {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: var(--vscode-button-foreground);
+    opacity: 0.8;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: var(--vscode-button-foreground);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4CAF50;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+/* 信息部分 */
+.info-section {
+    padding: 25px 30px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.info-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.info-item span {
+    font-size: 14px;
+    color: var(--vscode-editor-foreground);
+    font-weight: 500;
+}
+
+/* 项目列表样式 */
+.projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--vscode-editorGroup-border);
+    border-radius: 4px;
+    background-color: var(--vscode-editor-background);
+    transition: all 0.2s ease;
+}
+
+.project-item:hover {
+    border-color: var(--vscode-focusBorder);
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.project-item.associated {
+    border-color: var(--vscode-inputValidation-infoBorder);
+    background-color: var(--vscode-editor-background);
+}
+
+.project-item.associated:hover {
+    border-color: var(--vscode-inputValidation-infoBorder);
+    background-color: color-mix(in srgb, var(--vscode-inputValidation-infoBorder) 10%, transparent);
+}
+
+.project-info-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.project-icon {
+    margin-right: 12px;
+    color: var(--vscode-foreground);
+    flex-shrink: 0;
+}
+
+.project-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.project-description {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.project-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.project-role {
+    padding: 2px 6px;
+    border-radius: 3px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-weight: 500;
+}
+
+.project-role.owner {
+    background-color: var(--vscode-inputValidation-infoBackground);
+}
+
+.project-role.admin {
+    background-color: var(--vscode-inputValidation-warningBackground);
+}
+
+.project-members {
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.project-actions {
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.project-actions .btn {
+    min-width: 60px;
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+}
+
+/* 获取共享注释按钮样式 */
+.fetch-shared-comments {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid var(--vscode-editorGroup-border);
+    border-radius: 4px;
+    background-color: var(--vscode-editor-background);
+}
+
+.fetch-shared-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+}
+
+.fetch-shared-status .spinner.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+/* 空状态样式 */
+.projects-empty,
+.projects-error {
+    text-align: center;
+    padding: 32px 0;
+}
+
+.empty-icon,
+.error-icon {
+    margin-bottom: 16px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.projects-empty p,
+.projects-error p {
+    margin: 0 0 8px 0;
+    font-weight: 500;
+}
+
+.projects-empty small,
+.projects-error small {
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+}
+
+/* 项目加载状态样式 */
+.projects-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 0;
+    color: var(--vscode-descriptionForeground);
+}
+
+.projects-loading .spinner.small {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+/* 统计信息 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: var(--vscode-list-hoverBackground);
+    border-radius: 6px;
+    border: 1px solid var(--vscode-panel-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--vscode-button-background);
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* 操作按钮 */
+.actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 20px;
+}
+
+/* 模态框样式 */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--vscode-sideBar-background);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 400px;
+}
+
+.modal-content p {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    color: var(--vscode-foreground);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    gap: 6px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.btn-primary:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.btn-secondary {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.btn-secondary:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.btn-danger {
+    background: var(--vscode-errorForeground);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* 错误消息 */
+.error-message {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.error-message h3 {
+    margin: 0 0 10px 0;
+    color: var(--vscode-errorForeground);
+}
+
+.error-message p {
+    margin: 0 0 20px 0;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .profile-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .avatar-container {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+    
+    .actions {
+        flex-direction: column;
+        padding: 15px;
+    }
+}
+
+/* 头像上传相关样式 */
+.avatar-container {
+    position: relative;
+    margin-right: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.avatar-container:hover {
+    transform: scale(1.05);
+}
+
+.avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.avatar-container:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-overlay svg {
+    margin-bottom: 4px;
+}
+
+.avatar-overlay span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 上传区域样式 */
+.upload-area {
+    border: 2px dashed var(--vscode-panel-border);
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    margin: 20px 0;
+    transition: border-color 0.2s ease;
+    position: relative;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.upload-area:hover {
+    border-color: var(--vscode-focusBorder);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--vscode-descriptionForeground);
+    width: 100%;
+}
+
+.upload-placeholder svg {
+    margin-bottom: 12px;
+    color: var(--vscode-foreground);
+}
+
+.upload-placeholder p {
+    margin: 0 0 8px 0;
+    font-weight: 500;
+}
+
+.upload-placeholder small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: contain;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--vscode-editor-background);
+    border: 2px solid var(--vscode-panel-border);
+    transition: transform 0.2s ease;
+    transform-origin: center center;
+}
+
+.preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    padding: 15px;
+}
+
+/* 头像上传模态框样式调整 */
+#avatar-upload-modal .modal-content {
+    max-width: 500px;
+}
+
+#avatar-upload-modal .modal-content h3 {
+    margin: 0 0 10px 0;
+    color: var(--vscode-editor-foreground);
+}
+
+#avatar-upload-modal .modal-content p {
+    margin: 0 0 20px 0;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* 裁剪功能样式 */
+.crop-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.crop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: crosshair;
+}
+
+.crop-box {
+    position: absolute;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    cursor: move;
+    min-width: 50px;
+    min-height: 50px;
+    aspect-ratio: 1;
+    width: 100px;
+    height: 100px;
+}
+
+.crop-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border: 1px solid #333;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.crop-handle-nw {
+    top: -5px;
+    left: -5px;
+    cursor: nw-resize;
+}
+
+.crop-handle-ne {
+    top: -5px;
+    right: -5px;
+    cursor: ne-resize;
+}
+
+.crop-handle-sw {
+    bottom: -5px;
+    left: -5px;
+    cursor: sw-resize;
+}
+
+.crop-handle-se {
+    bottom: -5px;
+    right: -5px;
+    cursor: se-resize;
+}
+
+/* 裁剪控制按钮区域 */
+.crop-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+    padding: 10px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+}
+
+.crop-controls .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 60px;
+}
+
+/* 裁剪操作按钮区域 */
+.crop-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+    padding: 10px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+}
+
+.crop-actions .btn {
+    min-width: 100px;
+    padding: 10px 16px;
+    font-size: 13px;
+} 

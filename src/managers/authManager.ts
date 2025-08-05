@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import axios, { AxiosInstance } from 'axios';
-import { ApiRoutes } from '../apiService';
+import { ApiRoutes, apiService } from '../apiService';
 
 export interface UserInfo {
     id: string;
@@ -29,30 +28,24 @@ export class AuthManager {
     private sessionFile: string;
     private currentSession: AuthSession | null = null;
     private isAuthenticated = false;
-    private apiClient: AxiosInstance;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         this.sessionFile = path.join(context.globalStorageUri?.fsPath || context.extensionPath, 'auth-session.json');
 
-        const config = vscode.workspace.getConfiguration('local-comment');
-        const apiUrl = config.get<string>('server.apiUrl');
+        // 设置AuthManager到API服务
+        apiService.setAuthManager(this);
 
-        this.apiClient = axios.create({
-            baseURL: apiUrl,
-            timeout: 10000,
-            headers: {
-                'Content-Type': 'application/json',
-            },
+        // 异步加载会话，但不等待完成
+        this.loadSession().catch(error => {
+            console.error('加载会话时出错:', error);
         });
-
-        this.loadSession();
 
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('local-comment.server.apiUrl')) {
                 const newApiUrl = vscode.workspace.getConfiguration('local-comment').get<string>('server.apiUrl');
-                if (this.apiClient) {
-                    this.apiClient.defaults.baseURL = newApiUrl;
+                if (newApiUrl) {
+                    apiService.updateBaseURL(newApiUrl);
                     console.log(`API URL updated to: ${newApiUrl}`);
                 }
             }
@@ -72,18 +65,26 @@ export class AuthManager {
                 if (session.expiresAt > Date.now()) {
                     this.currentSession = session;
                     this.isAuthenticated = true;
-                    this.apiClient.defaults.headers.common['Authorization'] = `Bearer ${session.token}`;
                     
                     // 验证用户信息是否仍然有效
                     try {
-                        const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
+                        const user = await apiService.get<UserInfo>(ApiRoutes.auth.me);
                         // 更新用户信息
-                        this.currentSession.user = userResponse.data;
+                        this.currentSession.user = user;
                         await this.saveSession(this.currentSession);
                         console.log('已加载有效会话');
                     } catch (error) {
                         console.error('验证用户信息失败:', error);
-                        this.clearSession();
+                        // 如果验证失败，可能是因为token过期，尝试刷新
+                        try {
+                            const refreshed = await this.refreshSession();
+                            if (!refreshed) {
+                                this.clearSession();
+                            }
+                        } catch (refreshError) {
+                            console.error('刷新token失败:', refreshError);
+                            this.clearSession();
+                        }
                     }
                 } else {
                     // 会话过期，清除
@@ -117,7 +118,6 @@ export class AuthManager {
     private clearSession(): void {
         this.currentSession = null;
         this.isAuthenticated = false;
-        delete this.apiClient.defaults.headers.common['Authorization'];
         if (fs.existsSync(this.sessionFile)) {
             fs.unlinkSync(this.sessionFile);
         }
@@ -129,40 +129,38 @@ export class AuthManager {
     public async login(credentials: LoginCredentials): Promise<{ success: boolean; message: string; user?: UserInfo }> {
         try {
             // 调用实际的登录API
-            const response = await this.apiClient.post<{ access_token: string; token_type: string }>(
+            const response = await apiService.post<{ access_token: string; token_type: string }>(
                 ApiRoutes.auth.login, 
                 credentials,
                 {
+                    skipAuth: true,
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     }
                 }
             );
             
-            const { access_token, token_type } = response.data;
-
-            // 设置认证头
-            this.apiClient.defaults.headers.common['Authorization'] = `${token_type} ${access_token}`;
+            const { access_token, token_type } = response;
             
-            // 获取用户信息
-            const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
-            const user = userResponse.data;
-
+            // 先设置session，这样API服务就能获取到token
             const session: AuthSession = {
                 token: access_token,
-                user,
-                expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 默认24小时过期
+                user: null as any, // 临时设置为null
+                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 默认1周过期
             };
             
             this.currentSession = session;
             this.isAuthenticated = true;
+            
+            // 获取用户信息
+            const user = await apiService.get<UserInfo>(ApiRoutes.auth.me);
+            
+            // 更新session中的用户信息
+            session.user = user;
             await this.saveSession(session);
             
             return { success: true, message: '登录成功', user };
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response) {
-                return { success: false, message: error.response.data.message || '用户名或密码错误' };
-            }
             return { success: false, message: '登录失败: ' + (error as Error).message };
         }
     }
@@ -176,7 +174,7 @@ export class AuthManager {
         try {
             // 调用登出API
             if (this.currentSession) {
-                await this.apiClient.post(ApiRoutes.auth.logout);
+                await apiService.post(ApiRoutes.auth.logout);
             }
         } catch (error) {
             console.error('登出API调用失败:', error);
@@ -207,6 +205,23 @@ export class AuthManager {
     }
 
     /**
+     * 获取用户所属的项目列表
+     */
+    public async getUserProjects(): Promise<any[]> {
+        try {
+            if (!this.isLoggedIn()) {
+                throw new Error('用户未登录');
+            }
+
+            const projects = await apiService.get(ApiRoutes.project.getMyProject);
+            return projects || [];
+        } catch (error) {
+            console.error('获取用户项目失败:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 刷新会话
      */
     public async refreshSession(): Promise<boolean> {
@@ -216,17 +231,16 @@ export class AuthManager {
 
         try {
             // 调用刷新token的API
-            const response = await this.apiClient.post<{ access_token: string; token_type: string }>(ApiRoutes.auth.refreshToken);
-            const { access_token, token_type } = response.data;
+            const response = await apiService.post<{ access_token: string; token_type: string }>(ApiRoutes.auth.refreshToken);
+            const { access_token, token_type } = response;
 
             this.currentSession.token = access_token;
             this.currentSession.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 默认24小时过期
-            this.apiClient.defaults.headers.common['Authorization'] = `${token_type} ${access_token}`;
             
             // 更新用户信息
             try {
-                const userResponse = await this.apiClient.get<UserInfo>(ApiRoutes.auth.me);
-                this.currentSession.user = userResponse.data;
+                const user = await apiService.get<UserInfo>(ApiRoutes.auth.me);
+                this.currentSession.user = user;
             } catch (error) {
                 console.error('获取用户信息失败:', error);
             }
