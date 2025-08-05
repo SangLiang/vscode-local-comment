@@ -188,31 +188,12 @@ export async function showMarkdownWebviewInput(
                             console.log('activeEditor:', activeEditor);
                             console.log('contextInfo:', contextInfo);
                             
-                            // 优先从contextInfo获取文件路径，如果没有则尝试从活动编辑器获取
+                            // 直接使用contextInfo中的文件路径
                             if (contextInfo?.filePath) {
                                 filePath = contextInfo.filePath;
                                 console.log('从contextInfo获取文件路径:', filePath);
-                            } else if (activeEditor) {
-                                // 优先使用活动编辑器的文档路径，这样可以保持完整的路径结构
-                                const documentUri = activeEditor.document.uri;
-                                filePath = documentUri.fsPath;
-                                console.log('从activeEditor获取文件路径:', filePath);
-                            } else if (contextInfo?.fileName && vscode.workspace.workspaceFolders?.length) {
-                                // 如果只有文件名，尝试在工作区中查找该文件
-                                // 修复：优先使用contextInfo中的完整路径信息，而不是简单拼接
-                                const workspaceFolder = vscode.workspace.workspaceFolders[0];
-                                
-                                // 检查contextInfo是否有完整的相对路径信息
-                                if (contextInfo.filePath) {
-                                    filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.filePath).fsPath;
-                                } else {
-                                    // 如果确实只有文件名，尝试在项目中搜索完整路径
-                                    filePath = vscode.Uri.joinPath(workspaceFolder.uri, contextInfo.fileName).fsPath;
-                                    console.warn('使用文件名构建路径，可能丢失中间目录信息:', contextInfo.fileName);
-                                }
-                                console.log('从工作区构建文件路径:', filePath);
                             } else {
-                                console.warn('无法获取当前文档信息，将使用空路径');
+                                console.warn('contextInfo中没有文件路径信息');
                                 vscode.window.showWarningMessage('无法获取文件路径信息，分享功能可能无法正常工作');
                             }
 

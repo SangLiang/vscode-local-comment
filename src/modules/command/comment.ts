@@ -176,6 +176,7 @@ export function registerCommentCommands(
             
             let contextInfo: any = {
                 fileName,
+                filePath: documentUri.fsPath, // 添加完整的文件路径
                 lineNumber: comment.line,
                 originalLineContent: comment.lineContent // 注释保存的代码快照
             };
@@ -295,6 +296,7 @@ export function registerCommentCommands(
         
         let contextInfo: any = {
             fileName,
+            filePath: editor.document.uri.fsPath, // 添加完整的文件路径
             lineNumber: comment.line,
             originalLineContent: comment.lineContent // 注释保存的代码快照
         };
@@ -352,6 +354,7 @@ export function registerCommentCommands(
             
             let contextInfo: any = {
                 fileName,
+                filePath: uri.fsPath, // 添加完整的文件路径
                 lineNumber: comment.line,
                 originalLineContent: comment.lineContent // 注释保存的代码快照
             };
@@ -402,6 +405,7 @@ export function registerCommentCommands(
                 
                 let contextInfo: any = {
                     fileName,
+                    filePath: item.filePath, // 添加完整的文件路径
                     lineNumber: item.comment.line,
                     originalLineContent: item.comment.lineContent // 注释保存的代码快照
                 };
@@ -930,6 +934,7 @@ export function registerCommentCommands(
                     '',
                     {
                         fileName,
+                        filePath: editor.document.uri.fsPath, // 添加完整的文件路径
                         lineNumber: line,
                         lineContent,
                         // 暂时不包含上下文，让webview先显示
