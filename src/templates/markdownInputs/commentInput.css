@@ -331,8 +331,47 @@ button {
 
 .tab-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: 1px solid var(--vscode-panel-border);
     margin-bottom: 12px;
+}
+
+.tab-buttons {
+    display: flex;
+}
+
+.preview-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+/* Maximized state */
+.container.maximized .input-area,
+.container.maximized .button-group,
+.container.maximized .header,
+.container.maximized .resize-hint {
+    display: none;
+}
+
+.container.maximized #previewArea {
+    max-height: calc(100vh - 150px); /* 150px is an approximation for other elements */
 }
 
 .tab-btn {

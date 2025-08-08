@@ -363,8 +363,17 @@ function getMarkdownWebviewContent(
     // 添加tab切换功能
     contextHtml += '<div class="context-tabs">';
     contextHtml += '<div class="tab-header">';
-    contextHtml += '<button class="tab-btn active" data-tab="code-tab">代码快照</button>';
-    contextHtml += '<button class="tab-btn" data-tab="preview-tab">Markdown预览</button>';
+    contextHtml += '  <div class="tab-buttons">';
+    contextHtml += '    <button class="tab-btn active" data-tab="code-tab">代码快照</button>';
+    contextHtml += '    <button class="tab-btn" data-tab="preview-tab">Markdown预览</button>';
+    contextHtml += '  </div>';
+    contextHtml += '  <div class="preview-controls">';
+    contextHtml += '    <button id="toggle-preview-size-btn" class="control-btn" title="最大化/最小化预览">';
+    contextHtml += '      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">';
+    contextHtml += '        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 2h-2v3h-3v2h5v-5zm-2-4h2V5h-5v2h3v3z"/>';
+    contextHtml += '      </svg>';
+    contextHtml += '    </button>';
+    contextHtml += '  </div>';
     contextHtml += '</div>';
     
     // 代码快照tab内容
