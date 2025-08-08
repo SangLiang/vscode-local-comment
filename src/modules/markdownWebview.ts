@@ -256,7 +256,7 @@ export async function showMarkdownWebviewInput(
                                 // 更新界面显示分享状态
                                 panel.webview.postMessage({
                                     command: 'shareSuccess',
-                                    sharedId: response.data.id?.toString(), // 使用返回数据中的id
+                                    sharedId: response.id?.toString(), // 使用返回数据中的id
                                     message: '分享成功'
                                 });
                             } else {
