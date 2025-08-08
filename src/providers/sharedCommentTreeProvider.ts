@@ -10,10 +10,18 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
     constructor(private commentManager: CommentManager) {
         // 监听注释管理器变化事件
         const commentUpdateDisposable = this.commentManager.onDidChangeComments(() => {
-            console.log('🔄 [SharedCommentTreeProvider] 共享注释变化，触发树刷新');
+            console.log('🔄 [SharedCommentTreeProvider] 注释变化，触发树刷新');
             this.refresh();
         });
-        this.disposables.push(commentUpdateDisposable);
+        
+        // 监听共享注释变化事件
+        const sharedCommentUpdateDisposable = this.commentManager.onDidChangeSharedComments(() => {
+            console.log('🔄 [SharedCommentTreeProvider] 共享注释变化，触发树刷新和上下文更新');
+            this.refresh();
+            this.updateContext();
+        });
+        
+        this.disposables.push(commentUpdateDisposable, sharedCommentUpdateDisposable);
     }
 
     refresh(): void {
@@ -158,6 +166,18 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
         });
     }
 
+    /**
+     * 更新共享注释相关的上下文变量
+     */
+    private updateContext(): void {
+        // 检查是否有共享注释
+        const allSharedComments = this.commentManager.getAllSharedComments();
+        const hasSharedComments = Object.values(allSharedComments).some(comments => comments.length > 0);
+        
+        // 更新上下文变量
+        vscode.commands.executeCommand('setContext', 'localComment.hasSharedComments', hasSharedComments);
+    }
+
     dispose(): void {
         // 清理所有disposables
         this.disposables.forEach(d => d.dispose());
@@ -177,3 +197,4 @@ export class SharedCommentTreeItem extends vscode.TreeItem {
     filePath?: string;
     sharedComment?: SharedComment;
 }
+

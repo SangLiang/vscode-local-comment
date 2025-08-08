@@ -36,19 +36,28 @@ let refreshTimer: NodeJS.Timeout | null = null;
 const REFRESH_DEBOUNCE_DELAY = 150; // 150ms防抖延迟
 let statusBarItem: vscode.StatusBarItem;
 
-// 更新状态栏显示
-function updateStatusBar() {
-    if (authManager && authManager.isLoggedIn()) {
-        const user = authManager.getCurrentUser();
-        statusBarItem.text = `$(account) ${user?.username || '已登录'}`;
-        statusBarItem.tooltip = '点击查看用户信息';
-        statusBarItem.command = 'localComment.showUserInfo';
-    } else {
-        statusBarItem.text = '$(sign-in) 未登录';
-        statusBarItem.tooltip = '点击登录或查看用户信息';
-        statusBarItem.command = 'localComment.showUserInfo';
+    // 更新状态栏和上下文变量
+    function updateStatusAndContext() {
+        // 更新登录状态
+        const isLoggedIn = authManager && authManager.isLoggedIn();
+        vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', isLoggedIn);
+
+        // 更新共享注释状态
+        const hasSharedComments = commentManager && Object.values(commentManager.getAllSharedComments()).some(comments => comments.length > 0);
+        vscode.commands.executeCommand('setContext', 'localComment.hasSharedComments', hasSharedComments);
+
+        // 更新状态栏
+        if (isLoggedIn) {
+            const user = authManager.getCurrentUser();
+            statusBarItem.text = `$(account) ${user?.username || '已登录'}`;
+            statusBarItem.tooltip = '点击查看用户信息';
+            statusBarItem.command = 'localComment.showUserInfo';
+        } else {
+            statusBarItem.text = '$(sign-in) 未登录';
+            statusBarItem.tooltip = '点击登录或查看用户信息';
+            statusBarItem.command = 'localComment.showUserInfo';
+        }
     }
-}
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('本地注释插件已激活');
@@ -162,7 +171,14 @@ export function activate(context: vscode.ExtensionContext) {
     // 创建状态栏项
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'localComment.showUserInfo';
-    updateStatusBar();
+    
+    // 初始化上下文变量
+    const isLoggedIn = authManager.isLoggedIn();
+    vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', isLoggedIn);
+    const hasSharedComments = Object.values(commentManager.getAllSharedComments()).some(comments => comments.length > 0);
+    vscode.commands.executeCommand('setContext', 'localComment.hasSharedComments', hasSharedComments);
+    
+    updateStatusAndContext();
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
@@ -286,7 +302,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 监听登录状态变化
     const onUserLogin = vscode.commands.registerCommand('localComment.onUserLogin', async (user) => {
-        updateStatusBar();
+        // 更新登录状态上下文变量
+        vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', true);
+        updateStatusAndContext();
         vscode.window.showInformationMessage(`欢迎回来，${user.username}！`);
         
         // 用户登录后，处理共享注释（保留现有共享注释）
@@ -295,6 +313,8 @@ export function activate(context: vscode.ExtensionContext) {
             // 刷新注释显示
             commentProvider.refresh();
             commentTreeProvider.refresh();
+            sharedCommentTreeProvider.refresh();
+            updateStatusAndContext(); // 再次更新状态以反映共享注释的变化
         } catch (error) {
             console.error('处理登录后的共享注释失败:', error);
         }
@@ -306,7 +326,9 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     const onUserLogout = vscode.commands.registerCommand('localComment.onUserLogout', async () => {
-        updateStatusBar();
+        // 更新登录状态上下文变量
+        vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', false);
+        updateStatusAndContext();
         vscode.window.showInformationMessage('您已成功登出');
         
         // 用户登出后，清除所有共享注释
@@ -315,6 +337,8 @@ export function activate(context: vscode.ExtensionContext) {
             // 刷新注释显示
             commentProvider.refresh();
             commentTreeProvider.refresh();
+            sharedCommentTreeProvider.refresh();
+            updateStatusAndContext(); // 再次更新状态以反映共享注释的变化
         } catch (error) {
             console.error('处理登出后的共享注释失败:', error);
         }

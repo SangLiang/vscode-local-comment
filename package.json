@@ -260,7 +260,7 @@
         {
           "id": "sharedComments",
           "name": "%sharedCommentsTreeViewTitle%",
-          "when": "true"
+          "when": "localComment.hasSharedComments && localComment.isLoggedIn"
         }
       ]
     },

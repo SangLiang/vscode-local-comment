@@ -53,6 +53,10 @@ export class CommentManager {
     private _onDidChangeComments: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     readonly onDidChangeComments: vscode.Event<void> = this._onDidChangeComments.event;
 
+    // 事件发射器，用于通知共享注释变化
+    private _onDidChangeSharedComments: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+    readonly onDidChangeSharedComments: vscode.Event<void> = this._onDidChangeSharedComments.event;
+
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         this.storageFile = this.getProjectStorageFile(context);
@@ -227,6 +231,7 @@ export class CommentManager {
             
             // 触发注释变化事件
             this._onDidChangeComments.fire();
+            this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
         } catch (error) {
             console.error('保存注释失败:', error);
         }
@@ -405,6 +410,7 @@ export class CommentManager {
 
         if (totalRemoved > 0) {
             await this.saveComments();
+            this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
             vscode.window.showInformationMessage(`已清空所有共享注释，共删除 ${totalRemoved} 条共享注释`);
         } else {
             vscode.window.showInformationMessage('没有找到共享注释');
@@ -978,6 +984,7 @@ export class CommentManager {
         try {
             setTimeout(async () => {
                 await this.saveComments();
+                this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
             }, 100);
         } catch (error) {
             console.error('异步保存注释失败:', error);
