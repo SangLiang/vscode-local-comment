@@ -141,6 +141,18 @@ export async function showMarkdownWebviewInput(
                         });
                     })
                 );
+
+                // 发送Mermaid主题配置
+                promises.push(
+                    Promise.resolve().then(() => {
+                        const config = vscode.workspace.getConfiguration('local-comment');
+                        const mermaidTheme = config.get<string>('mermaid.theme', 'default');
+                        panel.webview.postMessage({
+                            command: 'setMermaidTheme',
+                            theme: mermaidTheme
+                        });
+                    })
+                );
                 
                 // 如果需要代码上下文且当前没有提供，异步加载
                 if (contextInfo && contextInfo.lineNumber !== undefined && !contextInfo.contextLines) {

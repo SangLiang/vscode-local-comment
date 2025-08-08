@@ -52,5 +52,8 @@
   "showUserInfo": "显示用户信息",
   "treeViewTitle": "本地注释",
   "sharedCommentsTreeViewTitle": "共享注释",
-  "refreshSharedComments": "刷新共享注释"
+  	"refreshSharedComments": "刷新共享注释",
+	"mermaidThemeDescription": "选择Mermaid图表的渲染主题。",
+	"mermaidThemeDefault": "默认风格",
+	"mermaidThemeHandDrawn": "手绘风格"
 } 

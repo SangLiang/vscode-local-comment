@@ -91,23 +91,39 @@
         });
     }
 
+    // 构建Mermaid配置（可选启用手绘风格）
+    function buildMermaidConfig(handDrawnEnabled) {
+        const config = {
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            },
+            sequence: {
+                useMaxWidth: true
+            },
+            gantt: {
+                useMaxWidth: true
+            }
+        };
+
+        if (handDrawnEnabled) {
+            config.look = 'handDrawn';
+            config.handDrawn = {
+                jitter: 5,       // 提升线条抖动程度
+                roughness: 5,  // 提升线条粗糙度
+                seed: 20         // 保持一致性的随机种子
+            };
+        }
+
+        return config;
+    }
+
     // 初始化mermaid
-    function initializeMermaid() {
-        if (typeof mermaid !== 'undefined' && !mermaidInitialized) {
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: 'default',
-                flowchart: {
-                    useMaxWidth: true,
-                    htmlLabels: true
-                },
-                sequence: {
-                    useMaxWidth: true
-                },
-                gantt: {
-                    useMaxWidth: true
-                }
-            });
+    function initializeMermaid(handDrawnEnabled = false) {
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize(buildMermaidConfig(handDrawnEnabled));
             mermaidInitialized = true;
             return true;
         }
@@ -283,6 +299,14 @@
         } else if (message.command === 'updateCodeContext') {
             // 异步更新代码上下文
             updateCodeContext(message.contextLines, message.contextStartLine, message.lineNumber);
+        } else if (message.command === 'setMermaidTheme') {
+            const handDrawn = message.theme === 'hand-drawn';
+            if (initializeMermaid(handDrawn)) {
+                console.log(`Mermaid 主题已设置为: ${message.theme}`);
+                if (currentTab === 'preview-tab' && textarea.value) {
+                    updatePreview(textarea.value);
+                }
+            }
         }
     });
     
@@ -788,6 +812,9 @@
         const svg = chartContainer.querySelector('svg');
         if (!svg) return;
 
+        // 使用以左上角为原点的缩放，便于基于鼠标位置的缩放计算
+        svg.style.transformOrigin = '0 0';
+        // 变换顺序：translate 后 scale（右到左应用），确保 p' = S * p + T，其中 T 为屏幕像素位移
         const transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
         svg.style.transform = transform;
 
@@ -826,17 +853,43 @@
 
     // 鼠标滚轮缩放
     function setupChartWheelZoom() {
+        // 按住 Ctrl 并滚动滚轮来缩放图表
         document.addEventListener('wheel', function(e) {
-            const chartContainer = e.target.closest('.mermaid-chart');
-            if (chartContainer && e.ctrlKey) {
-                e.preventDefault();
-                const chartId = chartContainer.getAttribute('data-chart-id');
-                if (chartId) {
-                    const factor = e.deltaY > 0 ? 0.9 : 1.1;
-                    zoomChart(chartId, factor);
-                }
-            }
-        });
+            const chartContainer = e.target.closest && e.target.closest('.mermaid-chart');
+            if (!chartContainer) return;
+
+            // 只有在按下 Ctrl 键时才进行缩放
+            if (!e.ctrlKey) return;
+
+            const chartId = chartContainer.getAttribute('data-chart-id');
+            if (!chartId) return;
+
+            const state = initChartState(chartId);
+            const svg = chartContainer.querySelector('svg');
+            if (!svg) return;
+
+            // 阻止页面滚动，专注于图表缩放
+            e.preventDefault();
+
+            const rect = svg.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 使用指数缩放使触控板/高分辨率滚轮更平滑
+            const zoomIntensity = 0.0005; // 减小缩放灵敏度（约每档 7-8%）
+            const wheel = -e.deltaY; // 向下滚动缩小，向上放大
+            const factor = Math.exp(wheel * zoomIntensity);
+
+            const newScale = Math.max(0.1, Math.min(5, state.scale * factor));
+            const ratio = newScale / state.scale;
+
+            // 调整平移量以保持鼠标下的点在屏幕位置不变
+            state.translateX = mouseX * (1 - ratio) + state.translateX * ratio;
+            state.translateY = mouseY * (1 - ratio) + state.translateY * ratio;
+            state.scale = newScale;
+
+            updateChartTransform(chartId);
+        }, { passive: false });
     }
 
     // 鼠标拖拽功能

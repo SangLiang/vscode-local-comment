@@ -442,7 +442,7 @@ button {
     width: 100% !important;
     height: auto !important;
     min-height: 100px;
-    background: white !important;
+    background: transparent !important;
     max-width: 100% !important;
     border-radius: 4px !important;
     transition: transform 0.1s ease !important;
@@ -456,7 +456,7 @@ button {
     overflow: hidden !important;
     margin: 1em 0 !important;
     padding: 10px !important;
-    background: var(--vscode-editor-background) !important;
+    background: #ffffff !important;
     border: 1px solid var(--vscode-editorWidget-border) !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
@@ -478,7 +478,7 @@ button {
     width: 100% !important;
     height: auto !important;
     min-height: 200px !important;
-    background: white !important;
+    background: transparent !important;
     visibility: visible !important;
     opacity: 1 !important;
     position: relative !important;
@@ -561,6 +561,55 @@ button {
 .mermaid-chart.zoomed {
     overflow: auto !important;
     cursor: grab !important;
+}
+
+/* 预览控制面板样式 */
+.preview-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-input-border);
+}
+
+/* 手绘风格切换按钮 */
+.hand-drawn-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.hand-drawn-toggle:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-focusBorder);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hand-drawn-toggle:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.hand-drawn-toggle.active {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-focusBorder);
+}
+
+.hand-drawn-toggle span {
+    font-size: 11px;
 }
 
 .mermaid-chart.zoomed:active {

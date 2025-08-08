@@ -51,5 +51,8 @@
   "showUserInfo": "Show User Info",
   "treeViewTitle": "Local Comments",
   "sharedCommentsTreeViewTitle": "Shared Comments",
-  "refreshSharedComments": "Refresh Shared Comments"
+  	"refreshSharedComments": "Refresh Shared Comments",
+	"mermaidThemeDescription": "Select the theme for rendering Mermaid diagrams.",
+	"mermaidThemeDefault": "Default style",
+	"mermaidThemeHandDrawn": "Hand-drawn style"
 } 

@@ -456,6 +456,19 @@
           "type": "string",
           "default": "http://127.0.0.1:8000",
           "description": "The base URL of the Local Comment server (e.g. http://127.0.0.1:8000)."
+        },
+        "local-comment.mermaid.theme": {
+          "type": "string",
+          "default": "hand-drawn",
+          "description": "%mermaidThemeDescription%",
+          "enum": [
+            "default",
+            "hand-drawn"
+          ],
+          "enumDescriptions": [
+            "%mermaidThemeDefault%",
+            "%mermaidThemeHandDrawn%"
+          ]
         }
       }
     }
