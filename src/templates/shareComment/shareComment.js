@@ -184,45 +184,63 @@
             // 等待库初始化完成
             await initializationPromise;
 
-            // 再次检查 marked 是否可用
-            let markedObj = marked;
-            if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
-                markedObj = window.marked;
-            }
-            
-            // 获取 markdown 解析函数
-            let markdownParser = null;
-            if (typeof markedObj === 'object' && markedObj !== null) {
-                if (typeof markedObj.parse === 'function') {
-                    markdownParser = markedObj.parse;
-                } else if (typeof markedObj.render === 'function') {
-                    markdownParser = markedObj.render;
-                } else if (typeof markedObj.marked === 'function') {
-                    markdownParser = markedObj.marked;
-                } else if (typeof markedObj.default === 'function') {
-                    markdownParser = markedObj.default;
+            // 1. 预处理Markdown，例如高亮@标签
+            let processedContent = content.replace(/@([a-zA-Z0-9_]+)/g, '<span style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold;">@$1</span>');
+
+            // 2. 查找所有的Mermaid代码块
+            const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
+            const mermaidBlocks = [...processedContent.matchAll(mermaidRegex)];
+            console.log(`找到 ${mermaidBlocks.length} 个Mermaid代码块`);
+
+            // 3. 异步渲染所有的Mermaid图表为SVG字符串
+            const svgPromises = mermaidBlocks.map(async (match, index) => {
+                const chartDefinition = match[1].trim();
+                const chartId = `mermaid-chart-${Date.now()}-${index}`;
+                try {
+                    console.log(`开始在内存中渲染图表: ${chartId}`);
+                    const { svg } = await mermaid.render(chartId, chartDefinition);
+                    console.log(`成功渲染图表: ${chartId}`);
+                    // 将SVG包裹在一个div中，添加控制按钮和交互功能
+                    return `<div class="mermaid-chart" data-chart-id="${chartId}">
+                        <div class="mermaid-controls">
+                            <button class="mermaid-control-btn" title="放大" onclick="zoomChart('${chartId}', 1.2)">+</button>
+                            <button class="mermaid-control-btn" title="缩小" onclick="zoomChart('${chartId}', 0.8)">−</button>
+                            <button class="mermaid-control-btn" title="重置" onclick="resetChart('${chartId}')">↺</button>
+                        </div>
+                        <div class="mermaid-zoom-info" id="zoom-info-${chartId}">100%</div>
+                        ${svg}
+                    </div>`;
+                } catch (error) {
+                    console.error(`渲染Mermaid图表失败: ${chartId}`, error);
+                    return `<div class="mermaid-error">图表渲染失败: ${error.message}<pre>${chartDefinition}</pre></div>`;
                 }
-            }
+            });
+
+            const renderedSvgs = await Promise.all(svgPromises);
+
+            // 4. 将渲染好的SVG替换回Markdown内容中
+            let finalContent = processedContent;
+            let svgIndex = 0;
+            finalContent = finalContent.replace(mermaidRegex, () => {
+                return renderedSvgs[svgIndex++];
+            });
+
+            // 5. 使用marked将整个内容（包括已插入的SVG）转换为HTML
+            const finalHtml = marked.parse(finalContent);
             
-            // 如果全局有保存的解析函数，使用它
-            if (!markdownParser && typeof window.markdownParser === 'function') {
-                markdownParser = window.markdownParser;
-            }
-            
-            if (typeof markdownParser !== 'function') {
-                throw new Error('markdown 解析函数不可用，请检查库是否正确加载');
-            }
+            // 6. 一次性更新DOM
+            previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
+            console.log("预览区域已使用包含SVG的完整HTML更新。");
 
-            // 渲染Markdown
-            let html = markdownParser(content);
+            // 7. 检查最终结果
+            const allMermaidCharts = previewArea.querySelectorAll('.mermaid-chart');
+            console.log(`最终在DOM中找到 ${allMermaidCharts.length} 个Mermaid图表容器`);
+            allMermaidCharts.forEach((chart, index) => {
+                const rect = chart.getBoundingClientRect();
+                console.log(`图表 ${index + 1} (${chart.id}) 尺寸: width=${rect.width}, height=${rect.height}`);
+            });
 
-            // 处理Mermaid图表
-            html = await processMermaidCharts(html);
-
-            // 更新预览区域
-            previewArea.innerHTML = html;
-
-            // 初始化图表交互
+            // 8. 初始化图表交互
             initChartInteractions();
 
         } catch (error) {
@@ -234,65 +252,6 @@
                 </div>
             `;
         }
-    }
-
-    // 处理Mermaid图表
-    async function processMermaidCharts(html) {
-        if (!mermaidInitialized || typeof mermaid !== 'object' || typeof mermaid.render !== 'function') {
-            return html;
-        }
-
-        // 查找所有Mermaid代码块
-        const mermaidRegex = /```mermaid\s*([\s\S]*?)```/g;
-        let match;
-        let chartIndex = 0;
-
-        while ((match = mermaidRegex.exec(html)) !== null) {
-            const mermaidCode = match[1].trim();
-            const chartId = `mermaid-chart-${chartIndex}`;
-            
-            try {
-                // 渲染Mermaid图表
-                const { svg } = await mermaid.render(chartId, mermaidCode);
-                
-                // 替换代码块为渲染后的图表
-                const chartHtml = `
-                    <div class="mermaid-chart" data-chart-id="${chartId}">
-                        <div class="mermaid-controls">
-                            <button class="mermaid-control-btn" onclick="resetChart('${chartId}')" title="重置">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-                                </svg>
-                            </button>
-                            <button class="mermaid-control-btn" onclick="toggleChartZoom('${chartId}')" title="全屏">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 2h-2v3h-3v2h5v-5zm-2-4h2V5h-5v2h3v3z"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="mermaid-zoom-info">滚轮缩放，拖拽移动</div>
-                        ${svg}
-                    </div>
-                `;
-                
-                html = html.replace(match[0], chartHtml);
-                chartIndex++;
-                
-            } catch (error) {
-                console.error('Mermaid图表渲染失败:', error);
-                const errorHtml = `
-                    <div class="mermaid-error">
-                        <p>Mermaid图表渲染失败</p>
-                        <pre>${error.message}</pre>
-                        <p>代码:</p>
-                        <pre>${mermaidCode}</pre>
-                    </div>
-                `;
-                html = html.replace(match[0], errorHtml);
-            }
-        }
-
-        return html;
     }
 
     // 初始化图表交互
@@ -328,7 +287,18 @@
             
             const svg = chart.querySelector('svg');
             if (svg) {
-                svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+                // 使用以左上角为原点的缩放，便于基于鼠标位置的缩放计算
+                svg.style.transformOrigin = '0 0';
+                // 变换顺序：translate 后 scale（右到左应用），确保 p' = S * p + T，其中 T 为屏幕像素位移
+                const transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                svg.style.transform = transform;
+            }
+            
+            // 更新容器状态
+            if (scale > 1 || translateX !== 0 || translateY !== 0) {
+                chart.classList.add('zoomed');
+            } else {
+                chart.classList.remove('zoomed');
             }
         }
     }
@@ -339,14 +309,49 @@
         if (!chart) return;
 
         chart.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            // 只有在按下 Ctrl 键时才进行缩放
+            if (!e.ctrlKey) return;
+
+            const chartId = chart.getAttribute('data-chart-id');
+            if (!chartId) return;
+
             const currentScale = parseFloat(chart.dataset.scale) || 1;
-            const newScale = Math.max(0.1, Math.min(5, currentScale * delta));
+            const svg = chart.querySelector('svg');
+            if (!svg) return;
+
+            // 阻止页面滚动，专注于图表缩放
+            e.preventDefault();
+
+            const rect = svg.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 使用指数缩放使触控板/高分辨率滚轮更平滑
+            const zoomIntensity = 0.0005; // 减小缩放灵敏度（约每档 7-8%）
+            const wheel = -e.deltaY; // 向下滚动缩小，向上放大
+            const factor = Math.exp(wheel * zoomIntensity);
+
+            const newScale = Math.max(0.1, Math.min(5, currentScale * factor));
+            const ratio = newScale / currentScale;
+
+            // 调整平移量以保持鼠标下的点在屏幕位置不变
+            const currentTranslateX = parseFloat(chart.dataset.translateX) || 0;
+            const currentTranslateY = parseFloat(chart.dataset.translateY) || 0;
+            
+            const newTranslateX = mouseX * (1 - ratio) + currentTranslateX * ratio;
+            const newTranslateY = mouseY * (1 - ratio) + currentTranslateY * ratio;
             
             chart.dataset.scale = newScale.toString();
+            chart.dataset.translateX = newTranslateX.toString();
+            chart.dataset.translateY = newTranslateY.toString();
+            
             updateChartTransform(chartId);
+            
+            // 更新缩放信息显示
+            const zoomInfo = chart.querySelector('.mermaid-zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = `${Math.round(newScale * 100)}%`;
+            }
         });
     }
 
@@ -394,6 +399,14 @@
                 chart.style.cursor = 'grab';
             }
         });
+
+        // 鼠标离开窗口时停止拖拽
+        document.addEventListener('mouseleave', () => {
+            if (isDragging) {
+                isDragging = false;
+                chart.style.cursor = 'grab';
+            }
+        });
     }
 
     // 重置图表
@@ -404,6 +417,30 @@
             chart.dataset.translateX = '0';
             chart.dataset.translateY = '0';
             updateChartTransform(chartId);
+            
+            // 更新缩放信息显示
+            const zoomInfo = chart.querySelector('.mermaid-zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = '100%';
+            }
+        }
+    };
+
+    // 缩放图表
+    window.zoomChart = function(chartId, factor) {
+        const chart = document.querySelector(`[data-chart-id="${chartId}"]`);
+        if (chart) {
+            const currentScale = parseFloat(chart.dataset.scale) || 1;
+            const newScale = Math.max(0.1, Math.min(5, currentScale * factor));
+            
+            chart.dataset.scale = newScale.toString();
+            updateChartTransform(chartId);
+            
+            // 更新缩放信息显示
+            const zoomInfo = chart.querySelector('.mermaid-zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = `${Math.round(newScale * 100)}%`;
+            }
         }
     };
 

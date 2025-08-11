@@ -8,9 +8,9 @@ body {
     line-height: 1.5;
 }
 .container {
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
+    max-width: 100%;
+    margin: 0 20px;
+    width: calc(100% - 40px);
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -495,7 +495,7 @@ button {
     overflow: hidden !important;
     margin: 1em 0 !important;
     padding: 10px !important;
-    background: #ffffff !important;
+    background: #dcdcdc !important;
     border: 1px solid var(--vscode-editorWidget-border) !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
