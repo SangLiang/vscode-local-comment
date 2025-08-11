@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommentManager } from './managers/commentManager';
 import { CommentProvider } from './providers/commentProvider';
+import { SharedCommentProvider } from './providers/sharedCommentProvider';
 import { CommentTreeProvider } from './providers/commentTreeProvider';
 import { SharedCommentTreeProvider } from './providers/sharedCommentTreeProvider';
 import { TagManager } from './managers/tagManager';
@@ -18,6 +19,7 @@ import { UserInfoWebview } from './modules/userInfoWebview';
 
 let commentManager: CommentManager;
 let commentProvider: CommentProvider;
+let sharedCommentProvider: SharedCommentProvider;
 let commentTreeProvider: CommentTreeProvider;
 let sharedCommentTreeProvider: SharedCommentTreeProvider;
 let tagManager: TagManager;
@@ -65,6 +67,15 @@ export function activate(context: vscode.ExtensionContext) {
     // 初始化管理器
     commentManager = new CommentManager(context);
     commentProvider = new CommentProvider(commentManager);
+    sharedCommentProvider = new SharedCommentProvider(commentManager);
+    
+    // 设置本地注释提供器的刷新回调，以便同步更新共享注释装饰器
+    commentProvider.setRefreshCallback(() => {
+        if (sharedCommentProvider) {
+            sharedCommentProvider.refresh();
+        }
+    });
+    
     fileHeatManager = new FileHeatManager(context);
     bookmarkManager = new BookmarkManager(context);
     bookmarkDecorationProvider = new BookmarkDecorationProvider(bookmarkManager);
@@ -164,6 +175,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (vscode.window.activeTextEditor) {
         // 如果已经有活动的编辑器，立即刷新
         commentProvider.refresh();
+        sharedCommentProvider.refresh();
         commentTreeProvider.refresh(); // 初始化时可以完整刷新
         sharedCommentTreeProvider.refresh(); // 初始化共享注释树视图
     }
@@ -192,6 +204,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await commentManager.handleSharedCommentsByAuthStatus(false);
                 // 刷新注释显示
                 commentProvider.refresh();
+                sharedCommentProvider.refresh();
                 commentTreeProvider.refresh();
                 sharedCommentTreeProvider.refresh();
             } catch (error) {
@@ -213,6 +226,7 @@ export function activate(context: vscode.ExtensionContext) {
                             console.log(`✅ 自动加载了 ${sharedComments.length} 条共享注释`);
                             // 刷新注释显示
                             commentProvider.refresh();
+                            sharedCommentProvider.refresh();
                             commentTreeProvider.refresh();
                             sharedCommentTreeProvider.refresh();
                         } else {
@@ -361,6 +375,7 @@ export function activate(context: vscode.ExtensionContext) {
         onUserLogin,
         onUserLogout,
         commentProvider,
+        sharedCommentProvider,
         commentTreeProvider,
         treeView,
         completionDisposable,
@@ -395,6 +410,11 @@ export function deactivate() {
     // 释放注释提供器
     if (commentProvider) {
         commentProvider.dispose();
+    }
+    
+    // 释放共享注释提供器
+    if (sharedCommentProvider) {
+        sharedCommentProvider.dispose();
     }
     
     console.log('✅ 本地注释插件停用完成');

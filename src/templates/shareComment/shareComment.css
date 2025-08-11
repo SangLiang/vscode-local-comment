@@ -13,7 +13,6 @@ body {
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 .context-info {
@@ -25,7 +24,6 @@ body {
     font-size: 13px;
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 .context-title {
@@ -209,12 +207,14 @@ button:hover {
     border-radius: 4px;
     padding: 20px;
     min-height: 200px;
-    max-height: 600px;
+    max-height: 800px; /* 增加最大高度，从600px改为800px */
     overflow-y: auto;
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
     line-height: 1.6;
     transition: all 0.3s ease;
+    word-wrap: break-word; /* 确保长单词能够换行 */
+    white-space: pre-wrap; /* 保留换行符和空格 */
 }
 
 /* Markdown渲染样式 */
@@ -302,7 +302,7 @@ button:hover {
 /* 最大化状态 */
 .container.maximized #previewArea {
     max-height: none;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 150px); /* 减少边距，从200px改为150px，给内容更多空间 */
 }
 
 /* Mermaid图表样式 */

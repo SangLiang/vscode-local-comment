@@ -258,7 +258,7 @@ export async function showMarkdownWebviewInput(
                             // 调用API服务分享注释
                             const apiService = ApiService.getInstance();
                             // 修复API路径拼写错误（sharedCommnets -> sharedComments）
-                            const response = await apiService.post<any>(ApiRoutes.comment.sharedCommnets, shareData);
+                            const response = await apiService.post<any>(ApiRoutes.comment.sharedComments, shareData);
                             
                             console.log('[shareData]', shareData);
                             console.log('[response]', response);

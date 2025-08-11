@@ -19,12 +19,6 @@
 
     // 初始化marked
     function initializeMarked() {
-        console.log('initializeMarked 被调用');
-        console.log('typeof marked:', typeof marked);
-        console.log('marked 对象:', marked);
-        console.log('window.marked:', window.marked);
-        console.log('global marked:', typeof global !== 'undefined' ? global.marked : 'global 未定义');
-        
         // 尝试多种方式获取 marked
         let markedObj = marked;
         if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
@@ -34,9 +28,6 @@
             markedObj = global.marked;
         }
         
-        console.log('最终 markedObj:', markedObj);
-        console.log('typeof markedObj:', typeof markedObj);
-        
         // 检查 marked 库的不同 API 结构
         let markdownParser = null;
         
@@ -44,22 +35,16 @@
             // 尝试不同的可能属性名
             if (typeof markedObj.parse === 'function') {
                 markdownParser = markedObj.parse;
-                console.log('找到 marked.parse 函数');
             } else if (typeof markedObj.render === 'function') {
                 markdownParser = markedObj.render;
-                console.log('找到 marked.render 函数');
             } else if (typeof markedObj.marked === 'function') {
                 markdownParser = markedObj.marked;
-                console.log('找到 marked.marked 函数');
             } else if (typeof markedObj.default === 'function') {
                 markdownParser = markedObj.default;
-                console.log('找到 marked.default 函数');
             } else {
                 // 检查对象的所有属性，寻找函数
-                console.log('marked 对象的所有属性:', Object.keys(markedObj));
                 for (const key in markedObj) {
                     if (typeof markedObj[key] === 'function') {
-                        console.log(`找到函数属性: ${key}`, markedObj[key]);
                     }
                 }
             }
@@ -67,7 +52,6 @@
         
         if (markdownParser && !markedInitialized) {
             try {
-                console.log('开始初始化 marked');
                 // 设置 marked 选项
                 if (typeof markedObj.setOptions === 'function') {
                     markedObj.setOptions({
@@ -84,39 +68,30 @@
                 // 保存解析函数引用
                 window.markdownParser = markdownParser;
                 markedInitialized = true;
-                console.log('marked 初始化成功，使用解析函数:', markdownParser);
                 return true;
             } catch (error) {
                 console.error('marked 初始化失败:', error);
                 return false;
             }
         } else {
-            console.log('marked 不可用，条件检查失败');
-            console.log('- markdownParser 存在:', !!markdownParser);
-            console.log('- !markedInitialized:', !markedInitialized);
         }
         return false;
     }
 
     // 等待marked库加载完成
     function waitForMarked() {
-        console.log('waitForMarked 开始');
         return new Promise((resolve, reject) => {
             const maxAttempts = 50; // 最多等待5秒
             let attempts = 0;
             
             const checkMarked = () => {
                 attempts++;
-                console.log(`waitForMarked 检查尝试 ${attempts}/${maxAttempts}`);
                 
                 if (initializeMarked()) {
-                    console.log('waitForMarked 成功，marked 已初始化');
                     resolve();
                 } else if (attempts >= maxAttempts) {
-                    console.error('waitForMarked 超时，marked 库加载失败');
                     reject(new Error('marked 库加载超时'));
                 } else {
-                    console.log(`waitForMarked 等待中，100ms 后重试...`);
                     setTimeout(checkMarked, 100);
                 }
             };
@@ -162,50 +137,35 @@
 
     // 初始化Mermaid
     function initializeMermaid(handDrawnEnabled = false) {
-        console.log('initializeMermaid 被调用');
-        console.log('typeof mermaid:', typeof mermaid);
-        console.log('mermaid 对象:', mermaid);
-        
         if (typeof mermaid !== 'undefined' && typeof mermaid.initialize === 'function' && !mermaidInitialized) {
             try {
-                console.log('开始初始化 mermaid');
                 const config = buildMermaidConfig(handDrawnEnabled);
                 mermaid.initialize(config);
                 mermaidInitialized = true;
-                console.log('mermaid 初始化成功');
                 return true;
             } catch (error) {
                 console.error('Mermaid初始化失败:', error);
                 return false;
             }
         } else {
-            console.log('mermaid 不可用，条件检查失败');
-            console.log('- mermaid !== undefined:', typeof mermaid !== 'undefined');
-            console.log('- mermaid.initialize === function:', typeof mermaid.initialize === 'function');
-            console.log('- !mermaidInitialized:', !mermaidInitialized);
         }
         return false;
     }
 
     // 等待Mermaid库加载完成
     function waitForMermaid() {
-        console.log('waitForMermaid 开始');
         return new Promise((resolve, reject) => {
             const maxAttempts = 50; // 最多等待5秒
             let attempts = 0;
             
             const checkMermaid = () => {
                 attempts++;
-                console.log(`waitForMermaid 检查尝试 ${attempts}/${maxAttempts}`);
                 
                 if (initializeMermaid()) {
-                    console.log('waitForMermaid 成功，mermaid 已初始化');
                     resolve();
                 } else if (attempts >= maxAttempts) {
-                    console.error('waitForMermaid 超时，mermaid 库加载失败');
                     reject(new Error('Mermaid 库加载超时'));
                 } else {
-                    console.log(`waitForMermaid 等待中，100ms 后重试...`);
                     setTimeout(checkMermaid, 100);
                 }
             };
@@ -252,8 +212,6 @@
             if (typeof markdownParser !== 'function') {
                 throw new Error('markdown 解析函数不可用，请检查库是否正确加载');
             }
-
-            console.log('开始渲染 Markdown，使用解析函数:', markdownParser);
 
             // 渲染Markdown
             let html = markdownParser(content);
@@ -508,7 +466,19 @@
     });
 
     // 初始化预览
-    if (window.markdownContent) {
-        updatePreview(window.markdownContent);
+    function initializePreview() {
+        if (window.markdownContent) {
+            updatePreview(window.markdownContent);
+        } else {
+            console.log('window.markdownContent 不存在或为空');
+        }
+    }
+
+    // 等待DOM加载完成后再初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePreview);
+    } else {
+        // DOM已经加载完成，直接初始化
+        initializePreview();
     }
 })();
