@@ -189,6 +189,20 @@ button:hover {
     border-color: var(--vscode-button-hoverBorder);
 }
 
+.export-btn {
+    background-color: var(--vscode-button-prominentBackground);
+    color: var(--vscode-button-prominentForeground);
+    border-color: var(--vscode-button-prominentBorder);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.export-btn:hover {
+    background-color: var(--vscode-button-prominentHoverBackground);
+    border-color: var(--vscode-button-prominentHoverBorder);
+}
+
 .close-btn {
     background-color: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);

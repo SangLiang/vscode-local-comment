@@ -82,6 +82,22 @@ export class CommentManager {
     }
 
     /**
+     * 获取指定行号的本地注释
+     * @param filePath 文件路径
+     * @param line 行号
+     * @returns 本地注释对象，如果未找到则返回undefined
+     */
+    public getLocalCommentAtLine(filePath: string, line: number): LocalComment | undefined {
+        const fileComments = this.comments[filePath];
+        if (!fileComments) {
+            return undefined;
+        }
+        
+        // 查找指定行的本地注释（排除共享注释）
+        return fileComments.find(c => c.line === line && !('userId' in c)) as LocalComment | undefined;
+    }
+
+    /**
      * 处理工作区变化
      */
     private async handleWorkspaceChange(): Promise<void> {
@@ -1307,6 +1323,64 @@ export class CommentManager {
                 valid: false,
                 message: `文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`
             };
+        }
+    }
+
+    /**
+     * 将共享注释转换为本地注释（保留原始的lineContent）
+     * @param filePath 文件路径
+     * @param line 行号
+     * @param content 注释内容
+     * @param lineContent 原始行内容
+     * @param originalLine 原始行号
+     * @param isMatched 是否匹配
+     * @param forceOverwrite 是否强制覆盖（不显示确认对话框）
+     */
+    public async addCommentFromShared(
+        filePath: string,
+        line: number,
+        content: string,
+        lineContent: string,
+        originalLine: number,
+        isMatched: boolean = true,
+        forceOverwrite: boolean = false
+    ): Promise<void> {
+        try {
+            if (!this.comments[filePath]) {
+                this.comments[filePath] = [];
+            }
+
+            // 创建本地注释，保留共享注释的原始lineContent
+            const comment: LocalComment = {
+                id: this.generateId(),
+                line: line,
+                content: content,
+                timestamp: Date.now(),
+                originalLine: originalLine,
+                lineContent: lineContent.trim(),
+                isMatched: isMatched,
+                isShared: false
+            };
+
+            // 检查是否已存在该行的本地注释，如果存在则替换
+            const existingLocalIndex = this.comments[filePath].findIndex(c => 
+                c.line === line && !('userId' in c)
+            );
+            
+            if (existingLocalIndex >= 0) {
+                // 替换现有的本地注释
+                this.comments[filePath][existingLocalIndex] = comment;
+                console.log(`替换第 ${line + 1} 行的本地注释`);
+            } else {
+                // 添加新的本地注释
+                this.comments[filePath].push(comment);
+                console.log(`添加第 ${line + 1} 行的本地注释`);
+            }
+
+            await this.saveComments();
+        } catch (error) {
+            console.error('从共享注释添加本地注释失败:', error);
+            throw error;
         }
     }
 

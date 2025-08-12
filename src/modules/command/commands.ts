@@ -938,7 +938,8 @@ export function registerCommands(
                 fileName: require('path').basename(filePath),
                 lineNumber: comment.line,
                 lineContent: comment.lineContent,
-                filePath: filePath
+                filePath: filePath,
+                commentContent: comment.content // 新增：注释内容
             };
             
             // 显示Webview

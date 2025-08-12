@@ -127,7 +127,7 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
             const commentNode = new SharedCommentTreeItem(
                 label,
                 vscode.TreeItemCollapsibleState.None,
-                'shared-comment'
+                isMatched ? 'shared-comment' : 'shared-comment-unmatched' // 使用不同的contextValue来区分匹配和未匹配的注释
             );
             
             commentNode.filePath = filePath;
@@ -138,12 +138,15 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
                 // 匹配的注释使用正常图标
                 commentNode.iconPath = new vscode.ThemeIcon('comment');
             } else {
-                // 未匹配的注释使用暗色图标
-                commentNode.iconPath = new vscode.ThemeIcon('comment', new vscode.ThemeColor('disabledForeground'));
+                // 未匹配的注释使用暗色主题图标，模仿本地注释的隐藏状态
+                commentNode.iconPath = new vscode.ThemeIcon('comment-unresolved');
                 
                 // 为未匹配的注释设置描述和特殊的tooltip
                 commentNode.description = '⚠️ 未匹配';
                 commentNode.tooltip = new vscode.MarkdownString(`**⚠️ 未匹配的共享注释**\n\n此注释在当前代码中找不到对应的内容，可能是代码已被修改或删除。\n\n**用户**: ${comment.username || `用户${comment.userId}`}\n\n**原始位置**: 第 ${comment.line + 1} 行\n\n**内容**:\n${comment.content}\n\n**原始代码**:\n\`${comment.lineContent || '无代码快照'}\``);
+                
+                // 应用特殊CSS类，模仿本地注释的隐藏状态处理
+                commentNode.resourceUri = vscode.Uri.parse(`hidden-shared-comment:${comment.id}`);
             }
             
             // 创建Markdown格式的tooltip（如果还没有设置的话）

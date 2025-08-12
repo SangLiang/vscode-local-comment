@@ -16,6 +16,7 @@ import { registerCommands } from './modules/command/commands';
 import { AuthManager } from './managers/authManager';
 import { ProjectManager } from './managers/projectManager';
 import { UserInfoWebview } from './modules/userInfoWebview';
+import { setCommentManager } from './modules/shareCommentWebview';
 
 let commentManager: CommentManager;
 let commentProvider: CommentProvider;
@@ -85,6 +86,9 @@ export function activate(context: vscode.ExtensionContext) {
     authManager = new AuthManager(context);
     projectManager = new ProjectManager(context);
 
+    // 设置共享注释webview的全局注释管理器引用
+    setCommentManager(commentManager);
+
     // 初始化标签数据
     tagManager.updateTags(commentManager.getAllComments());
 
@@ -137,6 +141,13 @@ export function activate(context: vscode.ExtensionContext) {
                     propagate: true,
                     color: new vscode.ThemeColor('descriptionForeground'),
                     tooltip: '此注释当前无法匹配到代码'
+                };
+            }
+            if (uri.scheme === 'hidden-shared-comment') {
+                return {
+                    propagate: true,
+                    color: new vscode.ThemeColor('descriptionForeground'),
+                    tooltip: '此共享注释当前无法匹配到代码'
                 };
             }
             return undefined;

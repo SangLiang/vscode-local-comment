@@ -465,6 +465,13 @@
         });
     };
 
+    // 导出为本地注释
+    window.exportToLocalComment = function() {
+        vscode.postMessage({
+            command: 'exportToLocalComment'
+        });
+    };
+
     // 切换预览大小
     toggleSizeBtn.addEventListener('click', () => {
         const container = document.querySelector('.container');
