@@ -495,7 +495,7 @@ button {
     overflow: hidden !important;
     margin: 1em 0 !important;
     padding: 10px !important;
-    background: #9b9b9b !important;
+    background: #eeeeee !important;
     border: 1px solid var(--vscode-editorWidget-border) !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;

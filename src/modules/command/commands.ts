@@ -883,7 +883,9 @@ export function registerCommands(
                 return;
             }
 
-            const associatedProjectId = commentManager.getContext().workspaceState.get('associatedProjectId') as string;
+            // 使用ProjectManager来获取项目绑定信息，而不是直接从workspaceState获取
+            const projectManager = new ProjectManager(context);
+            const associatedProjectId = projectManager.getAssociatedProject();
             if (!associatedProjectId) {
                 vscode.window.showWarningMessage('请先关联项目以刷新共享注释');
                 return;
