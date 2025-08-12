@@ -104,6 +104,9 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
         const commentNodes: SharedCommentTreeItem[] = [];
 
         for (const comment of sharedComments) {
+            // 检查注释是否匹配到本地代码
+            const isMatched = comment.isMatched !== false; // 默认为true，只有明确设置为false时才为未匹配
+            
             // 构建标签，包含用户信息和注释内容
             let label = `第${comment.line + 1}行: `;
             
@@ -130,30 +133,42 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
             commentNode.filePath = filePath;
             commentNode.sharedComment = comment;
             
-            // 设置图标
-            commentNode.iconPath = new vscode.ThemeIcon('comment');
-            
-            // 创建Markdown格式的tooltip
-            const markdownTooltip = new vscode.MarkdownString();
-            markdownTooltip.appendMarkdown(`**共享注释**\n\n`);
-            
-            // 显示用户信息
-            if (comment.username) {
-                markdownTooltip.appendMarkdown(`**用户**: ${comment.username}\n\n`);
-            } else if (comment.userId) {
-                markdownTooltip.appendMarkdown(`**用户ID**: ${comment.userId}\n\n`);
+            // 设置图标和样式
+            if (isMatched) {
+                // 匹配的注释使用正常图标
+                commentNode.iconPath = new vscode.ThemeIcon('comment');
+            } else {
+                // 未匹配的注释使用暗色图标
+                commentNode.iconPath = new vscode.ThemeIcon('comment', new vscode.ThemeColor('disabledForeground'));
+                
+                // 为未匹配的注释设置描述和特殊的tooltip
+                commentNode.description = '⚠️ 未匹配';
+                commentNode.tooltip = new vscode.MarkdownString(`**⚠️ 未匹配的共享注释**\n\n此注释在当前代码中找不到对应的内容，可能是代码已被修改或删除。\n\n**用户**: ${comment.username || `用户${comment.userId}`}\n\n**原始位置**: 第 ${comment.line + 1} 行\n\n**内容**:\n${comment.content}\n\n**原始代码**:\n\`${comment.lineContent || '无代码快照'}\``);
             }
             
-            markdownTooltip.appendMarkdown(`**位置**: 第 ${comment.line + 1} 行\n\n`);
-            markdownTooltip.appendMarkdown(`**内容**:\n${comment.content}\n\n`);
-            
-            if (comment.lineContent) {
-                markdownTooltip.appendMarkdown(`**代码**: \`${comment.lineContent}\`\n\n`);
+            // 创建Markdown格式的tooltip（如果还没有设置的话）
+            if (!commentNode.tooltip) {
+                const markdownTooltip = new vscode.MarkdownString();
+                markdownTooltip.appendMarkdown(`**共享注释**\n\n`);
+                
+                // 显示用户信息
+                if (comment.username) {
+                    markdownTooltip.appendMarkdown(`**用户**: ${comment.username}\n\n`);
+                } else if (comment.userId) {
+                    markdownTooltip.appendMarkdown(`**用户ID**: ${comment.userId}\n\n`);
+                }
+                
+                markdownTooltip.appendMarkdown(`**位置**: 第 ${comment.line + 1} 行\n\n`);
+                markdownTooltip.appendMarkdown(`**内容**:\n${comment.content}\n\n`);
+                
+                if (comment.lineContent) {
+                    markdownTooltip.appendMarkdown(`**代码**: \`${comment.lineContent}\`\n\n`);
+                }
+                
+                markdownTooltip.appendMarkdown(`**创建时间**: ${new Date(comment.timestamp).toLocaleString()}`);
+                
+                commentNode.tooltip = markdownTooltip;
             }
-            
-            markdownTooltip.appendMarkdown(`**创建时间**: ${new Date(comment.timestamp).toLocaleString()}`);
-            
-            commentNode.tooltip = markdownTooltip;
             
             // 小箭头图标通过 package.json 中的 menus 配置自动显示
             

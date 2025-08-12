@@ -118,11 +118,18 @@ export class SharedCommentProvider implements vscode.Disposable {
                 continue;
             }
 
-            // 创建共享注释装饰器
-            const decoration = this.createSharedCommentDecoration(lineNumber);
-            sharedDecorations.push(decoration);
+            // 只显示匹配的共享注释装饰器
+            const hasMatchedComment = lineComments.some(comment => comment.isMatched !== false);
+            
+            if (hasMatchedComment) {
+                // 创建匹配的共享注释装饰器
+                const decoration = this.createSharedCommentDecoration(lineNumber);
+                sharedDecorations.push(decoration);
+            }
+            // 未匹配的注释不显示任何装饰器
         }
 
+        // 应用装饰器
         editor.setDecorations(this.decorationType, sharedDecorations);
     }
 
