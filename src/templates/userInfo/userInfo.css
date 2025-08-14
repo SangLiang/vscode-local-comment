@@ -1,9 +1,6 @@
+/* body 样式已移至 public.css */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-    margin: 0;
     padding: 0;
-    background: var(--vscode-editor-background);
-    color: var(--vscode-editor-foreground);
     overflow-x: hidden;
 }
 
@@ -19,10 +16,9 @@ body {
 }
 
 .header h1 {
-    margin: 0;
     font-size: 28px;
     font-weight: 600;
-    color: var(--vscode-editor-foreground);
+    /* 其他样式已移至 public.css */
 }
 
 /* 加载动画 */
@@ -36,15 +32,12 @@ body {
     width: 40px;
     height: 40px;
     border: 3px solid var(--vscode-progressBar-background);
-    border-radius: 50%;
     border-top-color: var(--vscode-progressBar-foreground);
-    animation: spin 1s ease-in-out infinite;
     margin-bottom: 20px;
+    /* 其他样式已移至 public.css */
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+/* 动画已移至 public.css */
 
 /* 用户资料 */
 .user-profile {
@@ -150,7 +143,7 @@ body {
     margin: 0 0 20px 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--vscode-editor-foreground);
+    /* 其他样式已移至 public.css */
 }
 
 .info-grid {
@@ -426,7 +419,7 @@ body {
 .modal-content p {
     margin-bottom: 1.5rem;
     font-size: 1rem;
-    color: var(--vscode-foreground);
+    /* 其他样式已移至 public.css */
 }
 
 .modal-buttons {
@@ -494,12 +487,12 @@ body {
 
 .error-message h3 {
     margin: 0 0 10px 0;
-    color: var(--vscode-errorForeground);
+    /* 其他样式已移至 public.css */
 }
 
 .error-message p {
     margin: 0 0 20px 0;
-    color: var(--vscode-descriptionForeground);
+    /* 其他样式已移至 public.css */
 }
 
 /* 响应式设计 */
@@ -652,12 +645,12 @@ body {
 
 #avatar-upload-modal .modal-content h3 {
     margin: 0 0 10px 0;
-    color: var(--vscode-editor-foreground);
+    /* 其他样式已移至 public.css */
 }
 
 #avatar-upload-modal .modal-content p {
     margin: 0 0 20px 0;
-    color: var(--vscode-descriptionForeground);
+    /* 其他样式已移至 public.css */
 }
 
 /* 裁剪功能样式 */

@@ -1,12 +1,4 @@
-body {
-    font-family: var(--vscode-font-family);
-    font-size: var(--vscode-font-size);
-    color: var(--vscode-foreground);
-    background-color: var(--vscode-editor-background);
-    margin: 0;
-    padding: 20px;
-    line-height: 1.5;
-}
+/* body 样式已移至 public.css */
 .container {
     max-width: 100%;
     margin: 0 20px;
@@ -270,38 +262,33 @@ button {
 .preview-area h4,
 .preview-area h5,
 .preview-area h6 {
-    color: var(--vscode-foreground);
     margin-top: 16px;
     margin-bottom: 8px;
+    /* 其他样式已移至 public.css */
 }
 .preview-area p {
     margin: 8px 0;
 }
 .preview-area code {
-    background-color: var(--vscode-textCodeBlock-background);
     padding: 2px 4px;
-    border-radius: 3px;
-    font-family: var(--vscode-editor-font-family);
+    /* 其他样式已移至 public.css */
 }
 .preview-area pre {
-    background-color: var(--vscode-textCodeBlock-background);
     padding: 12px;
-    border-radius: 4px;
     overflow-x: auto;
+    /* 其他样式已移至 public.css */
 }
 .preview-area blockquote {
-    border-left: 4px solid var(--vscode-textBlockQuote-border);
     margin: 8px 0;
     padding-left: 12px;
-    color: var(--vscode-textBlockQuote-foreground);
+    /* 其他样式已移至 public.css */
 }
 .preview-area ul,
 .preview-area ol {
     padding-left: 24px;
 }
 .preview-area a {
-    color: var(--vscode-textLink-foreground);
-    text-decoration: none;
+    /* 样式已移至 public.css */
 }
 .preview-area a:hover {
     text-decoration: underline;
@@ -311,17 +298,16 @@ button {
     height: auto;
 }
 .preview-area table {
-    border-collapse: collapse;
-    width: 100%;
     margin: 8px 0;
+    /* 其他样式已移至 public.css */
 }
 .preview-area th,
 .preview-area td {
-    border: 1px solid var(--vscode-panel-border);
     padding: 6px 12px;
+    /* 其他样式已移至 public.css */
 }
 .preview-area th {
-    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    /* 样式已移至 public.css */
 }
 
 /* Tab 切换样式 */

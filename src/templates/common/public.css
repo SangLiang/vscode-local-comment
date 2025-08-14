@@ -1,0 +1,65 @@
+/* 公共样式 - 从各个模板中抽离的 HTML 元素样式 */
+
+/* 基础 body 样式 */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+/* 标题基础样式 */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--vscode-editor-foreground);
+    margin: 0;
+}
+
+/* 链接基础样式 */
+a {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* 代码块基础样式 */
+code, pre {
+    background-color: var(--vscode-textCodeBlock-background);
+    border: 1px solid var(--vscode-textBlockQuote-border);
+    border-radius: 3px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+}
+
+/* 引用块基础样式 */
+blockquote {
+    border-left: 4px solid var(--vscode-textBlockQuote-border);
+    margin: 8px 0;
+    padding-left: 12px;
+    color: var(--vscode-textBlockQuote-foreground);
+}
+
+/* 表格基础样式 */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0;
+}
+
+th, td {
+    border: 1px solid var(--vscode-panel-border);
+    padding: 6px 12px;
+}
+
+th {
+    background-color: var(--vscode-editor-inactiveSelectionBackground);
+}
+
+input{
+    box-sizing: border-box;
+}

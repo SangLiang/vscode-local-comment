@@ -1,10 +1,5 @@
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: var(--vscode-editor-background);
-    color: var(--vscode-editor-foreground);
-}
+/* body 样式已移至 public.css */
+@import '../common/public.css';
 
 .container {
     max-width: 400px;
@@ -21,9 +16,8 @@ body {
 }
 
 .header h1 {
-    margin: 0;
-    color: var(--vscode-editor-foreground);
     font-size: 24px;
+    /* 其他样式已移至 public.css */
 }
 
 .form-group {
@@ -40,17 +34,12 @@ body {
 .form-group input {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
     font-size: 14px;
-    box-sizing: border-box;
+    /* 其他样式已移至 public.css */
 }
 
 .form-group input:focus {
-    outline: none;
-    border-color: var(--vscode-focusBorder);
+    /* 样式已移至 public.css */
 }
 
 .btn {
@@ -109,16 +98,10 @@ body {
 }
 
 .spinner {
-    border: 2px solid var(--vscode-input-border);
-    border-top: 2px solid var(--vscode-focusBorder);
-    border-radius: 50%;
     width: 20px;
     height: 20px;
-    animation: spin 1s linear infinite;
     margin: 0 auto;
+    /* 其他样式已移至 public.css */
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-} 
+/* 动画已移至 public.css */ 
