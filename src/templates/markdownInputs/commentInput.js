@@ -39,7 +39,7 @@
         });
     
     // Tab切换功能
-    let currentTab = 'code-tab';
+    let currentTab = 'preview-tab';
     
     // 状态管理：恢复之前保存的状态
     const previousState = vscode.getState();
@@ -873,9 +873,10 @@
         switchTab(previousState.currentTab);
     }
     
-    // 初始化时如果有恢复的预览状态，更新预览内容
-    if (previewVisible && textarea.value) {
+    // 初始化时如果有恢复的预览状态或当前是预览标签页，更新预览内容
+    if ((previewVisible || currentTab === 'preview-tab') && textarea.value) {
         updatePreview(textarea.value);
+        console.log('页面加载时自动更新预览内容');
     }
     
     // 设置焦点

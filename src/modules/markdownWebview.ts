@@ -446,8 +446,8 @@ function getMarkdownWebviewContent(
     contextHtml += '<div class="context-tabs">';
     contextHtml += '<div class="tab-header">';
     contextHtml += '  <div class="tab-buttons">';
-    contextHtml += '    <button class="tab-btn active" data-tab="code-tab">代码快照</button>';
-    contextHtml += '    <button class="tab-btn" data-tab="preview-tab">Markdown预览</button>';
+    contextHtml += '    <button class="tab-btn active" data-tab="preview-tab">Markdown预览</button>';
+    contextHtml += '    <button class="tab-btn" data-tab="code-tab">代码快照</button>';
     contextHtml += '  </div>';
     contextHtml += '  <div class="preview-controls">';
     contextHtml += '    <button id="toggle-preview-size-btn" class="control-btn" title="最大化/最小化预览">';
@@ -459,7 +459,7 @@ function getMarkdownWebviewContent(
     contextHtml += '</div>';
     
     // 代码快照tab内容
-    contextHtml += '<div id="code-tab" class="tab-content active">';
+    contextHtml += '<div id="code-tab" class="tab-content">';
     
     if (contextInfo) {
         // 如果文件不存在，显示特殊提示
@@ -559,7 +559,7 @@ function getMarkdownWebviewContent(
     contextHtml += '</div>'; // 结束代码快照tab内容
     
     // Markdown预览tab内容
-    contextHtml += '<div id="preview-tab" class="tab-content">';
+    contextHtml += '<div id="preview-tab" class="tab-content active">';
     contextHtml += '<div id="previewArea" class="preview-area"></div>';
     contextHtml += '</div>'; // 结束预览tab内容
     

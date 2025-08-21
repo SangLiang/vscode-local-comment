@@ -444,7 +444,7 @@ export class CommentManager {
         delete this.comments[filePath];
 
         await this.saveComments();
-        vscode.window.showInformationMessage(`已清除该文件的所有本地注释，共删除 ${commentCount} 条注释`);
+        // vscode.window.showInformationMessage(`已清除该文件的所有本地注释，共删除 ${commentCount} 条注释`);
     }
 
     /**
@@ -1651,14 +1651,6 @@ export class CommentManager {
             if (savedCount > 0) {
                 vscode.window.showInformationMessage(`已保存 ${savedCount} 个共享注释到本地`);
             }
-            
-            // if (skippedCount > 0) {
-            //     vscode.window.showWarningMessage(`跳过 ${skippedCount} 个共享注释（文件不存在）`);
-            // }
-            
-            // if (remappedCount > 0) {
-            //     vscode.window.showInformationMessage(`重映射了 ${remappedCount} 个共享注释路径`);
-            // }
         } catch (error) {
             console.error('保存项目共享注释到本地失败:', error);
             vscode.window.showErrorMessage(`保存项目共享注释到本地失败: ${error}`);
