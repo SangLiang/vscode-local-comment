@@ -2,14 +2,7 @@
 
 一个专为大项目开发而设计的 VSCode 扩展，提供本地注释和书签功能，允许你在不修改源代码的情况下添加Markdown技术笔记。
 
-现在你或许不需要他，但你面对难啃的巨量代码时候，希望你能想起他。
-
-## 多人合作来了!!! [v1.2.0特性]
-![image]()
-
-## Mermaid流程图支持！！！【v1.1.3 特性】
-
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+> 现在你或许不需要他，但你面对难以应付的的巨量代码时候，希望你能想起他。
 
 ## tag跳转
 
@@ -18,6 +11,24 @@
 ## markdown本地注释
 
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
+
+## Mermaid流程图支持！！！【v1.1.3 特性】
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+
+## 多人合作来了!!! [v1.2.0特性]
+
+在编辑器上显示其他人(此处为admin用户)的注释信息，你可以像看微信读书那样，看到别人对该段代码的评价:
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+
+用户的本地注释信息和线上其他人的分享的信息区分：
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+
+在web页面，管理自己分享的comment:
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+
+**注意** :多人协作版暂不对外免费提供。
 
 ## 为什么需要本地注释？
 
@@ -38,19 +49,21 @@
 
 ### local comment 的解决方案
 
-✅ **完全独立**：注释数据与源代码完全分离，不影响原文件
+**完全独立**：注释数据与源代码完全分离，不影响原文件
 
-✅ **项目隔离**：每个项目独立存储，互不干扰
+**项目隔离**：每个项目独立存储，互不干扰
 
-✅ **持久保存**：跨会话保持，重启VSCode后依然存在
+**持久保存**：跨会话保持，重启VSCode后依然存在
 
-✅ **智能跟踪**：代码变化时自动调整注释位置
+**智能跟踪**：代码变化时自动调整注释位置
 
-✅ **富文本支持**：支持Markdown语法，内容更丰富
+**富文本支持**：支持Markdown语法，内容更丰富
 
-✅ **Mermaid流程图支持**：支持Mermaid流程图，能更好的帮助理解代码
+**Mermaid流程图支持**：支持Mermaid流程图，能更好的帮助理解代码
 
-✅ **个人专属**：完全本地化，注释内容完全私有
+**个人专属**：完全本地化，注释内容完全私有
+
+**多人协作**：前人栽树，后人乘凉。用户完成的对代码的分析，对功能的理解可以分享到团队，大家都能享受到学习成果。
 
 ## 🚀 核心功能
 
@@ -186,7 +199,7 @@ another-project-g7h8i9j0k1l2.json
 
 ### 变更日志
 
-## [1.2.0] - 2025-08-17
+## [1.2.0] - 2025-08-23
 
 - ✨最大亮点：支持多人合作，允许用户分享本地注释到云，允许拉取云上的本地注释
 - ✨优化mermaid图，允许使用ctrl+鼠标滚轮缩放流程图
@@ -195,7 +208,7 @@ another-project-g7h8i9j0k1l2.json
 - ✨允许用户将贡献注释直接导入到本地注释中
 - ✨允许用户在markdown编辑器中，通过点击上下文内容切注释行号
 - 🔨修复一些已知问题
-- 🎉额外的说明： 虽然此版本已经支持多人注释，但是我没有云服务器,所以大家没法使用，哈哈哈哈
+- 🎉额外的说明： 虽然此版本已经支持多人注释，但是我没有云服务器,暂时没法试用
 
 ## [1.1.3] - 2025-08-07
 
