@@ -1,5 +1,7 @@
 # VSCode Local Comment Extension
 
+[中文文档](https://github.com/SangLiang/vscode-local-commet/blob/master/README_CN.md)
+
 A VSCode extension designed for large project development, providing local comment and bookmark functionality that allows you to add Markdown technical notes without modifying source code.
 
 > You might not need it now, but when you face overwhelming amounts of code, I hope you'll remember it.
