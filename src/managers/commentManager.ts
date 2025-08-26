@@ -154,7 +154,7 @@ export class CommentManager {
 
             if (fs.existsSync(this.storageFile)) {
                 const data = fs.readFileSync(this.storageFile, 'utf8');
-                console.log('🔍 调试存储文件原始内容:', data);
+                // console.log('🔍 调试存储文件原始内容:', data);
                 
                 try {
                     const parsedData = JSON.parse(data);
@@ -607,8 +607,6 @@ export class CommentManager {
                 }
                 matchedComments.push(matchedComment);
                 
-                console.log(`🔍 匹配结果matchedComment:`, matchedComment);
-
                 // 如果位置发生了变化，更新存储的注释
                 if (comment.line !== matchedLine) {
                     comment.line = matchedLine;

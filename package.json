@@ -64,17 +64,6 @@
         "category": "Local Comment"
       },
       {
-        "command": "localComment.editComment",
-        "title": "%editComment%",
-        "category": "Local Comment",
-        "when": false
-      },
-      {
-        "command": "localComment.editCommentInPlace",
-        "title": "%editCommentInPlace%",
-        "category": "Local Comment"
-      },
-      {
         "command": "localComment.editCommentFromHover",
         "title": "%editCommentFromHover%",
         "category": "Local Comment",
@@ -279,10 +268,6 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "localComment.editComment",
-          "when": "false"
-        },
-        {
           "command": "localComment.editCommentFromHover",
           "when": "false"
         },
@@ -436,7 +421,7 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "localComment.editCommentInPlace",
+        "command": "localComment.addMarkdownComment",
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
         "when": "editorTextFocus"

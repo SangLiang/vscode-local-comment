@@ -46,17 +46,18 @@ export function registerCommentCommands(
             try {
                 // 对于添加操作，检查内容是否为空
                 if (operation === 'add' && (!savedContent || savedContent.trim() === '')) {
+                    callback && callback();
                     return;
                 }
                 
                 // 对于编辑操作，检查内容是否发生变化
                 if (operation === 'edit' && savedContent === originalContent) {
+                    callback && callback();
                     return;
                 }
-                
+
                 // 如果行号有变化，使用更新后的行号
                 const finalLine = updatedContextInfo?.lineNumber ?? line;
-                
                 // 检查目标行是否已有其他注释
                 if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== line) {
                     const allComments = commentManager.getAllComments();
@@ -83,7 +84,6 @@ export function registerCommentCommands(
                         }
                     }
                 }
-                
                 const promise = operation === 'edit' 
                     ? handleEditComment(savedContent, updatedContextInfo)
                     : commentManager.addComment(uri, finalLine, savedContent);
@@ -177,6 +177,73 @@ export function registerCommentCommands(
         }
     });
 
+    // 辅助函数：执行编辑注释的核心逻辑
+    async function executeEditComment(
+        uri: vscode.Uri,
+        comment: { id: string; line: number; content: string; lineContent: string; isShared?: boolean }
+    ) {
+        try {
+            // 获取上下文信息
+            const fileName = uri.fsPath.split(/[/\\\\]/).pop() || '';
+            
+            let contextInfo: any = {
+                fileName,
+                filePath: uri.fsPath, // 添加完整的文件路径
+                lineNumber: comment.line,
+                originalLineContent: comment.lineContent // 注释保存的代码快照
+            };
+
+            // 检查文件是否存在
+            let fileExists = false;
+            let document: vscode.TextDocument | null = null;
+            
+            try {
+                document = await vscode.workspace.openTextDocument(uri);
+                fileExists = true;
+            } catch (error) {
+                // 文件不存在，但这不应该阻止编辑注释
+                console.log(`文件不存在: ${uri.fsPath}，但仍允许编辑注释`);
+                fileExists = false;
+            }
+
+            if (fileExists && document) {
+                // 文件存在时，检查注释是否能匹配到当前代码
+                const matchedComments = commentManager.getComments(uri);
+                const isMatched = matchedComments.some(c => c.id === comment.id);
+                
+                if (isMatched) {
+                    // 注释能匹配到代码，显示完整的上下文信息
+                    const lineContent = document.lineAt(comment.line).text;
+                    const codeContext = await getCodeContext(uri, comment.line);
+                    
+                    contextInfo.lineContent = lineContent; // 当前行的实际内容
+                    contextInfo.contextLines = codeContext.contextLines;
+                    contextInfo.contextStartLine = codeContext.contextStartLine;
+                }
+            } else {
+                // 文件不存在时，在上下文信息中添加说明
+                contextInfo.fileNotFound = true;
+            }
+            
+            const result = await showMarkdownWebviewInput(
+                context!,
+                fileExists ? '修改注释内容' : '修改注释内容 (原文件已删除)',
+                fileExists ? 
+                    '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签' : 
+                    '原文件已删除，但您仍可以编辑注释内容。支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
+                comment.content,
+                contextInfo,
+                '',
+                createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
+                new AuthManager(context!).isLoggedIn(),
+                comment.isShared || false
+            );
+        } catch (error) {
+            console.error('编辑注释失败:', error);
+            vscode.window.showErrorMessage(`编辑注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+    }
+
     // 添加editCommentFromHover命令
     const editCommentFromHoverCommand = vscode.commands.registerCommand('localComment.editCommentFromHover', async (args) => {
         try {
@@ -206,8 +273,6 @@ export function registerCommentCommands(
             }
 
             const documentUri = vscode.Uri.parse(uri);
-            
-            // 通过commentId直接查找注释，不依赖光标位置
             const comment = commentManager.getCommentById(documentUri, commentId);
             
             if (!comment) {
@@ -215,371 +280,18 @@ export function registerCommentCommands(
                 return;
             }
 
-            // 获取上下文信息
-            const fileName = documentUri.fsPath.split(/[/\\]/).pop() || '';
-            const document = await vscode.workspace.openTextDocument(documentUri);
-            
-            // 检查注释是否能匹配到当前代码
-            const matchedComments = commentManager.getComments(documentUri);
-            const isMatched = matchedComments.some(c => c.id === comment.id);
-            
-            let contextInfo: any = {
-                fileName,
-                filePath: documentUri.fsPath, // 添加完整的文件路径
-                lineNumber: comment.line,
-                originalLineContent: comment.lineContent // 注释保存的代码快照
-            };
+            await executeEditComment(documentUri, comment);
 
-            if (isMatched) {
-                // 注释能匹配到代码，显示完整的上下文信息
-                const lineContent = document.lineAt(comment.line).text;
-                const codeContext = await getCodeContext(documentUri, comment.line);
-                
-                contextInfo.lineContent = lineContent; // 当前行的实际内容
-                contextInfo.contextLines = codeContext.contextLines;
-                contextInfo.contextStartLine = codeContext.contextStartLine;
-            }
-
-            const result = await showMarkdownWebviewInput(
-                context!,
-                '修改注释内容',
-                '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
-                comment.content,
-                contextInfo,
-                '',
-                (content: string, updatedContextInfo?: any) => {
-                    // 如果上下文信息有更新，使用更新后的行号
-                    const finalLine = updatedContextInfo?.lineNumber ?? comment.line;
-                    createSaveAndContinueCallback('edit', documentUri, commentId, finalLine, comment.content)(content);
-                },
-                new AuthManager(context!).isLoggedIn(),
-                comment.isShared || false
-            );
-
-            // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
-            if (result !== undefined) {
-                const newContent = typeof result === 'string' ? result : result.content;
-                const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                
-                if (newContent !== comment.content) {
-                    // 如果行号有变化，检查目标行是否已有其他注释
-                    if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== comment.line) {
-                        const allComments = commentManager.getAllComments();
-                        const fileComments = allComments[documentUri.fsPath];
-                        
-                        if (fileComments) {
-                            const existingComment = fileComments.find(c => c.line === updatedContextInfo.lineNumber && c.id !== commentId);
-                            if (existingComment) {
-                                const replaceExisting = await vscode.window.showWarningMessage(
-                                    `第${updatedContextInfo.lineNumber + 1}行已经有注释了：\n"${existingComment.content}"\n\n是否要替换它？`,
-                                    { modal: true },
-                                    '替换现有注释', '取消操作'
-                                );
-                                
-                                if (replaceExisting !== '替换现有注释') {
-                                    return;
-                                }
-                                
-                                // 删除现有注释
-                                const existingIndex = commentManager.findCommentIndex(fileComments, existingComment.id);
-                                if (existingIndex >= 0) {
-                                    fileComments.splice(existingIndex, 1);
-                                }
-                            }
-                        }
-                        
-                        // 更新注释行号和内容
-                        await commentManager.updateCommentLine(documentUri, commentId, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                    }
-                    
-                    await commentManager.editComment(documentUri, commentId, newContent);
-                    tagManager.updateTags(commentManager.getAllComments());
-                    refreshAllCommentViews();
-                }
-            }
         } catch (error) {
             console.error('从hover编辑注释时发生错误:', error);
             vscode.window.showErrorMessage(`编辑注释时发生错误: ${error}`);
         }
     });
 
-    // 添加快速编辑命令（单行输入）
-    const quickEditCommentFromHoverCommand = vscode.commands.registerCommand('localComment.quickEditCommentFromHover', async (args) => {
-        try {
-            let parsedArgs;
-            
-            if (typeof args === 'object') {
-                parsedArgs = args;
-            } else if (typeof args === 'string') {
-                try {
-                    parsedArgs = JSON.parse(args);
-                } catch (parseError) {
-                    console.error('参数解析失败:', parseError);
-                    vscode.window.showErrorMessage('参数格式错误');
-                    return;
-                }
-            } else {
-                vscode.window.showErrorMessage('参数类型不正确');
-                return;
-            }
-
-            const { uri, commentId, line } = parsedArgs;
-            
-            if (!uri || !commentId || line === undefined) {
-                vscode.window.showErrorMessage('参数不完整');
-                return;
-            }
-
-            const documentUri = vscode.Uri.parse(uri);
-            const comment = commentManager.getCommentById(documentUri, commentId);
-            
-            if (!comment) {
-                vscode.window.showWarningMessage(`找不到指定的注释`);
-                return;
-            }
-
-            const newContent = await showQuickInputWithTagCompletion(
-                '快速编辑注释',
-                '支持标签引用 @标签名',
-                comment.content,
-                tagManager
-            );
-
-            if (newContent !== undefined && newContent !== comment.content) {
-                await commentManager.editComment(documentUri, commentId, newContent);
-                tagManager.updateTags(commentManager.getAllComments());
-                refreshAllCommentViews();
-            }
-        } catch (error) {
-            console.error('从hover快速编辑注释时发生错误:', error);
-            vscode.window.showErrorMessage(`编辑注释时发生错误: ${error}`);
-        }
-    });
-
-    // 添加editCommentInPlace命令
-    const editCommentInPlaceCommand = vscode.commands.registerCommand('localComment.editCommentInPlace', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
-        const selection = editor.selection;
-        const line = selection.active.line;
-        
-        // 获取当前行的注释
-        const comments = commentManager.getComments(editor.document.uri);
-        const comment = comments.find(c => c.line === line);
-        
-        if (!comment) {
-            vscode.window.showWarningMessage(`第 ${line + 1} 行没有本地注释`);
-            return;
-        }
-
-        // 获取上下文信息
-        const fileName = editor.document.uri.fsPath.split(/[/\\]/).pop() || '';
-        const lineContent = editor.document.lineAt(line).text;
-        
-        let contextInfo: any = {
-            fileName,
-            filePath: editor.document.uri.fsPath, // 添加完整的文件路径
-            lineNumber: comment.line,
-            originalLineContent: comment.lineContent // 注释保存的代码快照
-        };
-
-        // 检查注释是否能匹配到当前代码
-        const matchedComments = commentManager.getComments(editor.document.uri);
-        const isMatched = matchedComments.some(c => c.id === comment.id);
-        
-        if (isMatched) {
-            // 注释能匹配到代码，显示完整的上下文信息
-            const codeContext = await getCodeContext(editor.document.uri, comment.line);
-            
-            contextInfo.lineContent = lineContent; // 当前行的实际内容
-            contextInfo.contextLines = codeContext.contextLines;
-            contextInfo.contextStartLine = codeContext.contextStartLine;
-        }
-
-            const result = await showMarkdownWebviewInput(
-                context!,
-                '编辑本地注释',
-                '请修改注释内容...',
-                comment.content,
-                contextInfo,
-                '',
-                createSaveAndContinueCallback('edit', editor.document.uri, comment.id, comment.line, comment.content),
-                new AuthManager(context!).isLoggedIn(),
-                comment.isShared || false
-            );
-
-            if (result !== undefined) {
-                const newContent = typeof result === 'string' ? result : result.content;
-                const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                
-                if (newContent !== comment.content) {
-                    // 如果行号有变化，需要先更新注释的行号
-                    if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== comment.line) {
-                        await commentManager.updateCommentLine(editor.document.uri, comment.id, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                    }
-                    
-                    await commentManager.editComment(editor.document.uri, comment.id, newContent);
-                    tagManager.updateTags(commentManager.getAllComments());
-                    refreshAllCommentViews();
-                }
-            }
-    });
-
-    const editCommentCommand = vscode.commands.registerCommand('localComment.editComment', async (uri: vscode.Uri, line: number) => {
-        try {
-            const comments = commentManager.getComments(uri);
-            const comment = comments.find(c => c.line === line);
-            
-            if (!comment) {
-                vscode.window.showErrorMessage('找不到指定的注释');
-                return;
-            }
-            
-            // 获取上下文信息
-            const fileName = uri.fsPath.split(/[/\\]/).pop() || '';
-            const document = await vscode.workspace.openTextDocument(uri);
-            
-            // 检查注释是否能匹配到当前代码
-            const matchedComments = commentManager.getComments(uri);
-            const isMatched = matchedComments.some(c => c.id === comment.id);
-            
-            let contextInfo: any = {
-                fileName,
-                filePath: uri.fsPath, // 添加完整的文件路径
-                lineNumber: comment.line,
-                originalLineContent: comment.lineContent // 注释保存的代码快照
-            };
-
-            if (isMatched) {
-                // 注释能匹配到代码，显示完整的上下文信息
-                const lineContent = document.lineAt(comment.line).text;
-                const codeContext = await getCodeContext(uri, comment.line);
-                
-                contextInfo.lineContent = lineContent; // 当前行的实际内容
-                contextInfo.contextLines = codeContext.contextLines;
-                contextInfo.contextStartLine = codeContext.contextStartLine;
-            }
-            
-            // 使用新的WebView输入界面
-            const result = await showMarkdownWebviewInput(
-                context!,
-                '编辑本地注释',
-                '请修改注释内容...',
-                comment.content,
-                contextInfo,
-                '',
-                createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
-                new AuthManager(context!).isLoggedIn(),
-                comment.isShared || false
-            );
-            
-            // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
-            if (result !== undefined) {
-                const newContent = typeof result === 'string' ? result : result.content;
-                const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                
-                if (newContent.trim() !== '') {
-                    // 如果行号有变化，需要先更新注释的行号
-                    if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== comment.line) {
-                        await commentManager.updateCommentLine(uri, comment.id, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                    }
-                    
-                    await commentManager.editComment(uri, comment.id, newContent);
-                    // 刷新标签和界面
-                    tagManager.updateTags(commentManager.getAllComments());
-                    refreshAllCommentViews();
-                }
-            }
-        } catch (error) {
-            console.error('编辑注释时出错:', error);
-            vscode.window.showErrorMessage(`编辑注释失败: ${error}`);
-        }
-    });
-
     const editCommentFromTreeCommand = vscode.commands.registerCommand('localComment.editCommentFromTree', async (item) => {
         if ((item.contextValue === 'comment' || item.contextValue === 'hidden-comment') && item.filePath && item.comment) {
-            try {
-                // 获取上下文信息
-                const fileName = item.filePath.split(/[/\\]/).pop() || '';
-                const uri = vscode.Uri.file(item.filePath);
-                
-                let contextInfo: any = {
-                    fileName,
-                    filePath: item.filePath, // 添加完整的文件路径
-                    lineNumber: item.comment.line,
-                    originalLineContent: item.comment.lineContent // 注释保存的代码快照
-                };
-
-                // 检查文件是否存在
-                let fileExists = false;
-                let document: vscode.TextDocument | null = null;
-                
-                try {
-                    document = await vscode.workspace.openTextDocument(uri);
-                    fileExists = true;
-                } catch (error) {
-                    // 文件不存在，但这不应该阻止编辑注释
-                    console.log(`文件不存在: ${item.filePath}，但仍允许编辑注释`);
-                    fileExists = false;
-                }
-
-                if (fileExists && document) {
-                    // 文件存在时，检查注释是否能匹配到当前代码
-                    const matchedComments = commentManager.getComments(uri);
-                    const isMatched = matchedComments.some(c => c.id === item.comment.id);
-                    
-                    if (isMatched) {
-                        // 注释能匹配到代码，显示完整的上下文信息
-                        const lineContent = document.lineAt(item.comment.line).text;
-                        const codeContext = await getCodeContext(uri, item.comment.line);
-                        
-                        contextInfo.lineContent = lineContent; // 当前行的实际内容
-                        contextInfo.contextLines = codeContext.contextLines;
-                        contextInfo.contextStartLine = codeContext.contextStartLine;
-                    }
-                } else {
-                    // 文件不存在时，在上下文信息中添加说明
-                    contextInfo.fileNotFound = true;
-                }
-                
-                const result = await showMarkdownWebviewInput(
-                    context!,
-                    fileExists ? '修改注释内容' : '修改注释内容 (原文件已删除)',
-                    fileExists ? 
-                        '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签' : 
-                        '原文件已删除，但您仍可以编辑注释内容。支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
-                    item.comment.content,
-                    contextInfo,
-                    '',
-                    createSaveAndContinueCallback('edit', uri, item.comment.id, item.comment.line, item.comment.content),
-                    new AuthManager(context!).isLoggedIn(),
-                    item.comment.isShared || false
-                );
-
-                // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
-                if (result !== undefined) {
-                    const newContent = typeof result === 'string' ? result : result.content;
-                    const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                    
-                    if (newContent !== item.comment.content) {
-                        // 如果行号有变化，需要先更新注释的行号
-                        if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== item.comment.line) {
-                            await commentManager.updateCommentLine(uri, item.comment.id, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                        }
-                        
-                        await commentManager.editComment(uri, item.comment.id, newContent);
-                        tagManager.updateTags(commentManager.getAllComments());
-                        refreshAllCommentViews();
-                    }
-                }
-            } catch (error) {
-                console.error('编辑注释失败:', error);
-                vscode.window.showErrorMessage(`编辑注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
-            }
+            const uri = vscode.Uri.file(item.filePath);
+            await executeEditComment(uri, item.comment);
         }
     });
 
@@ -1076,54 +788,7 @@ export function registerCommentCommands(
                     
                     if (localComment) {
                         // 有本地注释，编辑本地注释
-                        const matchedComments = commentManager.getComments(editor.document.uri);
-                        const isMatched = matchedComments.some(c => c.id === localComment.id);
-                        
-                        let contextInfo: any = {
-                            fileName,
-                            lineNumber: line,
-                            originalLineContent: localComment.lineContent, // 注释保存的代码快照
-                            filePath: editor.document.uri.fsPath // 始终设置完整的文件路径
-                        };
-
-                        if (isMatched) {
-                            // 注释能匹配到代码，显示完整的上下文信息
-                            const codeContext = await getCodeContext(editor.document.uri, line);
-                            
-                            contextInfo.lineContent = lineContent; // 当前行的实际内容
-                            contextInfo.contextLines = codeContext.contextLines;
-                            contextInfo.contextStartLine = codeContext.contextStartLine;
-                        }
-                        
-                        const result = await showMarkdownWebviewInput(
-                            context!,
-                            '编辑多行本地注释',
-                            '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
-                            localComment.content,
-                            contextInfo,
-                            '',
-                            createSaveAndContinueCallback('edit', editor.document.uri, localComment.id, localComment.line, localComment.content),
-                            isUserLoggedIn,
-                            false // 本地注释始终为false
-                        );
-                        
-                        // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
-                        if (result !== undefined) {
-                            const newContent = typeof result === 'string' ? result : result.content;
-                            const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                            
-                            if (newContent !== localComment.content) {
-                                // 如果行号有变化，需要先更新注释的行号
-                                if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== localComment.line) {
-                                    await commentManager.updateCommentLine(editor.document.uri, localComment.id, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                                }
-                                
-                                await commentManager.editComment(editor.document.uri, localComment.id, newContent);
-                                // 刷新标签和界面
-                                tagManager.updateTags(commentManager.getAllComments());
-                                refreshAllCommentViews();
-                            }
-                        }
+                        await executeEditComment(editor.document.uri, localComment);
                     } else {
                         // 没有本地注释，添加新的本地注释
                         const result = await showMarkdownWebviewInput(
@@ -1161,54 +826,7 @@ export function registerCommentCommands(
                     }
                 } else {
                     // 这是本地注释，直接编辑
-                    const matchedComments = commentManager.getComments(editor.document.uri);
-                    const isMatched = matchedComments.some(c => c.id === existingComment.id);
-                    
-                    let contextInfo: any = {
-                        fileName,
-                        lineNumber: line,
-                        originalLineContent: existingComment.lineContent, // 注释保存的代码快照
-                        filePath: editor.document.uri.fsPath // 始终设置完整的文件路径
-                    };
-
-                    if (isMatched) {
-                        // 注释能匹配到代码，显示完整的上下文信息
-                        const codeContext = await getCodeContext(editor.document.uri, line);
-                        
-                        contextInfo.lineContent = lineContent; // 当前行的实际内容
-                        contextInfo.contextLines = codeContext.contextLines;
-                        contextInfo.contextStartLine = codeContext.contextStartLine;
-                    }
-                    
-                    const result = await showMarkdownWebviewInput(
-                        context!,
-                        '编辑多行本地注释',
-                        '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
-                        existingComment.content,
-                        contextInfo,
-                        '',
-                        createSaveAndContinueCallback('edit', editor.document.uri, existingComment.id, existingComment.line, existingComment.content),
-                        isUserLoggedIn,
-                        false // 本地注释始终为false
-                    );
-                    
-                    // 注意：如果使用了saveAndContinue，内容会通过回调函数保存，这里不需要重复保存
-                    if (result !== undefined) {
-                        const newContent = typeof result === 'string' ? result : result.content;
-                        const updatedContextInfo = typeof result === 'object' ? result.contextInfo : undefined;
-                        
-                        if (newContent !== existingComment.content) {
-                            // 如果行号有变化，需要先更新注释的行号
-                            if (updatedContextInfo?.lineNumber !== undefined && updatedContextInfo.lineNumber !== existingComment.line) {
-                                await commentManager.updateCommentLine(editor.document.uri, existingComment.id, updatedContextInfo.lineNumber, updatedContextInfo.lineContent || '');
-                            }
-                            
-                            await commentManager.editComment(editor.document.uri, existingComment.id, newContent);
-                            // 刷新标签和界面
-                            tagManager.updateTags(commentManager.getAllComments());
-                            refreshAllCommentViews();
-                        }
-                    }
+                    await executeEditComment(editor.document.uri, existingComment);
                 }
             } else {
                 // 如果没有现有注释，添加新注释
@@ -1449,11 +1067,8 @@ export function registerCommentCommands(
         fuzzyMatchCommentCommand,
         goToFileCommand,
         updateCommentLineCommand,
-        editCommentInPlaceCommand,
-        editCommentCommand,
         editCommentFromTreeCommand,
         editCommentFromHoverCommand,
-        quickEditCommentFromHoverCommand,
         addMarkdownCommentCommand,
         addCommentCommand,
         convertSelectionToCommentCommand,
