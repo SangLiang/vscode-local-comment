@@ -244,9 +244,12 @@ export class CommentMatcher {
             return -1;
         }
 
+        // 判断是否为共享注释
+        const isSharedComment = 'userId' in comment;
+
         // 1. 优先在原始行号位置查找精确匹配
         if (comment.line >= 0 && comment.line < document.lineCount) {
-            if (this.isExactMatch(document, comment, comment.line) && !this.matchedLines.has(comment.line)) {
+            if (this.isExactMatch(document, comment, comment.line) && (isSharedComment || !this.matchedLines.has(comment.line))) {
                 return comment.line;
             }
         }
@@ -254,7 +257,7 @@ export class CommentMatcher {
         // 2. 检查注释行上面的行（处理插入行导致的位移）
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, previousLine) && !this.matchedLines.has(previousLine)) {
+            if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
                 console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
@@ -263,7 +266,7 @@ export class CommentMatcher {
         // 3. 检查注释行下面的行（处理删除行导致的位移）
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, nextLine) && !this.matchedLines.has(nextLine)) {
+            if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
                 console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
@@ -277,8 +280,8 @@ export class CommentMatcher {
         const endLine = Math.min(document.lineCount - 1, comment.line + searchRange);
 
         for (let i = startLine; i <= endLine; i++) {
-            // 跳过已经检查过的行和已被占用的行
-            if (i === comment.line || i === previousLine || i === nextLine || this.matchedLines.has(i)) {
+            // 跳过已经检查过的行，对于共享注释不检查已被占用的行
+            if (i === comment.line || i === previousLine || i === nextLine || (!isSharedComment && this.matchedLines.has(i))) {
                 continue;
             }
             
@@ -312,9 +315,12 @@ export class CommentMatcher {
             // 不直接返回-1，继续尝试匹配
         }
 
+        // 判断是否为共享注释
+        const isSharedComment = 'userId' in comment;
+
         // 1. 优先在原始行号位置查找精确匹配
         if (comment.line >= 0 && comment.line < document.lineCount) {
-            if (this.isExactMatch(document, comment, comment.line) && !this.matchedLines.has(comment.line)) {
+            if (this.isExactMatch(document, comment, comment.line) && (isSharedComment || !this.matchedLines.has(comment.line))) {
                 return comment.line;
             }
         }
@@ -322,7 +328,7 @@ export class CommentMatcher {
         // 2. 检查注释行上面的行（处理插入行导致的位移）
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, previousLine) && !this.matchedLines.has(previousLine)) {
+            if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
                 console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
@@ -331,7 +337,7 @@ export class CommentMatcher {
         // 3. 检查注释行下面的行（处理删除行导致的位移）
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, nextLine) && !this.matchedLines.has(nextLine)) {
+            if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
                 console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
@@ -345,8 +351,8 @@ export class CommentMatcher {
         const endLine = Math.min(document.lineCount - 1, comment.line + searchRange);
 
         for (let i = startLine; i <= endLine; i++) {
-            // 跳过已经检查过的行和已被占用的行
-            if (i === comment.line || i === previousLine || i === nextLine || this.matchedLines.has(i)) {
+            // 跳过已经检查过的行，对于共享注释不检查已被占用的行
+            if (i === comment.line || i === previousLine || i === nextLine || (!isSharedComment && this.matchedLines.has(i))) {
                 continue;
             }
             
@@ -363,8 +369,8 @@ export class CommentMatcher {
         const searchOrder = this.generateOptimizedSearchOrder(document.lineCount, comment.line, startLine, endLine);
         
         for (const i of searchOrder) {
-            // 跳过已被占用的行
-            if (this.matchedLines.has(i)) {
+            // 对于共享注释，不跳过已被占用的行
+            if (!isSharedComment && this.matchedLines.has(i)) {
                 continue;
             }
             
@@ -614,8 +620,7 @@ export class CommentMatcher {
     }
 
     /**
-     * 标准化行内容，用于模糊匹配（已废弃，保留用于向后兼容）
-     * @deprecated 不再使用模糊匹配以提高精度
+     * 标准化行内容，用于模糊匹配
      */
     public normalizeLineContent(content: string): string {
         const normalized = content
@@ -628,8 +633,7 @@ export class CommentMatcher {
     }
 
     /**
-     * 计算两个字符串的相似度（已废弃，保留用于向后兼容）
-     * @deprecated 不再使用相似度匹配以提高精度
+     * 计算两个字符串的相似度
      */
     public calculateSimilarity(str1: string, str2: string): number {
         if (!str1 || !str2) return 0;
@@ -688,9 +692,12 @@ export class CommentMatcher {
             // 不直接返回-1，继续尝试匹配
         }
 
+        // 判断是否为共享注释
+        const isSharedComment = 'userId' in comment;
+
         // 1. 优先在原始行号位置查找精确匹配
         if (comment.line >= 0 && comment.line < document.lineCount) {
-            if (this.isExactMatch(document, comment, comment.line) && !this.matchedLines.has(comment.line)) {
+            if (this.isExactMatch(document, comment, comment.line) && (isSharedComment || !this.matchedLines.has(comment.line))) {
                 return comment.line;
             }
         }
@@ -698,7 +705,7 @@ export class CommentMatcher {
         // 2. 检查注释行上面的行（处理插入行导致的位移）
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, previousLine) && !this.matchedLines.has(previousLine)) {
+            if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
                 console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
@@ -707,7 +714,7 @@ export class CommentMatcher {
         // 3. 检查注释行下面的行（处理删除行导致的位移）
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
-            if (this.isExactMatch(document, comment, nextLine) && !this.matchedLines.has(nextLine)) {
+            if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
                 console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
@@ -721,8 +728,8 @@ export class CommentMatcher {
         const endLine = Math.min(document.lineCount - 1, comment.line + extendedSearchRange);
 
         for (let i = startLine; i <= endLine; i++) {
-            // 跳过已经检查过的行和已被占用的行
-            if (i === comment.line || i === previousLine || i === nextLine || this.matchedLines.has(i)) {
+            // 跳过已经检查过的行，对于共享注释不检查已被占用的行
+            if (i === comment.line || i === previousLine || i === nextLine || (!isSharedComment && this.matchedLines.has(i))) {
                 continue;
             }
             
