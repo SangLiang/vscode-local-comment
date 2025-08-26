@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TagManager } from '../managers/tagManager';
+import { getFileNameFromPath } from '../utils/pathUtils';
 import { CommentManager } from '../managers/commentManager';
 
 export class TagCompletionProvider implements vscode.CompletionItemProvider {
@@ -62,7 +63,7 @@ export class TagCompletionProvider implements vscode.CompletionItemProvider {
                 item.detail = `标签引用: $${tagName}`;
                 item.documentation = new vscode.MarkdownString(
                     `**标签声明位置:**\n\n` +
-                    `文件: ${declaration.filePath.split(/[/\\]/).pop()}\n\n` +
+                    `文件: ${getFileNameFromPath(declaration.filePath)}\n\n` +
                     `行号: ${declaration.line + 1}\n\n` +
                     `内容: ${declaration.content}`
                 );

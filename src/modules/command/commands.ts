@@ -6,6 +6,7 @@ import { TagManager } from '../../managers/tagManager';
 import { CommentProvider } from '../../providers/commentProvider';
 import { CommentTreeProvider } from '../../providers/commentTreeProvider';
 import { BookmarkManager } from '../../managers/bookmarkManager';
+import { getFileNameFromPath } from '../../utils/pathUtils';
 
 import { ApiRoutes } from '../../apiService';
 import { ProjectManager } from '../../managers/projectManager';
@@ -93,7 +94,7 @@ export function registerCommands(
         if (localFileCount > 0) {
             message += `本地注释详细信息:\n`;
             for (const [filePath, commentCount] of Object.entries(localFileDetails)) {
-                const fileName = filePath.split(/[/\\]/).pop();
+                const fileName = getFileNameFromPath(filePath);
                 message += `• ${fileName}: ${commentCount} 条注释\n`;
             }
         }
@@ -101,7 +102,7 @@ export function registerCommands(
         if (sharedFileCount > 0) {
             message += `\n共享注释详细信息:\n`;
             for (const [filePath, comments] of Object.entries(allSharedComments)) {
-                const fileName = filePath.split(/[/\\]/).pop();
+                const fileName = getFileNameFromPath(filePath);
                 message += `• ${fileName}: ${comments.length} 条注释\n`;
             }
         }

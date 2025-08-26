@@ -7,6 +7,7 @@ import { TagManager } from '../../managers/tagManager';
 import { AuthManager } from '../../managers/authManager';
 import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
+import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
 
 export function registerCommentCommands(
     commentManager: CommentManager,
@@ -119,7 +120,7 @@ export function registerCommentCommands(
     const clearFileCommentsCommand = vscode.commands.registerCommand('localComment.clearFileComments', async (item) => {
         if (item.contextValue === 'file' && item.filePath) {
             // 显示确认对话框
-            const fileName = item.filePath.split(/[/\\]/).pop() || '';
+            const fileName = getFileNameFromPath(item.filePath);
             const confirm = await vscode.window.showWarningMessage(
                 `确定要清除文件 "${fileName}" 的所有本地注释吗？此操作不可恢复！`,
                 '确定清除', '取消'
@@ -160,7 +161,7 @@ export function registerCommentCommands(
         }
 
         const uri = editor.document.uri;
-        const fileName = uri.fsPath.split(/[/\\]/).pop() || '';
+        const fileName = getFileNameFromUri(uri);
         
         // 显示确认对话框
         const confirm = await vscode.window.showWarningMessage(
@@ -184,7 +185,7 @@ export function registerCommentCommands(
     ) {
         try {
             // 获取上下文信息
-            const fileName = uri.fsPath.split(/[/\\\\]/).pop() || '';
+            const fileName = getFileNameFromUri(uri);
             
             let contextInfo: any = {
                 fileName,
@@ -768,7 +769,7 @@ export function registerCommentCommands(
         const line = editor.selection.active.line;
         const document = editor.document;
         const lineContent = document.lineAt(line).text;
-        const fileName = document.fileName.split(/[/\\]/).pop() || '';
+        const fileName = getFileNameFromPath(document.fileName);
         
         // 检查当前行是否已有注释
         const comments = commentManager.getComments(editor.document.uri);
@@ -1026,7 +1027,7 @@ export function registerCommentCommands(
             }
 
             const documentUri = vscode.Uri.parse(uri);
-            const fileName = documentUri.fsPath.split(/[/\\]/).pop() || '未知文件';
+            const fileName = getFileNameFromUri(documentUri) || '未知文件';
             const lineNumber = line !== undefined ? line : 0;
             
             // 构建上下文信息
