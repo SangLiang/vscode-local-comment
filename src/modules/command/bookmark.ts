@@ -209,3 +209,17 @@ export function registerBookmarkCommands(
             await bookmarkManager.goToBookmark(bookmark.filePath, bookmark.line);
         }
     });
+
+    return [
+        addBookmarkCommand,
+        toggleBookmarkCommand,
+        removeBookmarkCommand,
+        goToBookmarkCommand,
+        deleteBookmarkFromTreeCommand,
+        clearFileBookmarksCommand,
+        clearAllBookmarksCommand,
+        goToNextBookmarkCommand,
+        goToPreviousBookmarkCommand,
+        showCurrentFileBookmarksCommand
+    ];
+}
