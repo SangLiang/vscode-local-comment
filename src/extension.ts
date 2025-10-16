@@ -66,7 +66,8 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('本地注释插件已激活');
 
     // 初始化管理器
-    commentManager = new CommentManager(context);
+    authManager = new AuthManager(context);
+    commentManager = new CommentManager(context, authManager);
     commentProvider = new CommentProvider(commentManager);
     sharedCommentProvider = new SharedCommentProvider(commentManager);
     
@@ -83,7 +84,6 @@ export function activate(context: vscode.ExtensionContext) {
     commentTreeProvider = new CommentTreeProvider(commentManager, fileHeatManager, bookmarkManager);
     sharedCommentTreeProvider = new SharedCommentTreeProvider(commentManager);
     tagManager = new TagManager();
-    authManager = new AuthManager(context);
     projectManager = new ProjectManager(context);
 
     // 设置共享注释webview的全局注释管理器引用
@@ -292,7 +292,8 @@ export function activate(context: vscode.ExtensionContext) {
         
         // 传递键盘活动信息给commentManager
         commentManager.handleDocumentChange(event, hasRecentKeyboardActivity);
-        // 书签保持静态，不需要处理文档变化
+        // 处理书签的文档变化
+        bookmarkManager.handleDocumentChange(event);
         tagManager.updateTags(commentManager.getAllComments());
         
         // 使用防抖机制减少频繁刷新

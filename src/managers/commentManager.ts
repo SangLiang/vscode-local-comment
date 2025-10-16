@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { CommentMatcher } from './commentMatcher';
 import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData } from '../utils/utils';
 import { apiService, ApiRoutes } from '../apiService';
+import { AuthManager } from './authManager';
 
 export interface LocalComment {
     id: string;
@@ -46,6 +47,7 @@ export class CommentManager {
     private shareComments: FileComments = {};
     private storageFile: string;
     private context: vscode.ExtensionContext;
+    private authManager?: AuthManager; // 认证管理器
     private _hasKeyboardActivity = false; // 记录键盘活动状态，用于区分用户编辑和Git分支切换
     private commentMatcher: CommentMatcher; // 注释匹配器
     
@@ -57,8 +59,9 @@ export class CommentManager {
     private _onDidChangeSharedComments: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     readonly onDidChangeSharedComments: vscode.Event<void> = this._onDidChangeSharedComments.event;
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, authManager?: AuthManager) {
         this.context = context;
+        this.authManager = authManager;
         this.storageFile = this.getProjectStorageFile(context);
         this.commentMatcher = new CommentMatcher(); // 实例化注释匹配器
         this.loadComments();
@@ -475,7 +478,10 @@ export class CommentManager {
             this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
             vscode.window.showInformationMessage(`已清空所有共享注释，共删除 ${totalRemoved} 条共享注释`);
         } else {
-            vscode.window.showInformationMessage('没有找到共享注释');
+            // 只有登录用户才显示"没有找到共享注释"提示
+            if (this.authManager && this.authManager.isLoggedIn()) {
+                vscode.window.showInformationMessage('没有找到共享注释');
+            }
         }
 
         return totalRemoved;

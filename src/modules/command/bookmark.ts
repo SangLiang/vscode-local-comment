@@ -72,22 +72,46 @@ export function registerBookmarkCommands(
             return;
         }
 
-        if (item.contextValue === 'bookmark' && item.bookmark) {
+        if (item && item.contextValue === 'bookmark' && item.bookmark) {
             await bookmarkManager.removeBookmarkById(item.bookmark.id);
         }
     });
 
     // 清除文件书签命令
-    const clearFileBookmarksCommand = vscode.commands.registerCommand('localComment.clearFileBookmarks', async (item) => {
+    const clearFileBookmarksCommand = vscode.commands.registerCommand('localComment.clearFileBookmarks', async (arg: any) => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
         }
 
-        if (item.contextValue === 'file' && item.filePath) {
-            const uri = vscode.Uri.file(item.filePath);
-            await bookmarkManager.clearFileBookmarks(uri);
+        let uri: vscode.Uri | undefined;
+
+        // 安全地检查参数类型
+        if (typeof arg === 'object' && arg !== null) {
+            // 检查是否是从树视图调用（带有 contextValue 和 filePath 属性）
+            if ('contextValue' in arg && 'filePath' in arg) {
+                if (arg.contextValue === 'file' && typeof arg.filePath === 'string') {
+                    uri = vscode.Uri.file(arg.filePath);
+                }
+            }
         }
+
+        // 如果没有有效的参数，则尝试使用当前活动编辑器
+        if (!uri) {
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+                uri = editor.document.uri;
+            }
+        }
+
+        // 执行清除操作
+        if (uri) {
+            await bookmarkManager.clearFileBookmarks(uri);
+            return;
+        }
+
+        // 如果既没有有效参数，也没有活动编辑器
+        vscode.window.showErrorMessage('请先打开一个文件或从书签树中选择一个文件');
     });
 
     // 清除所有书签命令
@@ -196,6 +220,6 @@ export function registerBookmarkCommands(
         clearAllBookmarksCommand,
         goToNextBookmarkCommand,
         goToPreviousBookmarkCommand,
-        showCurrentFileBookmarksCommand,
+        showCurrentFileBookmarksCommand
     ];
 }
