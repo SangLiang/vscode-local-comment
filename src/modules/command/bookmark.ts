@@ -38,23 +38,6 @@ export function registerBookmarkCommands(
         await bookmarkManager.toggleBookmark(editor.document.uri, line);
     });
 
-    // 移除书签命令
-    const removeBookmarkCommand = vscode.commands.registerCommand('localComment.removeBookmark', async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
-        const line = editor.selection.active.line;
-        await bookmarkManager.removeBookmark(editor.document.uri, line);
-    });
-
     // 跳转到书签命令
     const goToBookmarkCommand = vscode.commands.registerCommand('localComment.goToBookmark', async (filePath: string, line: number) => {
         if (!bookmarkManager) {
@@ -213,7 +196,6 @@ export function registerBookmarkCommands(
     return [
         addBookmarkCommand,
         toggleBookmarkCommand,
-        removeBookmarkCommand,
         goToBookmarkCommand,
         deleteBookmarkFromTreeCommand,
         clearFileBookmarksCommand,

@@ -39,7 +39,6 @@
   "goToFile": "跳转到文件",
   "addBookmark": "添加书签",
   "toggleBookmark": "切换书签",
-  "removeBookmark": "删除书签",
   "goToBookmark": "跳转到书签",
   "deleteBookmarkFromTree": "删除书签",
   "clearFileBookmarks": "清除文件书签",

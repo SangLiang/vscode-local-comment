@@ -1,4 +1,3 @@
-/* body 样式已移至 public.css */
 body {
     padding: 0;
     overflow-x: hidden;
@@ -18,7 +17,6 @@ body {
 .header h1 {
     font-size: 28px;
     font-weight: 600;
-    /* 其他样式已移至 public.css */
 }
 
 /* 加载动画 */
@@ -34,10 +32,7 @@ body {
     border: 3px solid var(--vscode-progressBar-background);
     border-top-color: var(--vscode-progressBar-foreground);
     margin-bottom: 20px;
-    /* 其他样式已移至 public.css */
 }
-
-/* 动画已移至 public.css */
 
 /* 用户资料 */
 .user-profile {
@@ -419,7 +414,6 @@ body {
 .modal-content p {
     margin-bottom: 1.5rem;
     font-size: 1rem;
-    /* 其他样式已移至 public.css */
 }
 
 .modal-buttons {
@@ -645,12 +639,10 @@ body {
 
 #avatar-upload-modal .modal-content h3 {
     margin: 0 0 10px 0;
-    /* 其他样式已移至 public.css */
 }
 
 #avatar-upload-modal .modal-content p {
     margin: 0 0 20px 0;
-    /* 其他样式已移至 public.css */
 }
 
 /* 裁剪功能样式 */

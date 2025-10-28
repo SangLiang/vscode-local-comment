@@ -182,11 +182,6 @@
         "category": "Local Comment"
       },
       {
-        "command": "localComment.removeBookmark",
-        "title": "%removeBookmark%",
-        "category": "Local Comment"
-      },
-      {
         "command": "localComment.goToBookmark",
         "title": "%goToBookmark%",
         "category": "Local Comment",

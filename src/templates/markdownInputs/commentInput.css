@@ -279,7 +279,7 @@ button {
     font-size: 12px;
     margin-left: 8px;
 }
-/* 旧的预览区域样式已移动到tab布局中 */
+
 /* Markdown 预览样式 */
 .preview-area h1,
 .preview-area h2,
@@ -289,32 +289,26 @@ button {
 .preview-area h6 {
     margin-top: 16px;
     margin-bottom: 8px;
-    /* 其他样式已移至 public.css */
 }
 .preview-area p {
     margin: 8px 0;
 }
 .preview-area code {
     padding: 2px 4px;
-    /* 其他样式已移至 public.css */
 }
 .preview-area pre {
     padding: 12px;
     overflow-x: auto;
-    /* 其他样式已移至 public.css */
 }
 .preview-area blockquote {
     margin: 8px 0;
     padding-left: 12px;
-    /* 其他样式已移至 public.css */
 }
 .preview-area ul,
 .preview-area ol {
     padding-left: 24px;
 }
-.preview-area a {
-    /* 样式已移至 public.css */
-}
+
 .preview-area a:hover {
     text-decoration: underline;
 }
@@ -324,15 +318,10 @@ button {
 }
 .preview-area table {
     margin: 8px 0;
-    /* 其他样式已移至 public.css */
 }
 .preview-area th,
 .preview-area td {
     padding: 6px 12px;
-    /* 其他样式已移至 public.css */
-}
-.preview-area th {
-    /* 样式已移至 public.css */
 }
 
 /* Tab 切换样式 */

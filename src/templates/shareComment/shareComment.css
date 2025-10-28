@@ -1,5 +1,3 @@
-/* body 样式已移至 public.css */
-
 .container {
     max-width: 100%;
     margin: 0 20px;
@@ -232,7 +230,6 @@ button:hover {
 #previewArea h6 {
     margin-top: 16px;
     margin-bottom: 8px;
-    /* 其他样式已移至 public.css */
 }
 
 #previewArea p {
@@ -241,28 +238,21 @@ button:hover {
 
 #previewArea code {
     padding: 2px 4px;
-    /* 其他样式已移至 public.css */
 }
 
 #previewArea pre {
     padding: 12px;
     overflow-x: auto;
-    /* 其他样式已移至 public.css */
 }
 
 #previewArea blockquote {
     margin: 8px 0;
     padding-left: 12px;
-    /* 其他样式已移至 public.css */
 }
 
 #previewArea ul,
 #previewArea ol {
     padding-left: 24px;
-}
-
-#previewArea a {
-    /* 样式已移至 public.css */
 }
 
 #previewArea a:hover {
@@ -276,17 +266,11 @@ button:hover {
 
 #previewArea table {
     margin: 8px 0;
-    /* 其他样式已移至 public.css */
 }
 
 #previewArea th,
 #previewArea td {
     padding: 6px 12px;
-    /* 其他样式已移至 public.css */
-}
-
-#previewArea th {
-    /* 样式已移至 public.css */
 }
 
 /* 最大化状态 */
