@@ -13,6 +13,7 @@ import { ProjectManager } from '../../managers/projectManager';
 import { buildExportData } from '../../utils/utils';
 import { registerCommentCommands } from './comment';
 import { registerBookmarkCommands } from './bookmark';
+import { logger } from '../../utils/logger';
 import { AuthWebview } from '../authWebview';
 import { UserInfoWebview } from '../userInfoWebview';
 import { apiService } from '../../apiService';
@@ -158,7 +159,7 @@ export function registerCommands(
                     const projectName = file.replace(/-[a-f0-9]+\.json$/, '');
                     message += `${projectName}: ${fileCount} 个文件, ${commentCount} 条注释\n`;
                 } catch (error) {
-                    console.error(`读取项目文件失败: ${file}`, error);
+                    logger.error(`读取项目文件失败: ${file}`, error);
                 }
             }
             
@@ -177,7 +178,7 @@ export function registerCommands(
             });
             
         } catch (error) {
-            console.error('管理项目数据失败:', error);
+            logger.error('管理项目数据失败:', error);
             vscode.window.showErrorMessage('管理项目数据时发生错误');
         }
     });
@@ -212,7 +213,7 @@ export function registerCommands(
                         fs.unlinkSync(filePath);
                         deletedCount++;
                     } catch (error) {
-                        console.error(`删除文件失败: ${item.description}`, error);
+                        logger.error(`删除文件失败: ${item.description}`, error);
                     }
                 }
                 
@@ -274,7 +275,7 @@ export function registerCommands(
             }
 
         } catch (error) {
-            console.error('导出注释数据时发生错误:', error);
+            logger.error('导出注释数据时发生错误:', error);
             vscode.window.showErrorMessage(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -431,7 +432,7 @@ export function registerCommands(
                 );
 
             } catch (error) {
-                console.error('云端上传失败:', error);
+                logger.error('云端上传失败:', error);
                 vscode.window.showErrorMessage(`云端上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
             }
         });
@@ -474,7 +475,7 @@ export function registerCommands(
             }
 
         } catch (error) {
-            console.error('导入注释数据时发生错误:', error);
+            logger.error('导入注释数据时发生错误:', error);
             vscode.window.showErrorMessage(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -647,7 +648,7 @@ export function registerCommands(
             }
 
         } catch (error) {
-            console.error('导入注释数据时发生错误:', error);
+            logger.error('导入注释数据时发生错误:', error);
             vscode.window.showErrorMessage(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     }
@@ -841,13 +842,13 @@ export function registerCommands(
                     }
 
                 } catch (error) {
-                    console.error('服务端导入失败:', error);
+                    logger.error('服务端导入失败:', error);
                     vscode.window.showErrorMessage(`服务端导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
                 }
             });
             
         } catch (error) {
-            console.error('服务端导入失败:', error);
+            logger.error('服务端导入失败:', error);
             vscode.window.showErrorMessage(`服务端导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     }
@@ -916,7 +917,7 @@ export function registerCommands(
                 }
             });
         } catch (error) {
-            console.error('刷新共享注释失败:', error);
+            logger.error('刷新共享注释失败:', error);
             vscode.window.showErrorMessage(`刷新共享注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -974,7 +975,7 @@ export function registerCommands(
             );
             
         } catch (error) {
-            console.error('显示共享注释Webview失败:', error);
+            logger.error('显示共享注释Webview失败:', error);
             vscode.window.showErrorMessage(`显示注释内容失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });

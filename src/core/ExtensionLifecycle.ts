@@ -7,6 +7,7 @@ import { AuthEventHandler } from './eventHandlers/AuthEventHandler';
 import { ProviderRegistry } from './ProviderRegistry';
 import { registerCommands } from '../modules/command/commands';
 import { UserInfoWebview } from '../modules/userInfoWebview';
+import { logger } from '../utils/logger';
 
 /**
  * 扩展生命周期管理器 - 管理扩展的激活和停用流程
@@ -31,7 +32,7 @@ export class ExtensionLifecycle {
      * 激活扩展 - 协调所有组件的初始化顺序
      */
     async activate(): Promise<void> {
-        console.log('本地注释插件已激活');
+        logger.info('本地注释插件已激活');
 
         try {
             // 步骤1：创建状态栏管理器
@@ -125,9 +126,9 @@ export class ExtensionLifecycle {
                 this.context.subscriptions.push(disposable);
             });
 
-            console.log('✅ 本地注释插件激活完成');
+            logger.info('✅ 本地注释插件激活完成');
         } catch (error) {
-            console.error('扩展激活失败:', error);
+            logger.error('扩展激活失败:', error);
             throw error;
         }
     }
@@ -136,7 +137,7 @@ export class ExtensionLifecycle {
      * 停用扩展 - 清理所有资源
      */
     deactivate(): void {
-        console.log('本地注释插件正在停用');
+        logger.info('本地注释插件正在停用');
 
         try {
             // 清理文档事件处理器的防抖定时器
@@ -159,14 +160,14 @@ export class ExtensionLifecycle {
                 try {
                     disposable.dispose();
                 } catch (error) {
-                    console.error('清理资源失败:', error);
+                    logger.error('清理资源失败:', error);
                 }
             });
             this.disposables = [];
 
-            console.log('✅ 本地注释插件停用完成');
+            logger.info('✅ 本地注释插件停用完成');
         } catch (error) {
-            console.error('扩展停用失败:', error);
+            logger.error('扩展停用失败:', error);
         }
     }
 }

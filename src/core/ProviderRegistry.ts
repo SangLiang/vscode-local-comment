@@ -3,6 +3,7 @@ import { ExtensionContainer } from './ExtensionContainer';
 import { TagCompletionProvider } from '../providers/tagCompletionProvider';
 import { TagDefinitionProvider } from '../providers/tagDefinitionProvider';
 import { UserInfoWebview } from '../modules/userInfoWebview';
+import { logger } from '../utils/logger';
 
 /**
  * 提供器注册表 - 注册所有语言服务提供器、树视图和文件装饰器
@@ -159,7 +160,7 @@ export class ProviderRegistry {
             async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
                 // 恢复webview时也需要检查认证状态
                 if (!container.authManager) {
-                    console.error('认证管理器未初始化，无法恢复用户信息面板');
+                    logger.error('认证管理器未初始化，无法恢复用户信息面板');
                     webviewPanel.dispose();
                     return;
                 }

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommentManager, SharedComment } from '../managers/commentManager';
 import { createDataUri } from '../utils/utils';
+import { logger } from '../utils/logger';
 
 export class SharedCommentProvider implements vscode.Disposable, vscode.HoverProvider {
     private decorationType: vscode.TextEditorDecorationType;
@@ -47,7 +48,7 @@ export class SharedCommentProvider implements vscode.Disposable, vscode.HoverPro
             const markdown = await createDataUri(context, 'src/resources/markdown.svg');
             this.markdownIconUri = markdown;
         } catch (error) {
-            console.error('加载图标失败:', error);
+            logger.error('加载图标失败:', error);
         }
     }
 

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ApiRoutes, apiService } from '../apiService';
+import { logger } from '../utils/logger';
 
 export interface UserInfo {
     id: string;
@@ -42,7 +43,7 @@ export class AuthManager {
 
         // 异步加载会话，但不等待完成
         this.loadSession().catch(error => {
-            console.error('加载会话时出错:', error);
+            logger.error('加载会话时出错:', error);
         });
 
         vscode.workspace.onDidChangeConfiguration(e => {
@@ -50,7 +51,7 @@ export class AuthManager {
                 const newApiUrl = vscode.workspace.getConfiguration('local-comment').get<string>('server.apiUrl');
                 if (newApiUrl) {
                     apiService.updateBaseURL(newApiUrl);
-                    console.log(`API URL updated to: ${newApiUrl}`);
+                    logger.info(`API URL updated to: ${newApiUrl}`);
                 }
             }
         });
@@ -76,9 +77,9 @@ export class AuthManager {
                         // 更新用户信息
                         this.currentSession.user = user;
                         await this.saveSession(this.currentSession);
-                        console.log('已加载有效会话');
+                        logger.info('已加载有效会话');
                     } catch (error) {
-                        console.error('验证用户信息失败:', error);
+                        logger.error('验证用户信息失败:', error);
                         // 如果验证失败，可能是因为token过期，尝试刷新
                         try {
                             const refreshed = await this.refreshSession();
@@ -86,7 +87,7 @@ export class AuthManager {
                                 this.clearSession();
                             }
                         } catch (refreshError) {
-                            console.error('刷新token失败:', refreshError);
+                            logger.error('刷新token失败:', refreshError);
                             this.clearSession();
                         }
                     }
@@ -96,7 +97,7 @@ export class AuthManager {
                 }
             }
         } catch (error) {
-            console.error('加载会话失败:', error);
+            logger.error('加载会话失败:', error);
             this.clearSession();
         } finally {
             // 标记初始化完成
@@ -118,7 +119,7 @@ export class AuthManager {
             }
             fs.writeFileSync(this.sessionFile, JSON.stringify(session, null, 2));
         } catch (error) {
-            console.error('保存会话失败:', error);
+            logger.error('保存会话失败:', error);
         }
     }
 
@@ -222,7 +223,7 @@ export class AuthManager {
             try {
                 callback();
             } catch (error) {
-                console.error('执行初始化完成回调时出错:', error);
+                logger.error('执行初始化完成回调时出错:', error);
             }
         });
         
@@ -256,7 +257,7 @@ export class AuthManager {
             const projects = await apiService.get(ApiRoutes.project.getMyProject);
             return projects || [];
         } catch (error) {
-            console.error('获取用户项目失败:', error);
+            logger.error('获取用户项目失败:', error);
             throw error;
         }
     }
@@ -282,13 +283,13 @@ export class AuthManager {
                 const user = await apiService.get<UserInfo>(ApiRoutes.auth.me);
                 this.currentSession.user = user;
             } catch (error) {
-                console.error('获取用户信息失败:', error);
+                logger.error('获取用户信息失败:', error);
             }
             
             await this.saveSession(this.currentSession);
             return true;
         } catch (error) {
-            console.error('刷新会话失败:', error);
+            logger.error('刷新会话失败:', error);
             await this.logout();
             return false;
         }

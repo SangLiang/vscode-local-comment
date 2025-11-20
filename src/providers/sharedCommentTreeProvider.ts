@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager, SharedComment } from '../managers/commentManager';
+import { logger } from '../utils/logger';
 
 export class SharedCommentTreeProvider implements vscode.TreeDataProvider<SharedCommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<SharedCommentTreeItem | undefined | null | void> = new vscode.EventEmitter<SharedCommentTreeItem | undefined | null | void>();
@@ -10,13 +11,13 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
     constructor(private commentManager: CommentManager) {
         // 监听注释管理器变化事件
         const commentUpdateDisposable = this.commentManager.onDidChangeComments(() => {
-            console.log('🔄 [SharedCommentTreeProvider] 注释变化，触发树刷新');
+            logger.debug('🔄 [SharedCommentTreeProvider] 注释变化，触发树刷新');
             this.refresh();
         });
         
         // 监听共享注释变化事件
         const sharedCommentUpdateDisposable = this.commentManager.onDidChangeSharedComments(() => {
-            console.log('🔄 [SharedCommentTreeProvider] 共享注释变化，触发树刷新和上下文更新');
+            logger.debug('🔄 [SharedCommentTreeProvider] 共享注释变化，触发树刷新和上下文更新');
             this.refresh();
             this.updateContext();
         });
@@ -25,7 +26,7 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
     }
 
     refresh(): void {
-        console.log('🔄 [SharedCommentTreeProvider] 执行完整刷新 - 触发树数据变更事件');
+        logger.debug('🔄 [SharedCommentTreeProvider] 执行完整刷新 - 触发树数据变更事件');
         this._onDidChangeTreeData.fire();
     }
 

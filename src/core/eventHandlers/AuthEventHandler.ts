@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ExtensionContainer } from '../ExtensionContainer';
 import { StatusBarManager } from '../StatusBarManager';
+import { logger } from '../../utils/logger';
 
 /**
  * 认证事件处理器 - 处理认证相关事件（登录、登出、初始化）
@@ -21,7 +22,7 @@ export class AuthEventHandler {
 
         // 订阅认证管理器初始化完成事件
         this.container.authManager.onInitialized(async () => {
-            console.log('✅ 认证管理器初始化完成，开始处理共享注释');
+            logger.info('✅ 认证管理器初始化完成，开始处理共享注释');
             await this.handleSharedCommentsAfterInit();
         });
 
@@ -57,7 +58,7 @@ export class AuthEventHandler {
             this.container.sharedCommentTreeProvider.refresh();
             this.statusBarManager.updateStatusAndContext(); // 再次更新状态以反映共享注释的变化
         } catch (error) {
-            console.error('处理登录后的共享注释失败:', error);
+            logger.error('处理登录后的共享注释失败:', error);
         }
         
         // 登录成功后自动打开用户信息界面
@@ -84,7 +85,7 @@ export class AuthEventHandler {
             this.container.sharedCommentTreeProvider.refresh();
             this.statusBarManager.updateStatusAndContext(); // 再次更新状态以反映共享注释的变化
         } catch (error) {
-            console.error('处理登出后的共享注释失败:', error);
+            logger.error('处理登出后的共享注释失败:', error);
         }
     }
 
@@ -94,7 +95,7 @@ export class AuthEventHandler {
     private async handleSharedCommentsAfterInit(): Promise<void> {
         const isLoggedIn = this.container.authManager.isLoggedIn();
         if (!isLoggedIn) {
-            console.log('用户未登录，某些功能可能受限');
+            logger.info('用户未登录，某些功能可能受限');
             // 用户未登录时，清除所有共享注释
             try {
                 await this.container.commentManager.handleSharedCommentsByAuthStatus(false);
@@ -104,11 +105,11 @@ export class AuthEventHandler {
                 this.container.commentTreeProvider.refresh();
                 this.container.sharedCommentTreeProvider.refresh();
             } catch (error) {
-                console.error('清除共享注释失败:', error);
+                logger.error('清除共享注释失败:', error);
             }
         } else {
             const user = this.container.authManager.getCurrentUser();
-            console.log(`用户已登录: ${user?.username}`);
+            logger.info(`用户已登录: ${user?.username}`);
             
             // 如果用户已登录，尝试自动加载共享注释
             try {
@@ -116,24 +117,24 @@ export class AuthEventHandler {
                 if (associatedProjectId) {
                     const projectId = parseInt(associatedProjectId, 10);
                     if (!isNaN(projectId)) {
-                        console.log(`🔄 自动加载项目 ${projectId} 的共享注释...`);
+                        logger.info(`🔄 自动加载项目 ${projectId} 的共享注释...`);
                         const sharedComments = await this.container.commentManager.getProjectSharedComments(projectId);
                         if (sharedComments && sharedComments.length > 0) {
-                            console.log(`✅ 自动加载了 ${sharedComments.length} 条共享注释`);
+                            logger.info(`✅ 自动加载了 ${sharedComments.length} 条共享注释`);
                             // 刷新注释显示
                             this.container.commentProvider.refresh();
                             this.container.sharedCommentProvider.refresh();
                             this.container.commentTreeProvider.refresh();
                             this.container.sharedCommentTreeProvider.refresh();
                         } else {
-                            console.log('ℹ️ 项目中没有共享注释');
+                            logger.info('ℹ️ 项目中没有共享注释');
                         }
                     }
                 } else {
-                    console.log('ℹ️ 用户未关联项目，跳过自动加载共享注释');
+                    logger.info('ℹ️ 用户未关联项目，跳过自动加载共享注释');
                 }
             } catch (error) {
-                console.error('自动加载共享注释失败:', error);
+                logger.error('自动加载共享注释失败:', error);
             }
         }
     }

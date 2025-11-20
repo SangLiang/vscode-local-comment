@@ -6,6 +6,7 @@ import { BookmarkManager } from '../managers/bookmarkManager';
 import { TagManager } from '../managers/tagManager';
 import { ProjectManager } from '../managers/projectManager';
 import { WebviewUtils } from '../utils/webviewUtils';
+import { logger } from '../utils/logger';
 
 export class UserInfoWebview {
     public static currentPanel: UserInfoWebview | undefined;
@@ -195,7 +196,7 @@ export class UserInfoWebview {
                 }
             });
         } catch (error) {
-            console.error('获取用户信息失败:', error);
+            logger.error('获取用户信息失败:', error);
             this._panel.webview.postMessage({
                 command: 'userInfoResult',
                 success: false,
@@ -262,7 +263,7 @@ export class UserInfoWebview {
                 });
             }
         } catch (error) {
-            console.error('获取项目共享注释失败:', error);
+            logger.error('获取项目共享注释失败:', error);
             this._panel.webview.postMessage({
                 command: 'fetchSharedCommentsResult',
                 success: false,
@@ -292,11 +293,11 @@ export class UserInfoWebview {
                 if (this._projectManager && typeof this._projectManager.getAssociatedProject === 'function') {
                     associatedProjectId = this._projectManager.getAssociatedProject();
                 } else {
-                    console.warn('ProjectManager not properly initialized');
+                    logger.warn('ProjectManager not properly initialized');
                     associatedProjectId = undefined;
                 }
             } catch (error) {
-                console.error('Error getting associated project:', error);
+                logger.error('Error getting associated project:', error);
                 associatedProjectId = undefined;
             }
 
@@ -308,7 +309,7 @@ export class UserInfoWebview {
                 associatedProjectId: associatedProjectId
             });
         } catch (error) {
-            console.error('获取项目列表失败:', error);
+            logger.error('获取项目列表失败:', error);
             this._panel.webview.postMessage({
                 command: 'projectsResult',
                 success: false,
@@ -331,7 +332,7 @@ export class UserInfoWebview {
             // 执行用户退出登录后的清理工作
             vscode.commands.executeCommand('localComment.onUserLogout');
         } catch (error) {
-            console.error('退出登录失败:', error);
+            logger.error('退出登录失败:', error);
             this._panel.webview.postMessage({
                 command: 'logoutResult',
                 success: false,
@@ -356,7 +357,7 @@ export class UserInfoWebview {
                 this.handleGetProjects();
             }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
         } catch (error) {
-            console.error('关联项目失败:', error);
+            logger.error('关联项目失败:', error);
             vscode.window.showErrorMessage('关联项目失败: ' + (error as Error).message);
             
             // 通知webview关联失败
@@ -385,7 +386,7 @@ export class UserInfoWebview {
                 this.handleGetProjects();
             }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
         } catch (error) {
-            console.error('取消关联项目失败:', error);
+            logger.error('取消关联项目失败:', error);
             vscode.window.showErrorMessage('取消关联项目失败: ' + (error as Error).message);
             
             // 通知webview取消关联失败
@@ -403,7 +404,7 @@ export class UserInfoWebview {
             // 使用AuthManager的公共方法获取项目列表
             return await this._authManager.getUserProjects();
         } catch (error) {
-            console.error('获取用户项目失败:', error);
+            logger.error('获取用户项目失败:', error);
             // 如果API调用失败，返回空数组
             return [];
         }
@@ -464,7 +465,7 @@ export class UserInfoWebview {
                 stats.tags = tagDeclarations.size;
             }
         } catch (error) {
-            console.error('获取统计信息失败:', error);
+            logger.error('获取统计信息失败:', error);
         }
 
         return stats;
@@ -509,7 +510,7 @@ export class UserInfoWebview {
 
             // TODO: 这里应该调用实际的API上传头像
             // 目前先模拟上传成功
-            console.log('头像上传数据:', {
+            logger.debug('头像上传数据:', {
                 fileName: data.fileName,
                 fileType: data.fileType,
                 fileSize: data.fileSize,
@@ -530,7 +531,7 @@ export class UserInfoWebview {
             vscode.window.showInformationMessage('头像上传成功！');
 
         } catch (error) {
-            console.error('头像上传失败:', error);
+            logger.error('头像上传失败:', error);
             this._panel.webview.postMessage({
                 command: 'uploadAvatarResult',
                 success: false,

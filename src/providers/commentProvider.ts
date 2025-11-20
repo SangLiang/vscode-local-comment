@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommentManager, LocalComment, SharedComment } from '../managers/commentManager';
 import { createDataUri } from '../utils/utils';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 export class CommentProvider implements vscode.Disposable {
     private decorationType: vscode.TextEditorDecorationType;
@@ -66,7 +67,7 @@ export class CommentProvider implements vscode.Disposable {
                 this.deleteIconUri = deleteIcon;
                 this.markdownIconUri = markdownIcon;
             } catch (error) {
-                console.error('加载图标失败:', error);
+                logger.error('加载图标失败:', error);
             }
         }
 
@@ -527,7 +528,7 @@ export class CommentProvider implements vscode.Disposable {
 
             return dataUri;
         } catch (error) {
-            console.error('获取图片失败:', error);
+            logger.error('获取图片失败:', error);
             return null;
         }
     }

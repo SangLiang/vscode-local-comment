@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { logger } from './logger';
 
 /**
  * 读取图标文件并将其转换为Base64数据URI。
@@ -15,7 +16,7 @@ export async function createDataUri(context: vscode.ExtensionContext, filePath: 
         const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
         return `data:image/svg+xml;base64,${Buffer.from(fileContent).toString('base64')}`;
     } catch (e) {
-        console.error(`Local-Comment: Failed to read icon file ${absolutePath}:`, e);
+        logger.error(`Local-Comment: Failed to read icon file ${absolutePath}:`, e);
         return '';
     }
 }

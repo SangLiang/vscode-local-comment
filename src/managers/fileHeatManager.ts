@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../utils/logger';
 
 export interface FileHeatInfo {
     filePath: string;
@@ -144,7 +145,7 @@ export class FileHeatManager implements vscode.Disposable {
         
         // 只有在明确需要触发排序更新时才触发热度更新事件
         if (triggerSortUpdate) {
-            console.log(`🔥 文件 ${filePath} 关闭，触发热度排序更新`);
+            logger.debug(`🔥 文件 ${filePath} 关闭，触发热度排序更新`);
             this.onHeatUpdated.fire();
         }
     }
@@ -184,7 +185,7 @@ export class FileHeatManager implements vscode.Disposable {
             const data = this.context.globalState.get<FileHeatData>(storageKey, {});
             this.heatData = data;
         } catch (error) {
-            console.error('加载文件热度数据失败:', error);
+            logger.error('加载文件热度数据失败:', error);
             this.heatData = {};
         }
     }
@@ -194,7 +195,7 @@ export class FileHeatManager implements vscode.Disposable {
             const storageKey = this.getStorageKey();
             this.context.globalState.update(storageKey, this.heatData);
         } catch (error) {
-            console.error('保存文件热度数据失败:', error);
+            logger.error('保存文件热度数据失败:', error);
         }
     }
 

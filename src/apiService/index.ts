@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { logger } from '../utils/logger';
 
 const VERSION = 'v1';
 const BASE_URL = `/api/${VERSION}`;
@@ -118,7 +119,7 @@ export class ApiService {
                             }
                         }
                     } catch (refreshError) {
-                        console.error('刷新token失败:', refreshError);
+                        logger.error('刷新token失败:', refreshError);
                         // 刷新失败，清除会话
                         if (this.authManager) {
                             await this.authManager.logout();
@@ -250,9 +251,9 @@ export const apiService = ApiService.getInstance();
 // 1. 基本GET请求 - 使用预定义的路由
 try {
     const user = await apiService.get<UserInfo>(ApiRoutes.auth.me);
-    console.log('用户信息:', user);
+    logger.info('用户信息:', user);
 } catch (error) {
-    console.error('获取用户信息失败:', error.message);
+    logger.error('获取用户信息失败:', error.message);
 }
 
 // 2. POST请求（带认证）- 使用预定义的路由
@@ -262,9 +263,9 @@ try {
         filePath: '/path/to/file.ts',
         line: 10
     });
-    console.log('创建注释成功:', result);
+    logger.info('创建注释成功:', result);
 } catch (error) {
-    console.error('创建注释失败:', error.message);
+    logger.error('创建注释失败:', error.message);
 }
 
 // 3. 跳过认证的请求（如登录）- 使用预定义的路由
@@ -273,18 +274,18 @@ try {
         username: 'user',
         password: 'password'
     }, { skipAuth: true });
-    console.log('登录成功:', loginResult);
+    logger.info('登录成功:', loginResult);
 } catch (error) {
-    console.error('登录失败:', error.message);
+    logger.error('登录失败:', error.message);
 }
 
 // 4. 带参数的GET请求 - 使用函数式路由
 try {
     const commentId = '12345';
     const sharedComments = await apiService.get(ApiRoutes.comment.getSharedComments(commentId));
-    console.log('获取共享注释成功:', sharedComments);
+    logger.info('获取共享注释成功:', sharedComments);
 } catch (error) {
-    console.error('获取共享注释失败:', error.message);
+    logger.error('获取共享注释失败:', error.message);
 }
 
 // 5. 带重试的请求 - 使用预定义的路由
@@ -293,9 +294,9 @@ try {
         retryCount: 3, 
         retryDelay: 1000 
     });
-    console.log('获取项目成功:', projects);
+    logger.info('获取项目成功:', projects);
 } catch (error) {
-    console.error('获取项目失败:', error.message);
+    logger.error('获取项目失败:', error.message);
 }
 
 特性：

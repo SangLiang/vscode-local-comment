@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
 import { WebviewUtils } from '../utils/webviewUtils';
+import { logger } from '../utils/logger';
 
 
 // 全局注释管理器引用
@@ -92,7 +93,7 @@ export async function showShareCommentWebview(
                 theme: mermaidTheme
             });
         } catch (error) {
-            console.error('发送Mermaid主题配置失败:', error);
+            logger.error('发送Mermaid主题配置失败:', error);
         }
     }, 0);
 
@@ -219,7 +220,7 @@ async function handleExportToLocalComment(
             vscode.window.showErrorMessage('无法获取注释管理器');
         }
     } catch (error) {
-        console.error('导出为本地注释失败:', error);
+        logger.error('导出为本地注释失败:', error);
         vscode.window.showErrorMessage(`导出失败：${error instanceof Error ? error.message : '未知错误'}`);
     }
 }
@@ -232,7 +233,7 @@ async function getCommentContentFromWebview(): Promise<string | null> {
         // 或者通过其他方式获取内容
         return null; // 暂时返回null，需要实现具体逻辑
     } catch (error) {
-        console.error('获取注释内容失败:', error);
+        logger.error('获取注释内容失败:', error);
         return null;
     }
 }

@@ -472,15 +472,18 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "build": "npx @vscode/vsce package",
-    "ls": "npx @vscode/vsce ls --tree",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "build": "npm run build:prod",
+    "build:dev": "cross-env LOG_LEVEL=info NODE_ENV=development node scripts/set-log-level.js && node scripts/package-dev.js",
+    "build:prod": "cross-env LOG_LEVEL=error NODE_ENV=production node scripts/set-log-level.js && npx @vscode/vsce package",
+    "ls": "npx @vscode/vsce ls --tree"
   },
   "devDependencies": {
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "cross-env": "^7.0.3"
   },
   "dependencies": {
     "axios": "^1.11.0"

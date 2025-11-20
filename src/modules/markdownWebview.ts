@@ -5,6 +5,7 @@ import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
 import { normalizeFilePath } from '../utils/utils';
 import { WebviewUtils } from '../utils/webviewUtils';
+import { logger } from '../utils/logger';
 
 // 辅助函数：获取代码上下文（前后5行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
@@ -36,7 +37,7 @@ export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contex
             contextStartLine: startLine
         };
     } catch (error) {
-        console.error('获取代码上下文失败:', error);
+        logger.error('获取代码上下文失败:', error);
         return {
             contextLines: [],
             contextStartLine: 0
@@ -180,7 +181,7 @@ export async function showMarkdownWebviewInput(
                 
                 await Promise.all(promises);
             } catch (error) {
-                console.error('异步加载数据失败:', error);
+                logger.error('异步加载数据失败:', error);
             }
         }, 0);
 
@@ -245,9 +246,9 @@ export async function showMarkdownWebviewInput(
                                         lineNumber: message.lineNumber
                                     });
                                     
-                                    console.log('已更新选中行:', message.lineNumber + 1);
+                                    logger.debug('已更新选中行:', message.lineNumber + 1);
                                 } catch (error) {
-                                    console.error('更新代码上下文失败:', error);
+                                    logger.error('更新代码上下文失败:', error);
                                 }
                             }
                         }
@@ -259,15 +260,15 @@ export async function showMarkdownWebviewInput(
                             const activeEditor = vscode.window.activeTextEditor;
                             let filePath = '';
 
-                            console.log('activeEditor:', activeEditor);
-                            console.log('contextInfo:', contextInfo);
+                            logger.debug('activeEditor:', activeEditor);
+                            logger.debug('contextInfo:', contextInfo);
                             
                             // 直接使用contextInfo中的文件路径
                             if (contextInfo?.filePath) {
                                 filePath = contextInfo.filePath;
-                                console.log('从contextInfo获取文件路径:', filePath);
+                                logger.debug('从contextInfo获取文件路径:', filePath);
                             } else {
-                                console.warn('contextInfo中没有文件路径信息');
+                                logger.warn('contextInfo中没有文件路径信息');
                                 vscode.window.showWarningMessage('无法获取文件路径信息，分享功能可能无法正常工作');
                             }
 
@@ -310,14 +311,14 @@ export async function showMarkdownWebviewInput(
                                 is_public: true // 默认设为公开
                             };
 
-                            console.log('[filePath]', filePath);
+                            logger.debug('[filePath]', filePath);
                             // 调用API服务分享注释
                             const apiService = ApiService.getInstance();
                             // 修复API路径拼写错误（sharedCommnets -> sharedComments）
                             const response = await apiService.post<any>(ApiRoutes.comment.sharedComments, shareData);
                             
-                            console.log('[shareData]', shareData);
-                            console.log('[response]', response);
+                            logger.debug('[shareData]', shareData);
+                            logger.debug('[response]', response);
                             // 分享成功后更新注释状态
                             if (response && response.id) {
                                 vscode.window.showInformationMessage('注释分享成功！');
@@ -331,7 +332,7 @@ export async function showMarkdownWebviewInput(
                                 throw new Error(response?.error || '分享失败');
                             }
                         } catch (error) {
-                            console.error('分享注释失败:', error);
+                            logger.error('分享注释失败:', error);
                             const errorMessage = error instanceof Error ? error.message : '未知错误';
                             vscode.window.showErrorMessage(`注释分享失败: ${errorMessage}`);
                             panel.webview.postMessage({
@@ -367,7 +368,7 @@ export async function showMarkdownWebviewInput(
                                     vscode.window.showWarningMessage(`未找到标签 @${message.tagName} 的声明`);
                                 }
                             } catch (error) {
-                                console.error('跳转到tag声明失败:', error);
+                                logger.error('跳转到tag声明失败:', error);
                                 vscode.window.showErrorMessage(`跳转失败: ${error instanceof Error ? error.message : '未知错误'}`);
                             }
                         }

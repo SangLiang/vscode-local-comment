@@ -8,6 +8,7 @@ import { AuthManager } from '../../managers/authManager';
 import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
+import { logger } from '../../utils/logger';
 
 export function registerCommentCommands(
     commentManager: CommentManager,
@@ -94,7 +95,7 @@ export function registerCommentCommands(
                 refreshAllCommentViews();
                 callback && callback();
             } catch (error) {
-                console.error('保存注释时发生错误:', error);
+                logger.error('保存注释时发生错误:', error);
                 vscode.window.showErrorMessage(`保存失败: ${error}`);
             }
         };
@@ -203,7 +204,7 @@ export function registerCommentCommands(
                 fileExists = true;
             } catch (error) {
                 // 文件不存在，但这不应该阻止编辑注释
-                console.log(`文件不存在: ${uri.fsPath}，但仍允许编辑注释`);
+                logger.info(`文件不存在: ${uri.fsPath}，但仍允许编辑注释`);
                 fileExists = false;
             }
 
@@ -240,7 +241,7 @@ export function registerCommentCommands(
                 comment.isShared || false
             );
         } catch (error) {
-            console.error('编辑注释失败:', error);
+            logger.error('编辑注释失败:', error);
             vscode.window.showErrorMessage(`编辑注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     }
@@ -257,7 +258,7 @@ export function registerCommentCommands(
                 try {
                     parsedArgs = JSON.parse(args);
                 } catch (parseError) {
-                    console.error('参数解析失败:', parseError);
+                    logger.error('参数解析失败:', parseError);
                     vscode.window.showErrorMessage('参数格式错误');
                     return;
                 }
@@ -284,7 +285,7 @@ export function registerCommentCommands(
             await executeEditComment(documentUri, comment);
 
         } catch (error) {
-            console.error('从hover编辑注释时发生错误:', error);
+            logger.error('从hover编辑注释时发生错误:', error);
             vscode.window.showErrorMessage(`编辑注释时发生错误: ${error}`);
         }
     });
@@ -363,7 +364,7 @@ export function registerCommentCommands(
                     );
                     
                 } catch (error) {
-                    console.error('显示共享注释webview失败:', error);
+                    logger.error('显示共享注释webview失败:', error);
                     
                     // 如果webview显示失败，回退到原来的信息提示
                     const commentType = 'username' in targetComment && targetComment.username ? `[${targetComment.username}]` : 
@@ -440,7 +441,7 @@ export function registerCommentCommands(
                 }
             }
         } catch (error) {
-            console.error('跳转到注释时发生错误:', error);
+            logger.error('跳转到注释时发生错误:', error);
             vscode.window.showErrorMessage('无法打开文件或跳转到指定位置');
         }
     });
@@ -482,7 +483,7 @@ export function registerCommentCommands(
             editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
             
         } catch (error) {
-            console.error('跳转到标签声明时发生错误:', error);
+            logger.error('跳转到标签声明时发生错误:', error);
             vscode.window.showErrorMessage(`跳转失败: ${error}`);
         }
     });
@@ -602,7 +603,7 @@ export function registerCommentCommands(
             }
 
         } catch (error) {
-            console.error('模糊匹配失败:', error);
+            logger.error('模糊匹配失败:', error);
             vscode.window.showErrorMessage(`模糊匹配失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -645,7 +646,7 @@ export function registerCommentCommands(
             }
 
         } catch (error) {
-            console.error('打开文件失败:', error);
+            logger.error('打开文件失败:', error);
             vscode.window.showErrorMessage(`打开文件失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -753,7 +754,7 @@ export function registerCommentCommands(
             }
 
         } catch (error) {
-            console.error('更新注释行号失败:', error);
+            logger.error('更新注释行号失败:', error);
             vscode.window.showErrorMessage(`更新失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
     });
@@ -866,7 +867,7 @@ export function registerCommentCommands(
                 }
             }
         } catch (error) {
-            console.error('处理多行注释时出错:', error);
+            logger.error('处理多行注释时出错:', error);
             vscode.window.showErrorMessage(`操作失败: ${error}`);
         }
     });
@@ -897,7 +898,7 @@ export function registerCommentCommands(
                 refreshAllCommentViews();
             }
         } catch (error) {
-            console.error('添加注释时出错:', error);
+            logger.error('添加注释时出错:', error);
             vscode.window.showErrorMessage(`添加注释失败: ${error}`);
         }
     });
@@ -928,7 +929,7 @@ export function registerCommentCommands(
             tagManager.updateTags(commentManager.getAllComments());
             refreshAllCommentViews();
         } catch (error) {
-            console.error('转换选中文字为注释失败:', error);
+            logger.error('转换选中文字为注释失败:', error);
             vscode.window.showErrorMessage('转换失败，请重试');
         }
     });
@@ -961,7 +962,7 @@ export function registerCommentCommands(
                 try {
                     parsedArgs = JSON.parse(args);
                 } catch (parseError) {
-                    console.error('参数解析失败:', parseError);
+                    logger.error('参数解析失败:', parseError);
                     vscode.window.showErrorMessage('参数格式错误');
                     return;
                 }
@@ -993,7 +994,7 @@ export function registerCommentCommands(
             refreshAllCommentViews();
             // 删除注释无需提示，用户可以直接看到结果
         } catch (error) {
-            console.error('从hover删除注释时发生错误:', error);
+            logger.error('从hover删除注释时发生错误:', error);
             vscode.window.showErrorMessage(`删除注释时发生错误: ${error}`);
         }
     });
@@ -1010,7 +1011,7 @@ export function registerCommentCommands(
                 try {
                     parsedArgs = JSON.parse(args);
                 } catch (parseError) {
-                    console.error('参数解析失败:', parseError);
+                    logger.error('参数解析失败:', parseError);
                     vscode.window.showErrorMessage('参数格式错误');
                     return;
                 }
@@ -1051,7 +1052,7 @@ export function registerCommentCommands(
                 contextInfo
             );
         } catch (error) {
-            console.error('预览注释时发生错误:', error);
+            logger.error('预览注释时发生错误:', error);
             vscode.window.showErrorMessage(`预览注释时发生错误: ${error}`);
         }
     });

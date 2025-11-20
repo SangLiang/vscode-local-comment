@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../utils/logger';
 
 export class ProjectManager {
     private static readonly MEMENTO_KEY = 'localComment.projectAssociations';
@@ -35,7 +36,7 @@ export class ProjectManager {
                 throw new Error('数据保存验证失败');
             }
         } catch (error) {
-            console.error('关联项目 - 保存失败:', error);
+            logger.error('关联项目 - 保存失败:', error);
             throw new Error(`保存关联数据失败: ${error}`);
         }
     }
@@ -92,7 +93,7 @@ export class ProjectManager {
                 throw new Error('数据保存验证失败');
             }
         } catch (error) {
-            console.error('取消关联项目 - 保存失败:', error);
+            logger.error('取消关联项目 - 保存失败:', error);
             throw new Error(`保存数据失败: ${error}`);
         }
     }

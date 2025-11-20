@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LocalComment, SharedComment } from './commentManager';
+import { logger } from '../utils/logger';
 
 /**
  * 注释匹配器 - 负责在文档内容变化时智能匹配注释位置
@@ -234,13 +235,13 @@ export class CommentMatcher {
         
         // 如果没有保存的行内容，严格隐藏注释
         if (!lineContent || lineContent.length === 0) {
-            console.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
+            logger.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
             return -1;
         }
         
         // 提高匹配标准：行内容必须有足够的特征性
         if (!this.hasEnoughCharacteristics(lineContent)) {
-            console.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，将被隐藏以避免误匹配`);
+            logger.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，将被隐藏以避免误匹配`);
             return -1;
         }
 
@@ -258,7 +259,7 @@ export class CommentMatcher {
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
             if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
-                console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
+                logger.debug(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
         }
@@ -267,14 +268,14 @@ export class CommentMatcher {
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
             if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
-                console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
+                logger.debug(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
         }
 
         // 4. 在有限范围内搜索精确匹配
         const searchRange = this.calculateSearchRange(document.lineCount, lineContent);
-        console.log(`🔍 使用受限搜索范围: ±${searchRange} 行 (文件总行数: ${document.lineCount}行)`);
+        logger.debug(`🔍 使用受限搜索范围: ±${searchRange} 行 (文件总行数: ${document.lineCount}行)`);
         
         const startLine = Math.max(0, comment.line - searchRange);
         const endLine = Math.min(document.lineCount - 1, comment.line + searchRange);
@@ -286,14 +287,14 @@ export class CommentMatcher {
             }
             
             if (this.isExactMatch(document, comment, i)) {
-                console.log(`✅ 在附近找到精确匹配：行 ${i + 1}`);
+                logger.debug(`✅ 在附近找到精确匹配：行 ${i + 1}`);
                 return i;
             }
         }
 
         // 5. 严格模式：不进行全文搜索和模糊匹配
         // 这样可以避免误匹配到完全不相关的代码行
-        console.log(`❌ 注释 ${comment.id} 未找到可靠匹配，将被隐藏以避免误匹配`);
+        logger.debug(`❌ 注释 ${comment.id} 未找到可靠匹配，将被隐藏以避免误匹配`);
         return -1;
     }
     
@@ -305,13 +306,13 @@ export class CommentMatcher {
         
         // 如果没有保存的行内容，严格隐藏注释
         if (!lineContent || lineContent.length === 0) {
-            console.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
+            logger.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
             return -1;
         }
         
         // 对于全文搜索场景，稍微放宽特征性检查
         if (!this.hasEnoughCharacteristics(lineContent)) {
-            console.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，但在全文搜索场景下继续尝试匹配`);
+            logger.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，但在全文搜索场景下继续尝试匹配`);
             // 不直接返回-1，继续尝试匹配
         }
 
@@ -329,7 +330,7 @@ export class CommentMatcher {
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
             if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
-                console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
+                logger.debug(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
         }
@@ -338,14 +339,14 @@ export class CommentMatcher {
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
             if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
-                console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
+                logger.debug(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
         }
 
         // 4. 在扩展范围内搜索精确匹配
         const searchRange = this.calculateSearchRange(document.lineCount, lineContent);
-        console.log(`🔍 使用扩展搜索范围: ±${searchRange} 行 (文件总行数: ${document.lineCount}行)`);
+        logger.debug(`🔍 使用扩展搜索范围: ±${searchRange} 行 (文件总行数: ${document.lineCount}行)`);
         
         const startLine = Math.max(0, comment.line - searchRange);
         const endLine = Math.min(document.lineCount - 1, comment.line + searchRange);
@@ -357,13 +358,13 @@ export class CommentMatcher {
             }
             
             if (this.isExactMatch(document, comment, i)) {
-                console.log(`✅ 在扩展范围内找到精确匹配：行 ${i + 1}`);
+                logger.debug(`✅ 在扩展范围内找到精确匹配：行 ${i + 1}`);
                 return i;
             }
         }
 
         // 5. 全文搜索：当局部搜索失败时，进行全文精确匹配
-        console.log(`🔍 开始全文搜索匹配注释 ${comment.id}`);
+        logger.debug(`🔍 开始全文搜索匹配注释 ${comment.id}`);
         
         // 为了提高性能，优先搜索距离原位置较近的行
         const searchOrder = this.generateOptimizedSearchOrder(document.lineCount, comment.line, startLine, endLine);
@@ -375,13 +376,13 @@ export class CommentMatcher {
             }
             
             if (this.isExactMatch(document, comment, i)) {
-                console.log(`✅ 全文搜索找到精确匹配：行 ${i + 1} (距离原位置 ${Math.abs(i - comment.line)} 行)`);
+                logger.debug(`✅ 全文搜索找到精确匹配：行 ${i + 1} (距离原位置 ${Math.abs(i - comment.line)} 行)`);
                 return i;
             }
         }
 
         // 6. 最终未找到匹配
-        console.log(`❌ 注释 ${comment.id} 即使在全文搜索中也未找到匹配，将被隐藏`);
+        logger.debug(`❌ 注释 ${comment.id} 即使在全文搜索中也未找到匹配，将被隐藏`);
         return -1;
     }
     
@@ -682,13 +683,13 @@ export class CommentMatcher {
         
         // 如果没有保存的行内容，严格隐藏注释
         if (!lineContent || lineContent.length === 0) {
-            console.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
+            logger.warn(`⚠️ 注释 ${comment.id} 缺少代码内容快照，将被隐藏`);
             return -1;
         }
         
         // 对于大块代码插入场景，放宽特征性检查
         if (!this.hasEnoughCharacteristics(lineContent)) {
-            console.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，但在大块变化场景下继续尝试匹配`);
+            logger.warn(`⚠️ 注释 ${comment.id} 对应的代码行特征性不足，但在大块变化场景下继续尝试匹配`);
             // 不直接返回-1，继续尝试匹配
         }
 
@@ -706,7 +707,7 @@ export class CommentMatcher {
         const previousLine = comment.line - 1;
         if (previousLine >= 0 && previousLine < document.lineCount) {
             if (this.isExactMatch(document, comment, previousLine) && (isSharedComment || !this.matchedLines.has(previousLine))) {
-                console.log(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
+                logger.debug(`✅ 注释需要上移一行：从行 ${comment.line + 1} 到行 ${previousLine + 1}`);
                 return previousLine;
             }
         }
@@ -715,14 +716,14 @@ export class CommentMatcher {
         const nextLine = comment.line + 1;
         if (nextLine < document.lineCount) {
             if (this.isExactMatch(document, comment, nextLine) && (isSharedComment || !this.matchedLines.has(nextLine))) {
-                console.log(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
+                logger.debug(`✅ 注释需要下移一行：从行 ${comment.line + 1} 到行 ${nextLine + 1}`);
                 return nextLine;
             }
         }
 
         // 4. 使用扩展的搜索范围进行精确匹配
         const extendedSearchRange = Math.min(100, Math.max(50, document.lineCount * 0.1)); // 最少50行，最多100行，或文件的10%
-        console.log(`🔍 大块变化场景，使用扩展搜索范围: ±${extendedSearchRange} 行 (文件总行数: ${document.lineCount}行)`);
+        logger.debug(`🔍 大块变化场景，使用扩展搜索范围: ±${extendedSearchRange} 行 (文件总行数: ${document.lineCount}行)`);
         
         const startLine = Math.max(0, comment.line - extendedSearchRange);
         const endLine = Math.min(document.lineCount - 1, comment.line + extendedSearchRange);
@@ -734,13 +735,13 @@ export class CommentMatcher {
             }
             
             if (this.isExactMatch(document, comment, i)) {
-                console.log(`✅ 在扩展范围内找到精确匹配：行 ${i + 1} (距离原位置 ${Math.abs(i - comment.line)} 行)`);
+                logger.debug(`✅ 在扩展范围内找到精确匹配：行 ${i + 1} (距离原位置 ${Math.abs(i - comment.line)} 行)`);
                 return i;
             }
         }
 
         // 5. 如果还是没找到，记录详细信息但不隐藏
-        console.log(`❌ 注释 ${comment.id} 在扩展范围内未找到匹配，将被隐藏`);
+        logger.debug(`❌ 注释 ${comment.id} 在扩展范围内未找到匹配，将被隐藏`);
         return -1;
     }
 } 

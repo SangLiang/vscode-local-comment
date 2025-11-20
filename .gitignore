@@ -17,6 +17,9 @@ build/
 !gulpfile.js
 !src/templates/**
 
+# 构建时生成的配置文件
+src/utils/logConfig.json
+
 # TypeScript 缓存
 *.tsbuildinfo
 

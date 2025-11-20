@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { logger } from '../utils/logger';
 
 export interface Bookmark {
     id: string;
@@ -57,7 +58,7 @@ export class BookmarkManager {
         await this.loadBookmarks();
         
         this._onDidChangeBookmarks.fire();
-        console.log('工作区已切换，书签数据已重新加载');
+        logger.info('工作区已切换，书签数据已重新加载');
     }
 
     /**
@@ -107,7 +108,7 @@ export class BookmarkManager {
                 this.bookmarks = {};
             }
         } catch (error) {
-            console.error('加载书签失败:', error);
+            logger.error('加载书签失败:', error);
             this.bookmarks = {};
         }
     }
@@ -131,7 +132,7 @@ export class BookmarkManager {
                         }
                     } catch (error) {
                         // 文件可能不存在或无法访问，跳过
-                        console.warn(`无法获取书签行内容: ${filePath}:${bookmark.line + 1}`);
+                        logger.warn(`无法获取书签行内容: ${filePath}:${bookmark.line + 1}`);
                     }
                 }
             }
@@ -152,7 +153,7 @@ export class BookmarkManager {
             
             fs.writeFileSync(this.storageFile, JSON.stringify(this.bookmarks, null, 2));
         } catch (error) {
-            console.error('保存书签失败:', error);
+            logger.error('保存书签失败:', error);
         }
     }
 
@@ -180,7 +181,7 @@ export class BookmarkManager {
                 lineContent = document.lineAt(line).text.trim();
             }
         } catch (error) {
-            console.error('获取行内容失败:', error);
+            logger.error('获取行内容失败:', error);
         }
 
         const bookmark: Bookmark = {
@@ -327,7 +328,7 @@ export class BookmarkManager {
             editor.selection = new vscode.Selection(position, position);
             editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
         } catch (error) {
-            console.error('跳转到书签失败:', error);
+            logger.error('跳转到书签失败:', error);
         }
     }
 
