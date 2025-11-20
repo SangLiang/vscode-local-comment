@@ -38,8 +38,8 @@ export class CommentProvider implements vscode.Disposable {
 
         // 监听编辑器变化
         this.disposables.push(
-            vscode.window.onDidChangeActiveTextEditor(() => this.updateDecorations()),
-            vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
+            // vscode.window.onDidChangeActiveTextEditor(() => this.updateDecorations()),
+            // vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
         );
 
         // 异步加载图标，加载完成后重新创建装饰类型
@@ -47,7 +47,6 @@ export class CommentProvider implements vscode.Disposable {
             this.recreateDecorationType();
             this.updateDecorations();
         });
-
         this.updateDecorations();
     }
 

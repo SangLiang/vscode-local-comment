@@ -575,7 +575,9 @@ export class CommentManager {
         logger.info(`🔍 文件首次加载场景，使用全文搜索进行智能匹配`);
         logger.info(`🔍 匹配前注释数量: ${allComments.length} (本地: ${localComments.length}, 共享: ${sharedComments.length})`);
         const matchResults = this.commentMatcher.batchMatchCommentsWithFullSearch(document, allComments);
-        logger.info(`🔍 匹配结果:`, matchResults);
+        // 将 Map 转换为对象格式以便更好地打印
+        const matchResultsObj = Object.fromEntries(matchResults);
+        logger.info(`🔍 匹配结果:`, matchResultsObj);
         
         const matchedComments: (LocalComment | SharedComment)[] = [];
         let needsSave = false;

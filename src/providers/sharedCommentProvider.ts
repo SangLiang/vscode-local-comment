@@ -27,10 +27,10 @@ export class SharedCommentProvider implements vscode.Disposable, vscode.HoverPro
         });
 
         // 监听编辑器变化
-        this.disposables.push(
-            vscode.window.onDidChangeActiveTextEditor(() => this.updateDecorations()),
-            vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
-        );
+        // this.disposables.push(
+        //     vscode.window.onDidChangeActiveTextEditor(() => this.updateDecorations()),
+        //     vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
+        // );
 
         // 异步加载图标，加载完成后重新创建装饰类型
         this.loadIcons().then(() => {
