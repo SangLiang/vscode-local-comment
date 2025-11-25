@@ -57,7 +57,8 @@ export async function showShareCommentWebview(
             retainContextWhenHidden: true,  // 用户切换tab时，保留状态
             localResourceRoots: [
                 vscode.Uri.joinPath(context.extensionUri, 'src', 'templates', 'shareComment'),
-                vscode.Uri.joinPath(context.extensionUri, 'src', 'lib')
+                vscode.Uri.joinPath(context.extensionUri, 'src', 'lib'),
+                vscode.Uri.joinPath(context.extensionUri, 'out', 'lib')  // 添加 out/lib 以支持打包后的库文件
             ],
             enableCommandUris: false,
             enableFindWidget: false

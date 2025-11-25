@@ -70,7 +70,11 @@ export class WebviewUtils {
 
         // 构建 marked.js URI
         if (options.markedJs) {
-            const markedJsPath = vscode.Uri.joinPath(extensionUri, 'src', 'lib', 'marked.min.js');
+            // 优先从 out/lib 加载（打包后的位置），如果不存在则从 src/lib 加载（开发环境）
+            const outPath = vscode.Uri.joinPath(extensionUri, 'out', 'lib', 'marked.min.js');
+            const srcPath = vscode.Uri.joinPath(extensionUri, 'src', 'lib', 'marked.min.js');
+            // 检查文件是否存在，优先使用 out/lib（打包后）
+            const markedJsPath = fs.existsSync(outPath.fsPath) ? outPath : srcPath;
             uris.markedJsUri = webview.asWebviewUri(markedJsPath).toString();
         }
 
@@ -88,7 +92,11 @@ export class WebviewUtils {
 
         // 构建 mermaid.js URI
         if (options.mermaidJs) {
-            const mermaidJsPath = vscode.Uri.joinPath(extensionUri, 'src', 'lib', 'mermaid.min.js');
+            // 优先从 out/lib 加载（打包后的位置），如果不存在则从 src/lib 加载（开发环境）
+            const outPath = vscode.Uri.joinPath(extensionUri, 'out', 'lib', 'mermaid.min.js');
+            const srcPath = vscode.Uri.joinPath(extensionUri, 'src', 'lib', 'mermaid.min.js');
+            // 检查文件是否存在，优先使用 out/lib（打包后）
+            const mermaidJsPath = fs.existsSync(outPath.fsPath) ? outPath : srcPath;
             uris.mermaidJsUri = webview.asWebviewUri(mermaidJsPath).toString();
         }
 

@@ -19,6 +19,12 @@ vsc-extension-quickstart.md
 **/.eslintrc
 **/tslint.json
 
+# 依赖文件
+# 注意：不要排除 node_modules/，vsce 需要它来打包 dependencies 中的包
+# vsce 会自动只打包 dependencies 中的包，不会打包 devDependencies
+package-lock.json
+yarn.lock
+
 # 测试文件
 **/test/**
 **/*.test.ts

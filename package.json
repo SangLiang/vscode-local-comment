@@ -471,8 +471,9 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "vscode:prepublish": "npm run copy-lib && npm run compile",
+    "copy-lib": "node scripts/copy-lib-files.js",
+    "compile": "npm run copy-lib && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "build": "npm run build:prod",
     "build:dev": "cross-env LOG_LEVEL=info NODE_ENV=development node scripts/set-log-level.js && node scripts/package-dev.js",
@@ -483,7 +484,9 @@
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
     "typescript": "^5.0.0",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "marked": "^4.3.0",
+    "mermaid": "^10.6.1"
   },
   "dependencies": {
     "axios": "^1.11.0"
