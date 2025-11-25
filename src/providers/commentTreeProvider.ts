@@ -4,6 +4,7 @@ import { CommentManager, LocalComment, SharedComment, FileComments } from '../ma
 import { FileHeatManager } from '../managers/fileHeatManager';
 import { BookmarkManager, Bookmark } from '../managers/bookmarkManager';
 import { logger } from '../utils/logger';
+import { COMMANDS } from '../constants';
 
 export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
@@ -210,7 +211,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             // 添加命令，点击时跳转到对应位置
             // 即使是隐藏注释也可以尝试跳转，用户可能想手动查找
             commentNode.command = {
-                command: 'localComment.goToComment',
+                command: COMMANDS.GO_TO_COMMENT,
                 title: '跳转到注释',
                 arguments: [filePath, matchedComment?.line || comment.line]
             };
@@ -287,7 +288,7 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             
             // 添加命令，点击时跳转到对应位置
             bookmarkNode.command = {
-                command: 'localComment.goToBookmark',
+                command: COMMANDS.GO_TO_BOOKMARK,
                 title: '跳转到书签',
                 arguments: [filePath, bookmark.line]
             };

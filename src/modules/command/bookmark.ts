@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { BookmarkManager } from '../../managers/bookmarkManager';
+import { COMMANDS } from '../../constants';
 
 export function registerBookmarkCommands(
     bookmarkManager?: BookmarkManager
 ): vscode.Disposable[] {
     // 添加书签命令
-    const addBookmarkCommand = vscode.commands.registerCommand('localComment.addBookmark', async () => {
+    const addBookmarkCommand = vscode.commands.registerCommand(COMMANDS.ADD_BOOKMARK, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -22,7 +23,7 @@ export function registerBookmarkCommands(
     });
 
     // 切换书签命令
-    const toggleBookmarkCommand = vscode.commands.registerCommand('localComment.toggleBookmark', async () => {
+    const toggleBookmarkCommand = vscode.commands.registerCommand(COMMANDS.TOGGLE_BOOKMARK, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -39,7 +40,7 @@ export function registerBookmarkCommands(
     });
 
     // 跳转到书签命令
-    const goToBookmarkCommand = vscode.commands.registerCommand('localComment.goToBookmark', async (filePath: string, line: number) => {
+    const goToBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_BOOKMARK, async (filePath: string, line: number) => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -49,7 +50,7 @@ export function registerBookmarkCommands(
     });
 
     // 从树中删除书签命令
-    const deleteBookmarkFromTreeCommand = vscode.commands.registerCommand('localComment.deleteBookmarkFromTree', async (item) => {
+    const deleteBookmarkFromTreeCommand = vscode.commands.registerCommand(COMMANDS.DELETE_BOOKMARK_FROM_TREE, async (item) => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -61,7 +62,7 @@ export function registerBookmarkCommands(
     });
 
     // 清除文件书签命令
-    const clearFileBookmarksCommand = vscode.commands.registerCommand('localComment.clearFileBookmarks', async (arg: any) => {
+    const clearFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_BOOKMARKS, async (arg: any) => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -98,7 +99,7 @@ export function registerBookmarkCommands(
     });
 
     // 清除所有书签命令
-    const clearAllBookmarksCommand = vscode.commands.registerCommand('localComment.clearAllBookmarks', async () => {
+    const clearAllBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_ALL_BOOKMARKS, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -107,7 +108,7 @@ export function registerBookmarkCommands(
     });
 
     // 跳转到下一个书签命令
-    const goToNextBookmarkCommand = vscode.commands.registerCommand('localComment.goToNextBookmark', async () => {
+    const goToNextBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_NEXT_BOOKMARK, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -117,7 +118,7 @@ export function registerBookmarkCommands(
     });
 
     // 跳转到上一个书签命令
-    const goToPreviousBookmarkCommand = vscode.commands.registerCommand('localComment.goToPreviousBookmark', async () => {
+    const goToPreviousBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_PREVIOUS_BOOKMARK, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;
@@ -127,7 +128,7 @@ export function registerBookmarkCommands(
     });
 
     // 显示当前文件书签命令
-    const showCurrentFileBookmarksCommand = vscode.commands.registerCommand('localComment.showCurrentFileBookmarks', async () => {
+    const showCurrentFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.SHOW_CURRENT_FILE_BOOKMARKS, async () => {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
             return;

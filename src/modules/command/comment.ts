@@ -9,6 +9,7 @@ import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
 import { logger } from '../../utils/logger';
+import { COMMANDS } from '../../constants';
 
 export function registerCommentCommands(
     commentManager: CommentManager,
@@ -101,15 +102,15 @@ export function registerCommentCommands(
         };
     }
 
-    const refreshCommentsCommand = vscode.commands.registerCommand('localComment.refreshComments', () => {
+    const refreshCommentsCommand = vscode.commands.registerCommand(COMMANDS.REFRESH_COMMENTS, () => {
         refreshAllCommentViews();
     });
 
-    const refreshTreeCommand = vscode.commands.registerCommand('localComment.refreshTree', () => {
+    const refreshTreeCommand = vscode.commands.registerCommand(COMMANDS.REFRESH_TREE, () => {
         commentTreeProvider.refresh();
     });
 
-    const deleteCommentFromTreeCommand = vscode.commands.registerCommand('localComment.deleteCommentFromTree', async (item) => {
+    const deleteCommentFromTreeCommand = vscode.commands.registerCommand(COMMANDS.DELETE_COMMENT_FROM_TREE, async (item) => {
         if ((item.contextValue === 'comment' || item.contextValue === 'hidden-comment') && item.filePath && item.comment) {
             const uri = vscode.Uri.file(item.filePath);
             await commentManager.removeComment(uri, item.comment.line);
@@ -118,7 +119,7 @@ export function registerCommentCommands(
         }
     });
 
-    const clearFileCommentsCommand = vscode.commands.registerCommand('localComment.clearFileComments', async (item) => {
+    const clearFileCommentsCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_COMMENTS, async (item) => {
         if (item.contextValue === 'file' && item.filePath) {
             // 显示确认对话框
             const fileName = getFileNameFromPath(item.filePath);
@@ -137,7 +138,7 @@ export function registerCommentCommands(
     });
 
     // 清空所有共享注释命令
-    const clearAllSharedCommentsCommand = vscode.commands.registerCommand('localComment.clearAllSharedComments', async () => {
+    const clearAllSharedCommentsCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_ALL_SHARED_COMMENTS, async () => {
         // 显示确认对话框
         const confirm = await vscode.window.showWarningMessage(
             '确定要清空所有共享注释吗？此操作不可恢复！',
@@ -154,7 +155,7 @@ export function registerCommentCommands(
     });
 
     // 清空当前文件的共享注释命令
-    const clearFileSharedCommentsCommand = vscode.commands.registerCommand('localComment.clearFileSharedComments', async () => {
+    const clearFileSharedCommentsCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_SHARED_COMMENTS, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
@@ -247,7 +248,7 @@ export function registerCommentCommands(
     }
 
     // 添加editCommentFromHover命令
-    const editCommentFromHoverCommand = vscode.commands.registerCommand('localComment.editCommentFromHover', async (args) => {
+    const editCommentFromHoverCommand = vscode.commands.registerCommand(COMMANDS.EDIT_COMMENT_FROM_HOVER, async (args) => {
         try {
             let parsedArgs;
             
@@ -290,14 +291,14 @@ export function registerCommentCommands(
         }
     });
 
-    const editCommentFromTreeCommand = vscode.commands.registerCommand('localComment.editCommentFromTree', async (item) => {
+    const editCommentFromTreeCommand = vscode.commands.registerCommand(COMMANDS.EDIT_COMMENT_FROM_TREE, async (item) => {
         if ((item.contextValue === 'comment' || item.contextValue === 'hidden-comment') && item.filePath && item.comment) {
             const uri = vscode.Uri.file(item.filePath);
             await executeEditComment(uri, item.comment);
         }
     });
 
-    const goToCommentCommand = vscode.commands.registerCommand('localComment.goToComment', async (filePath: string, line: number) => {
+    const goToCommentCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_COMMENT, async (filePath: string, line: number) => {
         try {
             const uri = vscode.Uri.file(filePath);
             
@@ -446,7 +447,7 @@ export function registerCommentCommands(
         }
     });
 
-    const goToTagDeclarationCommand = vscode.commands.registerCommand('localComment.goToTagDeclaration', async (args) => {
+    const goToTagDeclarationCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_TAG_DECLARATION, async (args) => {
         try {
             let tagName: string;
             
@@ -489,7 +490,7 @@ export function registerCommentCommands(
     });
 
     // 模糊匹配命令
-    const fuzzyMatchCommentCommand = vscode.commands.registerCommand('localComment.fuzzyMatchComment', async (item) => {
+    const fuzzyMatchCommentCommand = vscode.commands.registerCommand(COMMANDS.FUZZY_MATCH_COMMENT, async (item) => {
         if (!item || !item.comment || !item.filePath) {
             vscode.window.showErrorMessage('无效的注释项');
             return;
@@ -609,7 +610,7 @@ export function registerCommentCommands(
     });
 
     // 跳转到文件命令
-    const goToFileCommand = vscode.commands.registerCommand('localComment.goToFile', async (item) => {
+    const goToFileCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_FILE, async (item) => {
         if (!item || !item.filePath) {
             vscode.window.showErrorMessage('无效的文件项');
             return;
@@ -652,7 +653,7 @@ export function registerCommentCommands(
     });
 
     // 更新注释行号命令
-    const updateCommentLineCommand = vscode.commands.registerCommand('localComment.updateCommentLine', async (item) => {
+    const updateCommentLineCommand = vscode.commands.registerCommand(COMMANDS.UPDATE_COMMENT_LINE, async (item) => {
         if (!item || !item.comment || !item.filePath) {
             vscode.window.showErrorMessage('无效的注释项');
             return;
@@ -760,7 +761,7 @@ export function registerCommentCommands(
     });
 
     // 添加多行Markdown注释命令
-    const addMarkdownCommentCommand = vscode.commands.registerCommand('localComment.addMarkdownComment', async () => {
+    const addMarkdownCommentCommand = vscode.commands.registerCommand(COMMANDS.ADD_MARKDOWN_COMMENT, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
@@ -873,7 +874,7 @@ export function registerCommentCommands(
     });
 
     // 添加单行注释命令
-    const addCommentCommand = vscode.commands.registerCommand('localComment.addComment', async () => {
+    const addCommentCommand = vscode.commands.registerCommand(COMMANDS.ADD_COMMENT, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
@@ -904,7 +905,7 @@ export function registerCommentCommands(
     });
 
     // 添加转换选中文字为注释的命令
-    const convertSelectionToCommentCommand = vscode.commands.registerCommand('localComment.convertSelectionToComment', async () => {
+    const convertSelectionToCommentCommand = vscode.commands.registerCommand(COMMANDS.CONVERT_SELECTION_TO_COMMENT, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
@@ -935,7 +936,7 @@ export function registerCommentCommands(
     });
 
     // 删除注释命令
-    const removeCommentCommand = vscode.commands.registerCommand('localComment.removeComment', async () => {
+    const removeCommentCommand = vscode.commands.registerCommand(COMMANDS.REMOVE_COMMENT, async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
@@ -951,7 +952,7 @@ export function registerCommentCommands(
     });
 
     // 从hover删除注释命令
-    const removeCommentFromHoverCommand = vscode.commands.registerCommand('localComment.removeCommentFromHover', async (args) => {
+    const removeCommentFromHoverCommand = vscode.commands.registerCommand(COMMANDS.REMOVE_COMMENT_FROM_HOVER, async (args) => {
         try {
             let parsedArgs;
             
@@ -1000,7 +1001,7 @@ export function registerCommentCommands(
     });
 
     // 预览注释内容命令
-    const previewSharedCommentCommand = vscode.commands.registerCommand('localComment.previewSharedComment', async (args) => {
+    const previewSharedCommentCommand = vscode.commands.registerCommand(COMMANDS.PREVIEW_SHARED_COMMENT, async (args) => {
         try {
             let parsedArgs;
             

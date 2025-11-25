@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { AuthManager, LoginCredentials } from '../managers/authManager';
 import { WebviewUtils } from '../utils/webviewUtils';
+import { VIEW_TYPES, COMMANDS, IPC_MESSAGES } from '../constants';
 
 export class AuthWebview {
-    private static readonly viewType = 'localComment.auth';
+    private static readonly viewType = VIEW_TYPES.AUTH;
     private readonly _panel: vscode.WebviewPanel | undefined;
     private readonly _extensionUri: vscode.Uri;
     private readonly _authManager: AuthManager;
@@ -54,10 +55,10 @@ export class AuthWebview {
         this._panel.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
-                    case 'login':
+                    case IPC_MESSAGES.LOGIN:
                         await this.handleLogin(message.credentials);
                         break;
-                    case 'logout':
+                    case IPC_MESSAGES.LOGOUT:
                         await this.handleLogout();
                         break;
                 }
@@ -90,17 +91,17 @@ export class AuthWebview {
                 this.dispose();
                 
                 // 通知其他组件用户已登录
-                vscode.commands.executeCommand('localComment.onUserLogin', result.user);
+                vscode.commands.executeCommand(COMMANDS.ON_USER_LOGIN, result.user);
             } else {
                 this._panel?.webview.postMessage({
-                    command: 'loginResult',
+                    command: IPC_MESSAGES.LOGIN_RESULT,
                     success: false,
                     message: result.message
                 });
             }
         } catch (error) {
             this._panel?.webview.postMessage({
-                command: 'loginResult',
+                command: IPC_MESSAGES.LOGIN_RESULT,
                 success: false,
                 message: '登录失败: ' + (error as Error).message
             });
@@ -114,7 +115,7 @@ export class AuthWebview {
             this.dispose();
             
             // 通知其他组件用户已登出
-            vscode.commands.executeCommand('localComment.onUserLogout');
+            vscode.commands.executeCommand(COMMANDS.ON_USER_LOGOUT);
         } catch (error) {
             vscode.window.showErrorMessage('登出失败: ' + (error as Error).message);
         }

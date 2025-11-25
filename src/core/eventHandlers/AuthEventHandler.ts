@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionContainer } from '../ExtensionContainer';
 import { StatusBarManager } from '../StatusBarManager';
 import { logger } from '../../utils/logger';
+import { COMMANDS, CONTEXT_KEYS, DELAY_TIMES } from '../../constants';
 
 /**
  * 认证事件处理器 - 处理认证相关事件（登录、登出、初始化）
@@ -27,12 +28,12 @@ export class AuthEventHandler {
         });
 
         // 监听登录状态变化
-        const onUserLogin = vscode.commands.registerCommand('localComment.onUserLogin', async (user: any) => {
+        const onUserLogin = vscode.commands.registerCommand(COMMANDS.ON_USER_LOGIN, async (user: any) => {
             await this.handleUserLogin(user);
         });
         disposables.push(onUserLogin);
 
-        const onUserLogout = vscode.commands.registerCommand('localComment.onUserLogout', async () => {
+        const onUserLogout = vscode.commands.registerCommand(COMMANDS.ON_USER_LOGOUT, async () => {
             await this.handleUserLogout();
         });
         disposables.push(onUserLogout);
@@ -45,7 +46,7 @@ export class AuthEventHandler {
      */
     private async handleUserLogin(user: any): Promise<void> {
         // 更新登录状态上下文变量
-        vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', true);
+        vscode.commands.executeCommand('setContext', CONTEXT_KEYS.IS_LOGGED_IN, true);
         this.statusBarManager.updateStatusAndContext();
         vscode.window.showInformationMessage(`欢迎回来，${user.username}！`);
         
@@ -63,8 +64,8 @@ export class AuthEventHandler {
         
         // 登录成功后自动打开用户信息界面
         setTimeout(() => {
-            vscode.commands.executeCommand('localComment.showUserInfo');
-        }, 300); // 延迟300ms，让用户看到欢迎消息
+            vscode.commands.executeCommand(COMMANDS.SHOW_USER_INFO);
+        }, DELAY_TIMES.SHOW_USER_INFO_AFTER_LOGIN);
     }
 
     /**
@@ -72,7 +73,7 @@ export class AuthEventHandler {
      */
     private async handleUserLogout(): Promise<void> {
         // 更新登录状态上下文变量
-        vscode.commands.executeCommand('setContext', 'localComment.isLoggedIn', false);
+        vscode.commands.executeCommand('setContext', CONTEXT_KEYS.IS_LOGGED_IN, false);
         this.statusBarManager.updateStatusAndContext();
         vscode.window.showInformationMessage('您已成功登出');
         

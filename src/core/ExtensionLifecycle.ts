@@ -8,6 +8,7 @@ import { ProviderRegistry } from './ProviderRegistry';
 import { registerCommands } from '../modules/command/commands';
 import { UserInfoWebview } from '../modules/userInfoWebview';
 import { logger } from '../utils/logger';
+import { COMMANDS } from '../constants';
 
 /**
  * 扩展生命周期管理器 - 管理扩展的激活和停用流程
@@ -81,7 +82,7 @@ export class ExtensionLifecycle {
 
             // 步骤6：注册用户信息命令
             const showUserInfoCommand = vscode.commands.registerCommand(
-                'localComment.showUserInfo',
+                COMMANDS.SHOW_USER_INFO,
                 () => {
                     if (!this.container.authManager) {
                         vscode.window.showErrorMessage('认证管理器未初始化');

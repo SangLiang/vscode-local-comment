@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
+import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
 
 
 // 全局注释管理器引用
@@ -48,7 +49,7 @@ export async function showShareCommentWebview(
     
     // 创建WebView面板
     const panel = vscode.window.createWebviewPanel(
-        'shareCommentPreview',
+        VIEW_TYPES.SHARE_COMMENT_PREVIEW,
         title,
         viewColumn,
         {
@@ -89,7 +90,7 @@ export async function showShareCommentWebview(
             const config = vscode.workspace.getConfiguration('local-comment');
             const mermaidTheme = config.get<string>('mermaid.theme', 'default');
             panel.webview.postMessage({
-                command: 'setMermaidTheme',
+                command: IPC_MESSAGES.SET_MERMAID_THEME,
                 theme: mermaidTheme
             });
         } catch (error) {
@@ -101,12 +102,12 @@ export async function showShareCommentWebview(
     panel.webview.onDidReceiveMessage(
         async message => {
             switch (message.command) {
-                case 'close':
+                case IPC_MESSAGES.CLOSE:
                     panel.dispose();
                     // WebView关闭后恢复编辑器焦点
-                    setTimeout(() => restoreFocus(activeEditor), 100);
+                    setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
                     break;
-                case 'exportToLocalComment':
+                case IPC_MESSAGES.EXPORT_TO_LOCAL_COMMENT:
                     // 处理导出为本地注释的请求
                     await handleExportToLocalComment(context, contextInfo);
                     break;
@@ -117,7 +118,7 @@ export async function showShareCommentWebview(
     // 面板关闭时恢复编辑器焦点
     panel.onDidDispose(() => {
         // WebView关闭后恢复编辑器焦点
-        setTimeout(() => restoreFocus(activeEditor), 100);
+        setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
     });
 }
 
@@ -215,7 +216,7 @@ async function handleExportToLocalComment(
             );
 
             // 刷新注释显示
-            vscode.commands.executeCommand('localComment.refreshComments');
+            vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
         } else {
             vscode.window.showErrorMessage('无法获取注释管理器');
         }

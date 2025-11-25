@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager, SharedComment } from '../managers/commentManager';
 import { logger } from '../utils/logger';
+import { COMMANDS, CONTEXT_KEYS } from '../constants';
 
 export class SharedCommentTreeProvider implements vscode.TreeDataProvider<SharedCommentTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<SharedCommentTreeItem | undefined | null | void> = new vscode.EventEmitter<SharedCommentTreeItem | undefined | null | void>();
@@ -178,7 +179,7 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
             
             // 添加命令，点击时跳转到对应位置（通过右键菜单或双击）
             commentNode.command = {
-                command: 'localComment.goToComment',
+                command: COMMANDS.GO_TO_COMMENT,
                 title: '跳转到共享注释',
                 arguments: [filePath, comment.line]
             };
@@ -203,7 +204,7 @@ export class SharedCommentTreeProvider implements vscode.TreeDataProvider<Shared
         const hasSharedComments = Object.values(allSharedComments).some(comments => comments.length > 0);
         
         // 更新上下文变量
-        vscode.commands.executeCommand('setContext', 'localComment.hasSharedComments', hasSharedComments);
+        vscode.commands.executeCommand('setContext', CONTEXT_KEYS.HAS_SHARED_COMMENTS, hasSharedComments);
     }
 
     dispose(): void {

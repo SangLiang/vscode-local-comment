@@ -6,6 +6,7 @@ import { ProjectManager } from '../managers/projectManager';
 import { normalizeFilePath } from '../utils/utils';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
+import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 
 // 辅助函数：获取代码上下文（前后5行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
@@ -143,7 +144,7 @@ export async function showMarkdownWebviewInput(
                         
                         // 向webview发送标签建议数据
                         panel.webview.postMessage({
-                            command: 'updateTagSuggestions',
+                            command: IPC_MESSAGES.UPDATE_TAG_SUGGESTIONS,
                             tagSuggestions: asyncTagSuggestions
                         });
                     })
@@ -155,7 +156,7 @@ export async function showMarkdownWebviewInput(
                         const config = vscode.workspace.getConfiguration('local-comment');
                         const mermaidTheme = config.get<string>('mermaid.theme', 'default');
                         panel.webview.postMessage({
-                            command: 'setMermaidTheme',
+                            command: IPC_MESSAGES.SET_MERMAID_THEME,
                             theme: mermaidTheme
                         });
                     })
@@ -169,7 +170,7 @@ export async function showMarkdownWebviewInput(
                             getCodeContext(activeEditor.document.uri, contextInfo.lineNumber).then(codeContext => {
                                 // 向webview发送代码上下文数据
                                 panel.webview.postMessage({
-                                    command: 'updateCodeContext',
+                                    command: IPC_MESSAGES.UPDATE_CODE_CONTEXT,
                                     contextLines: codeContext.contextLines,
                                     contextStartLine: codeContext.contextStartLine,
                                     lineNumber: contextInfo.lineNumber
@@ -189,17 +190,17 @@ export async function showMarkdownWebviewInput(
         panel.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
-                    case 'save':
+                    case IPC_MESSAGES.SAVE:
                         // 返回内容和更新后的上下文信息
                         if (onSaveAndContinue) {
                             onSaveAndContinue(message.content, contextInfo,()=>{
                                 panel.dispose();
                                 // WebView关闭后恢复编辑器焦点
-                                setTimeout(() => restoreFocus(activeEditor), 100);
+                                setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
                             });
                         }
                         break;
-                    case 'saveAndContinue':
+                    case IPC_MESSAGES.SAVE_AND_CONTINUE:
                         // 保存内容但不关闭编辑器
                         if (onSaveAndContinue) {
                             onSaveAndContinue(message.content, contextInfo,()=>{
@@ -207,7 +208,7 @@ export async function showMarkdownWebviewInput(
                             });
                         }
                         break;
-                    case 'updateSelectedLine':
+                    case IPC_MESSAGES.UPDATE_SELECTED_LINE:
                         // 处理用户点击代码行的消息
                         if (message.lineNumber !== undefined && contextInfo) {
                             // 更新当前选中的行号
@@ -233,7 +234,7 @@ export async function showMarkdownWebviewInput(
                                     
                                     // 向webview发送更新后的代码上下文
                                     panel.webview.postMessage({
-                                        command: 'updateCodeContext',
+                                        command: IPC_MESSAGES.UPDATE_CODE_CONTEXT,
                                         contextLines: codeContext.contextLines,
                                         contextStartLine: codeContext.contextStartLine,
                                         lineNumber: message.lineNumber
@@ -241,7 +242,7 @@ export async function showMarkdownWebviewInput(
                                     
                                     // 同时发送当前行内容更新，让webview同步显示
                                     panel.webview.postMessage({
-                                        command: 'updateCurrentLineContent',
+                                        command: IPC_MESSAGES.UPDATE_CURRENT_LINE_CONTENT,
                                         lineContent: contextInfo.lineContent || '',
                                         lineNumber: message.lineNumber
                                     });
@@ -253,7 +254,7 @@ export async function showMarkdownWebviewInput(
                             }
                         }
                         break;
-                    case 'share':
+                    case IPC_MESSAGES.SHARE:
                         // 处理分享功能
                         try {
                             // 获取当前活动的编辑器和文档信息
@@ -281,7 +282,7 @@ export async function showMarkdownWebviewInput(
                             if (!projectId) {
                                 vscode.window.showWarningMessage('请先关联项目再分享注释');
                                 panel.webview.postMessage({
-                                    command: 'shareError',
+                                    command: IPC_MESSAGES.SHARE_ERROR,
                                     error: '请先关联项目再分享注释'
                                 });
                                 return;
@@ -324,7 +325,7 @@ export async function showMarkdownWebviewInput(
                                 vscode.window.showInformationMessage('注释分享成功！');
                                 // 更新界面显示分享状态
                                 panel.webview.postMessage({
-                                    command: 'shareSuccess',
+                                    command: IPC_MESSAGES.SHARE_SUCCESS,
                                     sharedId: response.id?.toString(), // 使用返回数据中的id
                                     message: '分享成功'
                                 });
@@ -336,12 +337,12 @@ export async function showMarkdownWebviewInput(
                             const errorMessage = error instanceof Error ? error.message : '未知错误';
                             vscode.window.showErrorMessage(`注释分享失败: ${errorMessage}`);
                             panel.webview.postMessage({
-                                command: 'shareError',
+                                command: IPC_MESSAGES.SHARE_ERROR,
                                 error: errorMessage
                             });
                         }
                         break;
-                    case 'goToTagDeclaration':
+                    case IPC_MESSAGES.GO_TO_TAG_DECLARATION:
                         // 处理跳转到tag声明的消息
                         if (message.tagName) {
                             try {
@@ -373,11 +374,11 @@ export async function showMarkdownWebviewInput(
                             }
                         }
                         break;
-                    case 'cancel':
+                    case IPC_MESSAGES.CANCEL:
                         resolve(undefined);
                         panel.dispose();
                         // WebView关闭后恢复编辑器焦点
-                        setTimeout(() => restoreFocus(activeEditor), 100);
+                        setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
                         break;
                 }
             }

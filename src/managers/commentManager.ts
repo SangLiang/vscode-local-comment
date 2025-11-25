@@ -7,6 +7,7 @@ import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportDa
 import { apiService, ApiRoutes } from '../apiService';
 import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
+import { DELAY_TIMES, COMMANDS } from '../constants';
 
 export interface LocalComment {
     id: string;
@@ -653,8 +654,8 @@ export class CommentManager {
             
             // 刷新注释显示
             setTimeout(() => {
-                vscode.commands.executeCommand('localComment.refreshComments');
-            }, 10);
+                vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
+            }, DELAY_TIMES.REFRESH_COMMENTS);
             return;
         }
 
@@ -688,8 +689,8 @@ export class CommentManager {
             
             // 刷新注释显示
             setTimeout(() => {
-                vscode.commands.executeCommand('localComment.refreshComments');
-            }, 10);
+                vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
+            }, DELAY_TIMES.REFRESH_COMMENTS);
             return;
         }
 
@@ -777,7 +778,7 @@ export class CommentManager {
         
                 // 更新完成后刷新注释树显示
         setTimeout(() => {
-            vscode.commands.executeCommand('localComment.refreshComments');
+            vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
         }, 10);
     }
 
@@ -1063,7 +1064,7 @@ export class CommentManager {
             setTimeout(async () => {
                 await this.saveComments();
                 this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
-            }, 100);
+            }, DELAY_TIMES.ASYNC_SAVE);
         } catch (error) {
             logger.error('异步保存注释失败:', error);
         }

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommentManager, SharedComment } from '../managers/commentManager';
 import { createDataUri } from '../utils/utils';
 import { logger } from '../utils/logger';
+import { COMMANDS } from '../constants';
 
 export class SharedCommentProvider implements vscode.Disposable, vscode.HoverProvider {
     private decorationType: vscode.TextEditorDecorationType;
@@ -250,7 +251,7 @@ export class SharedCommentProvider implements vscode.Disposable, vscode.HoverPro
 
             // 显示用户信息
             if (comment.username) {
-                markdownContent.appendMarkdown(`**用户**: ${comment.username}[${markdown}](command:localComment.showShareComment?${encodeURIComponent(JSON.stringify({
+                markdownContent.appendMarkdown(`**用户**: ${comment.username}[${markdown}](command:${COMMANDS.SHOW_SHARE_COMMENT}?${encodeURIComponent(JSON.stringify({
                     commentId: comment.id,
                     filePath: filePath,
                     line: comment.line
@@ -273,7 +274,7 @@ export class SharedCommentProvider implements vscode.Disposable, vscode.HoverPro
             }
 
             // 添加查看详情的链接
-            markdownContent.appendMarkdown(`[查看详情](command:localComment.showShareComment?${encodeURIComponent(JSON.stringify({
+            markdownContent.appendMarkdown(`[查看详情](command:${COMMANDS.SHOW_SHARE_COMMENT}?${encodeURIComponent(JSON.stringify({
                 commentId: comment.id,
                 filePath: filePath,
                 line: comment.line

@@ -17,6 +17,7 @@ import { logger } from '../../utils/logger';
 import { AuthWebview } from '../authWebview';
 import { UserInfoWebview } from '../userInfoWebview';
 import { apiService } from '../../apiService';
+import { COMMANDS } from '../../constants';
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -28,7 +29,7 @@ export function registerCommands(
     authManager?: any
 ) {
 
-    const showStorageLocationCommand = vscode.commands.registerCommand('localComment.showStorageLocation', () => {
+    const showStorageLocationCommand = vscode.commands.registerCommand(COMMANDS.SHOW_STORAGE_LOCATION, () => {
         const projectInfo = commentManager.getProjectInfo();
         const storageFile = commentManager.getStorageFilePath();
         
@@ -54,7 +55,7 @@ export function registerCommands(
         });
     });
 
-    const showStorageStatsCommand = vscode.commands.registerCommand('localComment.showStorageStats', () => {
+    const showStorageStatsCommand = vscode.commands.registerCommand(COMMANDS.SHOW_STORAGE_STATS, () => {
         const projectInfo = commentManager.getProjectInfo();
         const allComments = commentManager.getAllComments();
         const allSharedComments = commentManager.getAllSharedComments();
@@ -122,7 +123,7 @@ export function registerCommands(
     });
 
     // 添加管理所有项目注释数据的命令
-    const manageProjectsCommand = vscode.commands.registerCommand('localComment.manageProjects', async () => {
+    const manageProjectsCommand = vscode.commands.registerCommand(COMMANDS.MANAGE_PROJECTS, async () => {
         try {
             const globalStorageDir = commentManager.getContext().globalStorageUri?.fsPath || commentManager.getContext().extensionPath;
             const projectsDir = path.join(globalStorageDir, 'projects');
@@ -224,12 +225,12 @@ export function registerCommands(
         }
     }
 
-    const toggleCommentsCommand = vscode.commands.registerCommand('localComment.toggleComments', () => {
+    const toggleCommentsCommand = vscode.commands.registerCommand(COMMANDS.TOGGLE_COMMENTS, () => {
         commentProvider.toggleVisibility();
     });
 
     // 导出注释数据命令
-    const exportCommentsCommand = vscode.commands.registerCommand('localComment.exportComments', async () => {
+    const exportCommentsCommand = vscode.commands.registerCommand(COMMANDS.EXPORT_COMMENTS, async () => {
         try {
             const projectInfo = commentManager.getProjectInfo();
             const allComments = commentManager.getAllComments();
@@ -439,7 +440,7 @@ export function registerCommands(
     }
 
     // 导入注释数据命令
-    const importCommentsCommand = vscode.commands.registerCommand('localComment.importComments', async () => {
+    const importCommentsCommand = vscode.commands.registerCommand(COMMANDS.IMPORT_COMMENTS, async () => {
         try {
             // 让用户选择导入方式
             const importOptions = [
@@ -640,7 +641,7 @@ export function registerCommands(
                     if (selection === '查看注释列表') {
                         vscode.commands.executeCommand('workbench.view.explorer');
                     } else if (selection === '显示统计') {
-                        vscode.commands.executeCommand('localComment.showStorageStats');
+                        vscode.commands.executeCommand(COMMANDS.SHOW_STORAGE_STATS);
                     }
                 });
             } else {
@@ -826,7 +827,7 @@ export function registerCommands(
                                 if (selection === '查看注释列表') {
                                     vscode.commands.executeCommand('workbench.view.explorer');
                                 } else if (selection === '显示统计') {
-                                    vscode.commands.executeCommand('localComment.showStorageStats');
+                                    vscode.commands.executeCommand(COMMANDS.SHOW_STORAGE_STATS);
                                 }
                             });
                         } else {
@@ -854,7 +855,7 @@ export function registerCommands(
     }
 
     // 认证相关命令
-    const logoutCommand = vscode.commands.registerCommand('localComment.logout', async () => {
+    const logoutCommand = vscode.commands.registerCommand(COMMANDS.LOGOUT, async () => {
         if (!authManager) {
             vscode.window.showErrorMessage('认证管理器未初始化');
             return;
@@ -878,7 +879,7 @@ export function registerCommands(
     });
 
     // 刷新共享注释命令
-    const refreshSharedCommentsCommand = vscode.commands.registerCommand('localComment.refreshSharedComments', async () => {
+    const refreshSharedCommentsCommand = vscode.commands.registerCommand(COMMANDS.REFRESH_SHARED_COMMENTS, async () => {
         try {
             if (!authManager || !authManager.isLoggedIn()) {
                 vscode.window.showWarningMessage('请先登录以刷新共享注释');
@@ -923,7 +924,7 @@ export function registerCommands(
     });
 
     // 显示共享注释Webview命令
-    const showShareCommentCommand = vscode.commands.registerCommand('localComment.showShareComment', async (treeItemOrParams: any) => {
+    const showShareCommentCommand = vscode.commands.registerCommand(COMMANDS.SHOW_SHARE_COMMENT, async (treeItemOrParams: any) => {
         try {
             let comment: any;
             let filePath: string;

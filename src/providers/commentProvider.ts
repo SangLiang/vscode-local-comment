@@ -3,6 +3,7 @@ import { CommentManager, LocalComment, SharedComment } from '../managers/comment
 import { createDataUri } from '../utils/utils';
 import axios from 'axios';
 import { logger } from '../utils/logger';
+import { COMMANDS } from '../constants';
 
 export class CommentProvider implements vscode.Disposable {
     private decorationType: vscode.TextEditorDecorationType;
@@ -387,7 +388,7 @@ export class CommentProvider implements vscode.Disposable {
 
                 const editIcon = `<img src="${editIconUri}" width="12" height="12" alt="编辑" style="vertical-align: middle; margin-left: 4px;" />`;
                 
-                markdownContent.appendMarkdown(`**本地注释** [${editIcon}](command:localComment.editCommentFromHover?${encodeURIComponent(editArgs)} "编辑注释")\n\n`);
+                markdownContent.appendMarkdown(`**本地注释** [${editIcon}](command:${COMMANDS.EDIT_COMMENT_FROM_HOVER}?${encodeURIComponent(editArgs)} "编辑注释")\n\n`);
 
                 // 处理用户输入的转义字符
                 const processedContent = this.processMarkdownContent(comment.content);
@@ -401,7 +402,7 @@ export class CommentProvider implements vscode.Disposable {
                         // 提取标签名（去掉@符号）
                         const tagName = segment.text.substring(1);
                         // 创建可点击链接
-                        enhancedContent += `[${segment.text}](command:localComment.goToTagDeclaration?${encodeURIComponent(JSON.stringify({tagName}))})`;
+                        enhancedContent += `[${segment.text}](command:${COMMANDS.GO_TO_TAG_DECLARATION}?${encodeURIComponent(JSON.stringify({tagName}))})`;
                     } else {
                         // 普通文本直接添加
                         enhancedContent += segment.text;
@@ -437,7 +438,7 @@ export class CommentProvider implements vscode.Disposable {
                     // 处理引用标签
                     for (const tagText of referenceTags) {
                         const tagName = tagText.substring(1);
-                        markdownContent.appendMarkdown(`**引用**: \`${tagText}\` - [跳转到声明](command:localComment.goToTagDeclaration?${encodeURIComponent(JSON.stringify({tagName}))})\n\n`);
+                        markdownContent.appendMarkdown(`**引用**: \`${tagText}\` - [跳转到声明](command:${COMMANDS.GO_TO_TAG_DECLARATION}?${encodeURIComponent(JSON.stringify({tagName}))})\n\n`);
                     }
                 }
 
@@ -454,8 +455,8 @@ export class CommentProvider implements vscode.Disposable {
                 const deleteIcon = `<img src="${deleteIconUri}" width="16" height="16" alt="删除" style="vertical-align: middle;" />`;
                 const markDownIcon = `<img src="${markDownIconUri}" width="16" height="16" alt="Markdown编辑" style="vertical-align: middle;" />`;
 
-                markdownContent.appendMarkdown(`[${markDownIcon} Markdown编辑](command:localComment.editCommentFromHover?${encodeURIComponent(editArgs)} "多行编辑注释") | `);
-                markdownContent.appendMarkdown(`[${deleteIcon} 删除](command:localComment.removeCommentFromHover?${encodeURIComponent(removeArgs)} "删除注释")`);
+                markdownContent.appendMarkdown(`[${markDownIcon} Markdown编辑](command:${COMMANDS.EDIT_COMMENT_FROM_HOVER}?${encodeURIComponent(editArgs)} "多行编辑注释") | `);
+                markdownContent.appendMarkdown(`[${deleteIcon} 删除](command:${COMMANDS.REMOVE_COMMENT_FROM_HOVER}?${encodeURIComponent(removeArgs)} "删除注释")`);
             }
 
             // 如果同一行有共享注释，添加提示信息
@@ -475,7 +476,7 @@ export class CommentProvider implements vscode.Disposable {
                     });
                     
                     // 添加详情按钮
-                    markdownContent.appendMarkdown(`**${username}**: ${sharedComment.content.substring(0, 150)}${sharedComment.content.length > 150 ? '...' : ''} [查看详情](command:localComment.showShareComment?${encodeURIComponent(detailArgs)} "查看共享评论详情")\n\n`);
+                    markdownContent.appendMarkdown(`**${username}**: ${sharedComment.content.substring(0, 150)}${sharedComment.content.length > 150 ? '...' : ''} [查看详情](command:${COMMANDS.SHOW_SHARE_COMMENT}?${encodeURIComponent(detailArgs)} "查看共享评论详情")\n\n`);
                 }
             }
 

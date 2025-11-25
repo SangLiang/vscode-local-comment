@@ -6,13 +6,15 @@
     let markedInitialized = false;
     let mermaidInitialized = false;
 
-    // HTML转义函数
+    // HTML转义函数（与 webviewUtils.ts 中的实现保持一致）
     function escapeHtml(text) {
         if (typeof text !== 'string') return text;
         return text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // 防抖函数

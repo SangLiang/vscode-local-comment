@@ -7,11 +7,12 @@ import { TagManager } from '../managers/tagManager';
 import { ProjectManager } from '../managers/projectManager';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
+import { DELAY_TIMES, VIEW_TYPES, COMMANDS, IPC_MESSAGES } from '../constants';
 
 export class UserInfoWebview {
     public static currentPanel: UserInfoWebview | undefined;
 
-    public static readonly viewType = 'localComment.userInfo';
+    public static readonly viewType = VIEW_TYPES.USER_INFO;
 
     private readonly _panel: vscode.WebviewPanel;
     private readonly _extensionUri: vscode.Uri;
@@ -118,28 +119,28 @@ export class UserInfoWebview {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                    case 'getUserInfo':
+                    case IPC_MESSAGES.GET_USER_INFO:
                         this.handleGetUserInfo();
                         return;
-                    case 'getProjects':
+                    case IPC_MESSAGES.GET_PROJECTS:
                         this.handleGetProjects();
                         return;
-                    case 'logout':
+                    case IPC_MESSAGES.LOGOUT:
                         this.handleLogout();
                         return;
-                    case 'associateProject':
+                    case IPC_MESSAGES.ASSOCIATE_PROJECT:
                         this.handleAssociateProject(message.projectId);
                         return;
-                    case 'disassociateProject':
+                    case IPC_MESSAGES.DISASSOCIATE_PROJECT:
                         this.handleDisassociateProject(message.projectId);
                         return;
-                    case 'fetchSharedComments':
+                    case IPC_MESSAGES.FETCH_SHARED_COMMENTS:
                         this.handleFetchSharedComments();
                         return;
-                    case 'uploadAvatar':
+                    case IPC_MESSAGES.UPLOAD_AVATAR:
                         this.handleUploadAvatar(message.data);
                         return;
-                    case 'close':
+                    case IPC_MESSAGES.CLOSE:
                         this.dispose();
                         return;
                 }
@@ -168,7 +169,7 @@ export class UserInfoWebview {
             // 检查用户是否已登录
             if (!this._authManager.isLoggedIn()) {
                 this._panel.webview.postMessage({
-                    command: 'userInfoResult',
+                    command: IPC_MESSAGES.USER_INFO_RESULT,
                     success: false,
                     message: '用户未登录'
                 });
@@ -213,7 +214,7 @@ export class UserInfoWebview {
             // 检查用户是否已登录
             if (!this._authManager.isLoggedIn()) {
                 this._panel.webview.postMessage({
-                    command: 'fetchSharedCommentsResult',
+                    command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                     success: false,
                     message: '用户未登录'
                 });
@@ -224,7 +225,7 @@ export class UserInfoWebview {
             const associatedProjectId = this._projectManager.getAssociatedProject();
             if (!associatedProjectId) {
                 this._panel.webview.postMessage({
-                    command: 'fetchSharedCommentsResult',
+                    command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                     success: false,
                     message: '请先关联项目'
                 });
@@ -235,7 +236,7 @@ export class UserInfoWebview {
             const projectId = parseInt(associatedProjectId, 10);
             if (isNaN(projectId)) {
                 this._panel.webview.postMessage({
-                    command: 'fetchSharedCommentsResult',
+                    command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                     success: false,
                     message: '项目ID无效'
                 });
@@ -247,7 +248,7 @@ export class UserInfoWebview {
                 const sharedComments = await this._commentManager.getProjectSharedComments(projectId);
                 
                 this._panel.webview.postMessage({
-                    command: 'fetchSharedCommentsResult',
+                    command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                     success: true,
                     message: `成功获取 ${sharedComments?.length || 0} 条共享注释`,
                     data: sharedComments // 返回获取到的共享注释数据
@@ -257,7 +258,7 @@ export class UserInfoWebview {
                 // 比如显示通知或更新UI
             } else {
                 this._panel.webview.postMessage({
-                    command: 'fetchSharedCommentsResult',
+                    command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                     success: false,
                     message: '注释管理器未初始化'
                 });
@@ -265,7 +266,7 @@ export class UserInfoWebview {
         } catch (error) {
             logger.error('获取项目共享注释失败:', error);
             this._panel.webview.postMessage({
-                command: 'fetchSharedCommentsResult',
+                command: IPC_MESSAGES.FETCH_SHARED_COMMENTS_RESULT,
                 success: false,
                 message: '获取项目共享注释失败: ' + (error as Error).message
             });
@@ -277,7 +278,7 @@ export class UserInfoWebview {
             // 检查用户是否已登录
             if (!this._authManager.isLoggedIn()) {
                 this._panel.webview.postMessage({
-                    command: 'projectsResult',
+                    command: IPC_MESSAGES.PROJECTS_RESULT,
                     success: false,
                     message: '用户未登录'
                 });
@@ -303,7 +304,7 @@ export class UserInfoWebview {
 
             // 发送项目列表到webview，包含关联状态信息
             this._panel.webview.postMessage({
-                command: 'projectsResult',
+                command: IPC_MESSAGES.PROJECTS_RESULT,
                 success: true,
                 data: projects,
                 associatedProjectId: associatedProjectId
@@ -311,7 +312,7 @@ export class UserInfoWebview {
         } catch (error) {
             logger.error('获取项目列表失败:', error);
             this._panel.webview.postMessage({
-                command: 'projectsResult',
+                command: IPC_MESSAGES.PROJECTS_RESULT,
                 success: false,
                 message: '获取项目列表时发生错误: ' + (error as Error).message
             });
@@ -322,7 +323,7 @@ export class UserInfoWebview {
         try {
             await this._authManager.logout();
             this._panel.webview.postMessage({
-                command: 'logoutResult',
+                command: IPC_MESSAGES.LOGOUT_RESULT,
                 success: true
             });
             
@@ -330,11 +331,11 @@ export class UserInfoWebview {
             vscode.window.showInformationMessage('已成功退出登录');
             
             // 执行用户退出登录后的清理工作
-            vscode.commands.executeCommand('localComment.onUserLogout');
+            vscode.commands.executeCommand(COMMANDS.ON_USER_LOGOUT);
         } catch (error) {
             logger.error('退出登录失败:', error);
             this._panel.webview.postMessage({
-                command: 'logoutResult',
+                command: IPC_MESSAGES.LOGOUT_RESULT,
                 success: false,
                 message: '退出登录失败: ' + (error as Error).message
             });
@@ -347,7 +348,7 @@ export class UserInfoWebview {
 
             // 通知webview关联成功
             this._panel.webview.postMessage({
-                command: 'associateProjectResult',
+                command: IPC_MESSAGES.ASSOCIATE_PROJECT_RESULT,
                 success: true,
                 projectId: projectId
             });
@@ -355,14 +356,14 @@ export class UserInfoWebview {
             // 延迟重新获取项目列表，让前端先完成状态更新动画
             setTimeout(() => {
                 this.handleGetProjects();
-            }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
+            }, DELAY_TIMES.PROJECT_REFRESH_AFTER_ANIMATION);
         } catch (error) {
             logger.error('关联项目失败:', error);
             vscode.window.showErrorMessage('关联项目失败: ' + (error as Error).message);
             
             // 通知webview关联失败
             this._panel.webview.postMessage({
-                command: 'associateProjectResult',
+                command: IPC_MESSAGES.ASSOCIATE_PROJECT_RESULT,
                 success: false,
                 projectId: projectId,
                 message: '关联项目失败: ' + (error as Error).message
@@ -376,7 +377,7 @@ export class UserInfoWebview {
 
             // 通知webview取消关联成功
             this._panel.webview.postMessage({
-                command: 'disassociateProjectResult',
+                command: IPC_MESSAGES.DISASSOCIATE_PROJECT_RESULT,
                 success: true,
                 projectId: projectId
             });
@@ -384,14 +385,14 @@ export class UserInfoWebview {
             // 延迟重新获取项目列表，让前端先完成状态更新动画
             setTimeout(() => {
                 this.handleGetProjects();
-            }, 1200); // 延迟1.2秒，确保前端动画完成（前端800ms + 400ms缓冲）
+            }, DELAY_TIMES.PROJECT_REFRESH_AFTER_ANIMATION);
         } catch (error) {
             logger.error('取消关联项目失败:', error);
             vscode.window.showErrorMessage('取消关联项目失败: ' + (error as Error).message);
             
             // 通知webview取消关联失败
             this._panel.webview.postMessage({
-                command: 'disassociateProjectResult',
+                command: IPC_MESSAGES.DISASSOCIATE_PROJECT_RESULT,
                 success: false,
                 projectId: projectId,
                 message: '取消关联项目失败: ' + (error as Error).message
@@ -481,7 +482,7 @@ export class UserInfoWebview {
             // 检查用户是否已登录
             if (!this._authManager.isLoggedIn()) {
                 this._panel.webview.postMessage({
-                    command: 'uploadAvatarResult',
+                    command: IPC_MESSAGES.UPLOAD_AVATAR_RESULT,
                     success: false,
                     message: '用户未登录'
                 });
@@ -491,7 +492,7 @@ export class UserInfoWebview {
             // 验证文件大小（2MB）
             if (data.fileSize > 2 * 1024 * 1024) {
                 this._panel.webview.postMessage({
-                    command: 'uploadAvatarResult',
+                    command: IPC_MESSAGES.UPLOAD_AVATAR_RESULT,
                     success: false,
                     message: '文件大小不能超过2MB'
                 });
@@ -501,7 +502,7 @@ export class UserInfoWebview {
             // 验证文件类型
             if (!data.fileType.startsWith('image/')) {
                 this._panel.webview.postMessage({
-                    command: 'uploadAvatarResult',
+                    command: IPC_MESSAGES.UPLOAD_AVATAR_RESULT,
                     success: false,
                     message: '只支持图片文件'
                 });
@@ -522,7 +523,7 @@ export class UserInfoWebview {
 
             // 发送上传成功消息
             this._panel.webview.postMessage({
-                command: 'uploadAvatarResult',
+                command: IPC_MESSAGES.UPLOAD_AVATAR_RESULT,
                 success: true,
                 message: '头像上传成功'
             });
@@ -533,7 +534,7 @@ export class UserInfoWebview {
         } catch (error) {
             logger.error('头像上传失败:', error);
             this._panel.webview.postMessage({
-                command: 'uploadAvatarResult',
+                command: IPC_MESSAGES.UPLOAD_AVATAR_RESULT,
                 success: false,
                 message: '头像上传失败: ' + (error as Error).message
             });
