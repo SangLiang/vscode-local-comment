@@ -32,6 +32,12 @@ Manage your shared comments in the web interface:
 
 **Note**: The multi-user collaboration version is not currently available for free public use.
 
+## Support latex formulas [v1.3.0]
+
+Now, latex formulas can be added in local comments!
+
+! [image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+
 ## Why Do We Need Local Comments?
 
 In daily development, we often encounter scenarios like:
@@ -195,6 +201,12 @@ If you encounter problems during use, please provide feedback through:
 ## 📝 Changelog
 
 ### Change Log
+
+## [1.3.0] -2025-11-26
+
+- ✨ adds support for latex formulas!!
+- ✨ allows log information to be output in the output of the editor
+- 🔨 optimized the code, slightly improving performance in rendering
 
 ## [1.2.2] -2025-10-31
 

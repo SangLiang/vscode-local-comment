@@ -30,6 +30,12 @@
 
 **注意** :多人协作版暂不对外免费提供。
 
+## 支持latex公式 [v1.3.0]
+
+现在在本地注释中可以添加latex公式啦！
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+
 ## 为什么需要本地注释？
 
 在日常开发中，我们经常遇到这样的场景：
@@ -198,6 +204,12 @@ another-project-g7h8i9j0k1l2.json
 ## 📝 更新日志
 
 ### 变更日志
+
+## [1.3.0] - 2025-11-26
+
+- ✨ 加入对latex公式的支持！！
+- ✨ 允许在编辑器中的output输出日志信息
+- 🔨 对代码进行了优化，些微提高了在渲染方面的性能
 
 ## [1.2.2] - 2025-10-28
 
