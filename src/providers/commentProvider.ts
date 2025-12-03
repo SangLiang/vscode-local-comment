@@ -205,7 +205,7 @@ export class CommentProvider implements vscode.Disposable {
      *
      * @param content 主要作用：将注释内容按照标签进行分割，识别出哪些是普通文本，哪些是特殊标签。
      * 支持的标签格式：
-     * 声明标签：$标签名 （如 $bug、$todo）
+     * 声明标签：${标签名} （如 ${bug}、${todo}）
      * 引用标签：@标签名 （如 @bug、@todo）
      * @returns 返回一个数组，数组中每个元素包含文本和是否是标签的标志
      */
@@ -214,7 +214,7 @@ export class CommentProvider implements vscode.Disposable {
         let lastIndex = 0;
 
         // 匹配所有标签（声明和引用）
-        const tagRegex = /(\$[a-zA-Z_][a-zA-Z0-9_]*)|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
+        const tagRegex = /(\$\{[a-zA-Z_][a-zA-Z0-9_]*\})|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
         let match;
 
         while ((match = tagRegex.exec(content)) !== null) {
@@ -258,7 +258,7 @@ export class CommentProvider implements vscode.Disposable {
         const tags: Array<{text: string, type: 'declaration' | 'reference'}> = [];
 
         // 匹配所有标签（声明和引用）
-        const tagRegex = /(\$[a-zA-Z_][a-zA-Z0-9_]*)|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
+        const tagRegex = /(\$\{[a-zA-Z_][a-zA-Z0-9_]*\})|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
         let match;
 
         while ((match = tagRegex.exec(content)) !== null) {

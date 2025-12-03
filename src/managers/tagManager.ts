@@ -37,8 +37,8 @@ export class TagManager {
     private extractTagsFromComment(filePath: string, comment: LocalComment | SharedComment): void {
         const content = comment.content;
 
-        // 提取标签声明 ($标签名)
-        const declarationRegex = /\$([a-zA-Z_][a-zA-Z0-9_]*)/g;
+        // 提取标签声明 (${标签名})
+        const declarationRegex = /\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g;
         let match;
         while ((match = declarationRegex.exec(content)) !== null) {
             const tagName = match[1];

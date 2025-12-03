@@ -136,12 +136,12 @@ This reduces the problem of local comments not matching code positions after swi
 1. **Add First Comment**: Press `Ctrl+Shift+M` on a code line
 2. **Add First Bookmark**: Press `Ctrl+Alt+K` on a code line
 3. **View Sidebar**: Find "Local Comments" panel in resource explorer
-4. **Try Tag Function**: Use `$tagName` and `@tagName` in comments
+4. **Try Tag Function**: Use `${tagName}` and `@tagName` in comments
 
 ### Using Tags
 
 ```javascript
-let userConfig = {};  // local comment: This is where $userConfig is declared
+let userConfig = {};  // local comment: This is where ${userConfig} is declared
 
 function loadConfig() {// local comment: This loads @userConfig configuration
     userConfig = JSON.parse(localStorage.getItem('config'));
@@ -355,7 +355,7 @@ If you encounter problems during use, please provide feedback through:
 ### New Features
 
 - ✨ Local comment functionality: Add local comments in code without modifying original files
-- 🏷️ Tag system: Support `$tagName` declaration and `@tagName` reference
+- 🏷️ Tag system: Support `${tagName}` declaration and `@tagName` reference
 - 🔗 Smart navigation: Click tag references to jump to declaration positions
 - 💡 Auto-completion: Automatically suggest available tags when typing `@`
 - 🌲 Tree view: View all comments in sidebar

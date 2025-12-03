@@ -136,12 +136,12 @@ function test { // local comment 最好在此行注释
 1. **添加第一个注释**：在代码行上按 `Ctrl+Shift+M`
 2. **添加第一个书签**：在代码行上按 `Ctrl+Alt+K`
 3. **查看侧边栏**：在资源管理器中找到"本地注释"面板
-4. **尝试标签功能**：在注释中使用 `$tagName` 和 `@tagName`
+4. **尝试标签功能**：在注释中使用 `${tagName}` 和 `@tagName`
 
 ### 使用标签
 
 ```javascript
-let userConfig = {};  // 本地注释: 这里是$userConfig的声明地方
+let userConfig = {};  // 本地注释: 这里是${userConfig}的声明地方
 
 function loadConfig() {// 本地注释: 这里加载@userConfig的配置
     userConfig = JSON.parse(localStorage.getItem('config'));
@@ -360,7 +360,7 @@ another-project-g7h8i9j0k1l2.json
 ### 新增功能
 
 - ✨ 本地注释功能：在代码中添加本地注释，不修改原文件
-- 🏷️ 标签系统：支持 `$标签名` 声明和 `@标签名` 引用
+- 🏷️ 标签系统：支持 `${标签名}` 声明和 `@标签名` 引用
 - 🔗 智能跳转：点击标签引用可跳转到声明位置
 - 💡 自动补全：输入 `@` 时自动提示可用标签
 - 🌲 树形视图：在侧边栏查看所有注释

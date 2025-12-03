@@ -186,10 +186,19 @@
             // 等待关键库初始化完成
             await initializationPromise;
 
-            // 1. 预处理Markdown，例如高亮@标签并添加点击事件
-            let processedContent = content.replace(/@([a-zA-Z0-9_]+)/g, '<span class="tag-link" data-tag="$1" style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold; cursor: pointer; text-decoration: underline;">@$1</span>');
+            // 1. 预处理Markdown，先处理标签声明 ${标签名}（必须在 LaTeX 处理之前）
+            // 将 ${标签名} 替换为占位符，避免被 LaTeX 正则误匹配
+            const tagPlaceholders = new Map();
+            let processedContent = content.replace(/\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, (match, tagName) => {
+                const placeholder = `__TAG_DECL_PLACEHOLDER_${tagPlaceholders.size}__`;
+                tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
+                return placeholder;
+            });
 
-            // 2. 查找所有的Mermaid代码块
+            // 2. 处理 @标签引用并添加点击事件
+            processedContent = processedContent.replace(/@([a-zA-Z0-9_]+)/g, '<span class="tag-link" data-tag="$1" style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold; cursor: pointer; text-decoration: underline;">@$1</span>');
+
+            // 3. 查找所有的Mermaid代码块
             const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
             const mermaidBlocks = [...processedContent.matchAll(mermaidRegex)];
             console.log(`找到 ${mermaidBlocks.length} 个Mermaid代码块`);
@@ -227,7 +236,7 @@
                 return renderedSvgs[svgIndex++];
             });
 
-            // 5. 处理 LaTeX 公式（在 marked.parse 之前）
+            // 5. 处理 LaTeX 公式（在 marked.parse 之前，此时 ${标签名} 已被占位符替换）
             if (typeof katex !== 'undefined') {
                 try {
                     // 先处理块级公式 $$...$$（避免被行内公式正则误匹配）
@@ -256,10 +265,15 @@
                 console.warn('KaTeX 未加载，无法渲染 LaTeX 公式');
             }
 
-            // 6. 使用marked将整个内容（包括已插入的SVG和LaTeX公式）转换为HTML
+            // 6. 恢复标签声明占位符为 HTML 格式（在 marked.parse 之前）
+            tagPlaceholders.forEach((tagInfo, placeholder) => {
+                finalContent = finalContent.replace(placeholder, `<span class="tag-declaration" style="color: var(--vscode-symbolIcon-variableForeground); font-weight: bold;">${tagInfo.original}</span>`);
+            });
+
+            // 7. 使用marked将整个内容（包括已插入的SVG和LaTeX公式）转换为HTML
             const finalHtml = marked.parse(finalContent);
             
-            // 6. 一次性更新DOM
+            // 8. 一次性更新DOM
             previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
             console.log("预览区域已使用包含SVG的完整HTML更新。");
             
