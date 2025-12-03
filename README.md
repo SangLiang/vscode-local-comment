@@ -140,13 +140,32 @@ This reduces the problem of local comments not matching code positions after swi
 
 ### Using Tags
 
+The tag system supports Chinese tag names. You can use Chinese, English, or mixed Chinese-English tag names.
+
+**Tag Declaration Format**: `${tagName}` - Declare a tag in a comment
+**Tag Reference Format**: `@tagName` - Reference a declared tag in a comment
+
 ```javascript
 let userConfig = {};  // local comment: This is where ${userConfig} is declared
 
 function loadConfig() {// local comment: This loads @userConfig configuration
     userConfig = JSON.parse(localStorage.getItem('config'));
 }
+
+// Chinese tag example
+function handleError() { // local comment: ${错误处理} This is error handling logic
+    // ...
+}
+
+function validate() { // local comment: Call @错误处理 for validation here
+    // ...
+}
 ```
+
+**Tag Naming Rules**:
+- Supports Chinese characters, English letters, numbers, and underscores
+- Must start with a Chinese character, English letter, or underscore
+- Can use mixed Chinese-English, such as `${bug修复}`, `${待办事项}`
 
 ### Common Questions
 

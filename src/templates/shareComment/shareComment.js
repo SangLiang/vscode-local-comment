@@ -194,7 +194,7 @@
             });
 
             // 2. 处理 @标签引用
-            processedContent = processedContent.replace(/@([a-zA-Z0-9_]+)/g, '<span style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold;">@$1</span>');
+            processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, '<span style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold;">@$1</span>');
 
             // 3. 查找所有的Mermaid代码块
             const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;

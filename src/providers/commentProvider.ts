@@ -213,8 +213,8 @@ export class CommentProvider implements vscode.Disposable {
         const segments: Array<{text: string, isTag: boolean}> = [];
         let lastIndex = 0;
 
-        // 匹配所有标签（声明和引用）
-        const tagRegex = /(\$\{[a-zA-Z_][a-zA-Z0-9_]*\})|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
+        // 匹配所有标签（声明和引用），支持中文
+        const tagRegex = /(\$\{[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*\})|(@[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)/g;
         let match;
 
         while ((match = tagRegex.exec(content)) !== null) {
@@ -257,8 +257,8 @@ export class CommentProvider implements vscode.Disposable {
     private extractTagsFromContent(content: string): Array<{text: string, type: 'declaration' | 'reference'}> {
         const tags: Array<{text: string, type: 'declaration' | 'reference'}> = [];
 
-        // 匹配所有标签（声明和引用）
-        const tagRegex = /(\$\{[a-zA-Z_][a-zA-Z0-9_]*\})|(@[a-zA-Z_][a-zA-Z0-9_]*)/g;
+        // 匹配所有标签（声明和引用），支持中文
+        const tagRegex = /(\$\{[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*\})|(@[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)/g;
         let match;
 
         while ((match = tagRegex.exec(content)) !== null) {

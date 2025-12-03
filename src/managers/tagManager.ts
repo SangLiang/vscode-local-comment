@@ -37,8 +37,8 @@ export class TagManager {
     private extractTagsFromComment(filePath: string, comment: LocalComment | SharedComment): void {
         const content = comment.content;
 
-        // 提取标签声明 (${标签名})
-        const declarationRegex = /\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g;
+        // 提取标签声明 (${标签名})，支持中文
+        const declarationRegex = /\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g;
         let match;
         while ((match = declarationRegex.exec(content)) !== null) {
             const tagName = match[1];
@@ -52,8 +52,8 @@ export class TagManager {
             this.tagDeclarations.set(tagName, declaration);
         }
 
-        // 提取标签引用 (@标签名)
-        const referenceRegex = /\@([a-zA-Z_][a-zA-Z0-9_]*)/g;
+        // 提取标签引用 (@标签名)，支持中文
+        const referenceRegex = /\@([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)/g;
         while ((match = referenceRegex.exec(content)) !== null) {
             const tagName = match[1];
             const reference: TagReference = {

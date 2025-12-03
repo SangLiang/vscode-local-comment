@@ -140,13 +140,32 @@ function test { // local comment 最好在此行注释
 
 ### 使用标签
 
+标签系统支持中文标签名，您可以使用中文、英文或中英文混合的标签名。
+
+**标签声明格式**：`${标签名}` - 在注释中声明一个标签
+**标签引用格式**：`@标签名` - 在注释中引用已声明的标签
+
 ```javascript
 let userConfig = {};  // 本地注释: 这里是${userConfig}的声明地方
 
 function loadConfig() {// 本地注释: 这里加载@userConfig的配置
     userConfig = JSON.parse(localStorage.getItem('config'));
 }
+
+// 中文标签示例
+function handleError() { // 本地注释: ${错误处理} 这里是错误处理逻辑
+    // ...
+}
+
+function validate() { // 本地注释: 这里调用@错误处理进行验证
+    // ...
+}
 ```
+
+**标签命名规则**：
+- 支持中文、英文字母、数字和下划线
+- 必须以中文、英文字母或下划线开头
+- 可以使用中英文混合，如 `${bug修复}`、`${待办事项}`
 
 ### 常见问题
 

@@ -46,7 +46,7 @@ export class TagCompletionProvider implements vscode.CompletionItemProvider {
 
         // 检查光标前的字符是否是 @
         const textBeforeCursor = commentContent.substring(0, relativePosition);
-        const atMatch = textBeforeCursor.match(/@([a-zA-Z_][a-zA-Z0-9_]*)$/);
+        const atMatch = textBeforeCursor.match(/@([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)$/);
         
         if (!atMatch && !textBeforeCursor.endsWith('@')) {
             return [];

@@ -65,8 +65,8 @@ export class TagDefinitionProvider implements vscode.DefinitionProvider {
     }
 
     private findTagReferenceAtPosition(text: string, position: number): { tagName: string; start: number; end: number } | undefined {
-        // 查找所有 @标签名 的位置
-        const regex = /@([a-zA-Z_][a-zA-Z0-9_]*)/g;
+        // 查找所有 @标签名 的位置，支持中文
+        const regex = /@([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)/g;
         let match;
         
         while ((match = regex.exec(text)) !== null) {

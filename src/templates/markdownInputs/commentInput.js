@@ -189,14 +189,14 @@
             // 1. 预处理Markdown，先处理标签声明 ${标签名}（必须在 LaTeX 处理之前）
             // 将 ${标签名} 替换为占位符，避免被 LaTeX 正则误匹配
             const tagPlaceholders = new Map();
-            let processedContent = content.replace(/\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, (match, tagName) => {
+            let processedContent = content.replace(/\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g, (match, tagName) => {
                 const placeholder = `__TAG_DECL_PLACEHOLDER_${tagPlaceholders.size}__`;
                 tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
                 return placeholder;
             });
 
             // 2. 处理 @标签引用并添加点击事件
-            processedContent = processedContent.replace(/@([a-zA-Z0-9_]+)/g, '<span class="tag-link" data-tag="$1" style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold; cursor: pointer; text-decoration: underline;">@$1</span>');
+            processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, '<span class="tag-link" data-tag="$1" style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold; cursor: pointer; text-decoration: underline;">@$1</span>');
 
             // 3. 查找所有的Mermaid代码块
             const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
@@ -809,7 +809,7 @@
         const beforeCursor = text.substring(0, cursorPos);
         
         // 检查是否刚输入了@
-        const atMatch = beforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+        const atMatch = beforeCursor.match(/@([\u4e00-\u9fa5a-zA-Z0-9_]*)$/);
         if (atMatch && tagList.length > 0) {
             const searchTerm = atMatch[1].toLowerCase();
             const availableTags = tagList.filter(tag => 
