@@ -430,7 +430,8 @@ button {
     min-height: 100px;
     max-height: 400px;
     overflow-y: auto;
-    font-size: 13px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
     line-height: 1.5;
 }
 

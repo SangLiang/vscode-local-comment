@@ -124,7 +124,7 @@
 
 .help-text {
     color: var(--vscode-descriptionForeground);
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.4;
 }
 
@@ -431,7 +431,7 @@ button:hover {
     padding: 16px;
     margin: 20px 0;
     font-family: var(--vscode-editor-font-family);
-    font-size: 13px;
+    font-size: var(--vscode-editor-font-size);
 }
 
 .mermaid-error p {
@@ -445,6 +445,7 @@ button:hover {
     color: inherit;
     margin: 0;
     padding: 8px;
-    font-size: 11px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: 12px;
     overflow-x: auto;
 }

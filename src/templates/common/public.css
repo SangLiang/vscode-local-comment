@@ -29,9 +29,6 @@ a:hover {
 
 /* 代码块基础样式 */
 code, pre {
-    background-color: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-textBlockQuote-border);
-    border-radius: 3px;
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
 }
