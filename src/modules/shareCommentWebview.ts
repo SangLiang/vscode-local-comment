@@ -3,6 +3,7 @@ import { CommentManager } from '../managers/commentManager';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
+import { EditorUtils } from '../utils/editorUtils';
 
 
 // 全局注释管理器引用
@@ -119,7 +120,7 @@ export async function showShareCommentWebview(
                 case IPC_MESSAGES.CLOSE:
                     panel.dispose();
                     // WebView关闭后恢复编辑器焦点
-                    setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
+                    EditorUtils.restoreFocus(activeEditor);
                     break;
                 case IPC_MESSAGES.EXPORT_TO_LOCAL_COMMENT:
                     // 处理导出为本地注释的请求
@@ -132,22 +133,8 @@ export async function showShareCommentWebview(
     // 面板关闭时恢复编辑器焦点
     panel.onDidDispose(() => {
         // WebView关闭后恢复编辑器焦点
-        setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
+        EditorUtils.restoreFocus(activeEditor);
     });
-}
-
-// 辅助函数：恢复编辑器焦点
-function restoreFocus(editor: vscode.TextEditor | undefined) {
-    if (editor) {
-        vscode.window.showTextDocument(editor.document, {
-            viewColumn: editor.viewColumn,
-            selection: editor.selection,
-            preserveFocus: false
-        }).then(() => {
-            // 确保焦点真正回到编辑器
-            vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-        });
-    }
 }
 
 // 处理导出为本地注释的请求

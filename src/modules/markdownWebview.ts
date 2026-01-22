@@ -8,6 +8,7 @@ import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo } from './command/comment';
+import { EditorUtils } from '../utils/editorUtils';
 
 // 辅助函数：获取代码上下文（前后5行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
@@ -212,7 +213,7 @@ export async function showMarkdownWebviewInput(
                             onSaveAndContinue(message.content, contextInfo,()=>{
                                 panel.dispose();
                                 // WebView关闭后恢复编辑器焦点
-                                setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
+                                EditorUtils.restoreFocus(activeEditor);
                             });
                         }
                         break;
@@ -394,7 +395,7 @@ export async function showMarkdownWebviewInput(
                         resolve(undefined);
                         panel.dispose();
                         // WebView关闭后恢复编辑器焦点
-                        setTimeout(() => restoreFocus(activeEditor), DELAY_TIMES.RESTORE_EDITOR_FOCUS);
+                        EditorUtils.restoreFocus(activeEditor);
                         break;
                 }
             }
@@ -404,27 +405,9 @@ export async function showMarkdownWebviewInput(
         panel.onDidDispose(() => {
             resolve(undefined);
             // WebView关闭后恢复编辑器焦点
-            setTimeout(() => restoreFocus(activeEditor), 100);
+            EditorUtils.restoreFocus(activeEditor);
         });
     });
-}
-
-// 辅助函数：恢复编辑器焦点
-function restoreFocus(editor: vscode.TextEditor | undefined) {
-    // 获取当前活动的编辑器，而不是使用保存的编辑器
-    const currentActiveEditor = vscode.window.activeTextEditor;
-    if (currentActiveEditor) {
-        vscode.window.showTextDocument(currentActiveEditor.document, {
-            viewColumn: currentActiveEditor.viewColumn,
-            preserveFocus: false
-        }).then(() => {
-            // 确保焦点真正回到编辑器
-            vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-        });
-    } else {
-        // 如果没有当前活动编辑器，只是确保焦点回到编辑器组
-        vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-    }
 }
 
 function getMarkdownWebviewContent(
