@@ -5,37 +5,10 @@
     let markedInitialized = false;
     let mermaidInitialized = false;
     let isMaximized = false;
-
-    // 等待 highlight.js 加载完成（可选，不阻塞）
-    function waitForHighlight() {
-        return new Promise((resolve) => {
-            if (typeof hljs !== 'undefined') {
-                resolve();
-                return;
-            }
-            let attempts = 0;
-            const maxAttempts = 50; // 最多等待5秒
-            
-            const checkHighlight = () => {
-                if (typeof hljs !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                attempts++;
-                if (attempts >= maxAttempts) {
-                    // highlight.js 未加载，但不阻塞，继续执行
-                    console.warn('highlight.js 加载超时，代码高亮可能不可用');
-                    resolve();
-                } else {
-                    setTimeout(checkHighlight, 100);
-                }
-            };
-            checkHighlight();
-        });
-    }
+    let currentPreviewFontSize = null; // 保存当前预览字体大小
 
     // 全局、一次性的初始化任务
-    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), waitForHighlight()])
+    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
         .then(() => {
             console.log('所有库初始化成功');
         })
@@ -343,6 +316,11 @@
             // 8. 一次性更新DOM
             previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
             console.log("预览区域已使用包含SVG的完整HTML更新。");
+            
+            // 应用字体大小（如果有设置）
+            if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
+                window.applyPreviewFontSize(previewArea, currentPreviewFontSize);
+            }
 
             // 7. 检查最终结果
             const allMermaidCharts = previewArea.querySelectorAll('.mermaid-chart');
@@ -602,6 +580,15 @@
     window.addEventListener('message', event => {
         const message = event.data;
         switch (message.command) {
+            case 'setPreviewFontSize':
+                // 设置预览区域字体大小
+                if (message.fontSize && message.fontSize > 0) {
+                    currentPreviewFontSize = message.fontSize;
+                    if (typeof window.applyPreviewFontSize === 'function') {
+                        window.applyPreviewFontSize(previewArea, message.fontSize);
+                    }
+                }
+                break;
             case 'setMermaidTheme':
                 if (mermaidInitialized && typeof mermaid === 'object' && typeof mermaid.initialize === 'function') {
                     try {

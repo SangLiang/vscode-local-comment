@@ -142,6 +142,7 @@ export const IPC_MESSAGES = {
     UPDATE_CODE_CONTEXT: 'updateCodeContext',
     UPDATE_CURRENT_LINE_CONTENT: 'updateCurrentLineContent',
     SET_MERMAID_THEME: 'setMermaidTheme',
+    SET_PREVIEW_FONT_SIZE: 'setPreviewFontSize',
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',

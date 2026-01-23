@@ -507,6 +507,13 @@
             "Atom One Dark 主题",
             "Atom One Light 主题"
           ]
+        },
+        "local-comment.markdownPreview.fontSize": {
+          "type": "number",
+          "default": 0,
+          "description": "Markdown 预览区域的字体大小（像素）。设置为 0 时使用编辑器字体大小，设置为其他值时使用自定义大小。",
+          "minimum": 0,
+          "maximum": 100
         }
       }
     }

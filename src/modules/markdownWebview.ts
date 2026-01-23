@@ -118,7 +118,10 @@ export async function showMarkdownWebviewInput(
             katexCss: true,
             highlightJs: true,
             highlightCss: true,
-            highlightTheme: highlightTheme
+            highlightTheme: highlightTheme,
+            customResources: [
+                { path: 'src/templates/common/public.js', name: 'publicJsUri' }
+            ]
         });
 
         // 优化：先显示面板，使用空的标签建议，后续异步加载
@@ -142,7 +145,8 @@ export async function showMarkdownWebviewInput(
             tagSuggestions, 
             isUserLoggedIn, 
             isCommentShared, 
-            panel.webview
+            panel.webview,
+            resourceUris
         );
 
         // 异步加载标签建议和代码上下文，避免阻塞界面显示
@@ -175,6 +179,28 @@ export async function showMarkdownWebviewInput(
                         panel.webview.postMessage({
                             command: IPC_MESSAGES.SET_MERMAID_THEME,
                             theme: mermaidTheme
+                        });
+                    })
+                );
+
+                // 发送预览字体大小配置
+                promises.push(
+                    Promise.resolve().then(() => {
+                        const config = vscode.workspace.getConfiguration('local-comment');
+                        const previewFontSize = config.get<number>('markdownPreview.fontSize', 0);
+                        
+                        // 如果配置为 0，则使用编辑器字体大小
+                        let fontSize: number;
+                        if (previewFontSize === 0) {
+                            const editorConfig = vscode.workspace.getConfiguration('editor');
+                            fontSize = editorConfig.get<number>('fontSize', 14);
+                        } else {
+                            fontSize = previewFontSize;
+                        }
+                        
+                        panel.webview.postMessage({
+                            command: IPC_MESSAGES.SET_PREVIEW_FONT_SIZE,
+                            fontSize: fontSize
                         });
                     })
                 );
@@ -437,7 +463,8 @@ function getMarkdownWebviewContent(
     tagSuggestions: string = '',
     isUserLoggedIn: boolean = false,
     isCommentShared: boolean = false,
-    webview?: vscode.Webview // 添加webview参数
+    webview?: vscode.Webview, // 添加webview参数
+    resourceUris?: any // 添加resourceUris参数以获取publicJsUri
 ): string {
     // 生成nonce用于CSP
     const nonce = WebviewUtils.getNonce();
@@ -571,6 +598,12 @@ function getMarkdownWebviewContent(
     contextHtml += '</div>'; // 结束context-tabs
     contextHtml += '</div>'; // 结束context-info
 
+    // 计算 publicJsScript 的值
+    const publicJsUri = (resourceUris as any)?.publicJsUri || '';
+    const publicJsScript = publicJsUri 
+        ? `<script src="${publicJsUri}" onerror="console.error('public.js 加载失败')"></script>`
+        : '';
+
     // 准备模板变量
     const templateVariables: Record<string, string> = {
         contextHtml,
@@ -585,6 +618,8 @@ function getMarkdownWebviewContent(
         katexCssUri: katexCssUri || '',
         highlightJsUri: highlightJsUri || '',
         highlightCssUri: highlightCssUri || '',
+        publicJsUri: publicJsUri,
+        publicJsScript: publicJsScript,
         tagSuggestions: tagSuggestions,
         cspSource: webview ? webview.cspSource : "'self'", // 从webview获取CSP源
         shareButtonHtml: (isUserLoggedIn && !isCommentShared) ? 

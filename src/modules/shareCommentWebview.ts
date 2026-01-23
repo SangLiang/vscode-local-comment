@@ -80,7 +80,10 @@ export async function showShareCommentWebview(
         katexCss: true,
         highlightJs: true,
         highlightCss: true,
-        highlightTheme: highlightTheme
+        highlightTheme: highlightTheme,
+        customResources: [
+            { path: 'src/templates/common/public.js', name: 'publicJsUri' }
+        ]
     });
 
     // HTML内容
@@ -96,10 +99,11 @@ export async function showShareCommentWebview(
         resourceUris.katexCssUri || '',
         resourceUris.highlightJsUri || '',
         resourceUris.highlightCssUri || '',
-        panel.webview
+        panel.webview,
+        resourceUris
     );
 
-    // 异步发送Mermaid主题配置
+    // 异步发送Mermaid主题配置和字体大小配置
     setTimeout(() => {
         try {
             const config = vscode.workspace.getConfiguration('local-comment');
@@ -108,8 +112,25 @@ export async function showShareCommentWebview(
                 command: IPC_MESSAGES.SET_MERMAID_THEME,
                 theme: mermaidTheme
             });
+            
+            // 发送预览字体大小配置
+            const previewFontSize = config.get<number>('markdownPreview.fontSize', 0);
+            
+            // 如果配置为 0，则使用编辑器字体大小
+            let fontSize: number;
+            if (previewFontSize === 0) {
+                const editorConfig = vscode.workspace.getConfiguration('editor');
+                fontSize = editorConfig.get<number>('fontSize', 14);
+            } else {
+                fontSize = previewFontSize;
+            }
+            
+            panel.webview.postMessage({
+                command: IPC_MESSAGES.SET_PREVIEW_FONT_SIZE,
+                fontSize: fontSize
+            });
         } catch (error) {
-            logger.error('发送Mermaid主题配置失败:', error);
+            logger.error('发送配置失败:', error);
         }
     }, 0);
 
@@ -272,7 +293,8 @@ function getShareCommentWebviewContent(
     katexCssUri: string = '',
     highlightJsUri: string = '',
     highlightCssUri: string = '',
-    webview?: vscode.Webview
+    webview?: vscode.Webview,
+    resourceUris?: any // 添加resourceUris参数以获取publicJsUri
 ): string {
     // 生成nonce用于CSP
     const nonce = WebviewUtils.getNonce();
@@ -330,6 +352,12 @@ function getShareCommentWebviewContent(
         contextHtml += '</div>';
     }
 
+    // 计算 publicJsScript 的值
+    const publicJsUri = resourceUris?.publicJsUri || '';
+    const publicJsScript = publicJsUri 
+        ? `<script src="${publicJsUri}" onerror="console.error('public.js 加载失败')"></script>`
+        : '';
+
     // 准备模板变量
     const templateVariables: Record<string, string> = {
         contextHtml,
@@ -342,6 +370,8 @@ function getShareCommentWebviewContent(
         katexCssUri: katexCssUri || '',
         highlightJsUri: highlightJsUri || '',
         highlightCssUri: highlightCssUri || '',
+        publicJsUri: publicJsUri,
+        publicJsScript: publicJsScript,
         cspSource: webview ? webview.cspSource : "'self'"
     };
 

@@ -5,61 +5,11 @@
     let previewVisible = false;
     let markedInitialized = false;
     let mermaidInitialized = false;
+    let currentPreviewFontSize = null; // 保存当前预览字体大小
 
-    // HTML转义函数（与 webviewUtils.ts 中的实现保持一致）
-    function escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    // 防抖函数
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // 等待 highlight.js 加载完成（可选，不阻塞）
-    function waitForHighlight() {
-        return new Promise((resolve) => {
-            if (typeof hljs !== 'undefined') {
-                resolve();
-                return;
-            }
-            let attempts = 0;
-            const maxAttempts = 50; // 最多等待5秒
-            
-            const checkHighlight = () => {
-                if (typeof hljs !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                attempts++;
-                if (attempts >= maxAttempts) {
-                    // highlight.js 未加载，但不阻塞，继续执行
-                    console.warn('highlight.js 加载超时，代码高亮可能不可用');
-                    resolve();
-                } else {
-                    setTimeout(checkHighlight, 100);
-                }
-            };
-            checkHighlight();
-        });
-    }
 
     // 全局、一次性的初始化任务
-    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), waitForHighlight()])
+    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
         .catch(error => {
             console.error("关键库初始化失败:", error);
             // 可以在预览区域显示一个永久性的错误
@@ -332,6 +282,11 @@
             previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
             console.log("预览区域已使用包含SVG的完整HTML更新。");
             
+            // 应用字体大小（如果有设置）
+            if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
+                window.applyPreviewFontSize(previewArea, currentPreviewFontSize);
+            }
+            
             // 7. 为@tag链接添加点击事件
             const tagLinks = previewArea.querySelectorAll('.tag-link');
             tagLinks.forEach(link => {
@@ -448,6 +403,14 @@
                     updatePreview(textarea.value);
                 }
             }
+        } else if (message.command === 'setPreviewFontSize') {
+            // 设置预览区域字体大小
+            if (message.fontSize && message.fontSize > 0) {
+                currentPreviewFontSize = message.fontSize;
+                if (typeof window.applyPreviewFontSize === 'function') {
+                    window.applyPreviewFontSize(previewArea, message.fontSize);
+                }
+            }
         }
     });
     
@@ -480,7 +443,7 @@
                 const isTargetLine = currentLineNumber === lineNumber;
                 const lineClass = isTargetLine ? 'target-line' : 'context-line';
                 const lineNumberDisplay = currentLineNumber + 1;
-                const escapedLine = escapeHtml(line);
+                const escapedLine = typeof window.escapeHtml === 'function' ? window.escapeHtml(line) : line;
                 
                 contextHtml += `
                     <div class="code-line ${lineClass}" data-line-number="${currentLineNumber}">
@@ -596,7 +559,7 @@
             const currentCodePreview = currentCodeItem.querySelector('.current-code');
             if (currentCodePreview) {
                 // 转义HTML内容
-                const escapedContent = escapeHtml(lineContent);
+                const escapedContent = typeof window.escapeHtml === 'function' ? window.escapeHtml(lineContent) : lineContent;
                 
                 // 使用innerHTML来正确显示转义后的内容，避免HTML实体被显示为原始字符
                 currentCodePreview.innerHTML = escapedContent;
@@ -850,7 +813,7 @@
         hideAutocomplete();
     }
     
-    const debouncedUpdatePreview = debounce(updatePreview, 500);
+    const debouncedUpdatePreview = typeof window.debounce === 'function' ? window.debounce(updatePreview, 500) : updatePreview;
 
     textarea.addEventListener('input', function(e) {
         // 如果当前在预览tab，实时更新预览
