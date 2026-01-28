@@ -1,7 +1,5 @@
 # VSCode Local Comment Extension
 
-[中文文档](https://github.com/SangLiang/vscode-local-commet/blob/master/README_CN.md)
-
 A VSCode extension designed for large project development, providing local comment and bookmark functionality that allows you to add Markdown technical notes without modifying source code.
 
 > You might not need it now, but when you face overwhelming amounts of code, I hope you'll remember it.
@@ -18,11 +16,17 @@ A VSCode extension designed for large project development, providing local comme
 
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
 
-## Mermaid Flowchart Support!!! [v1.1.3 Feature]
+## Mermaid Flowchart Support!
 
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
 
-## Multi-user Collaboration is Here!!! [v1.2.0 Feature]
+## LaTeX formulas
+
+Now, LaTeX formulas can be added in local comments!
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+
+## Multi-user Collaboration
 
 Display other users' (here admin user) comment information in the editor. You can see others' evaluations of code segments like reading WeChat Books:
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
@@ -35,12 +39,6 @@ Manage your shared comments in the web interface:
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
 
 **Note**: The multi-user collaboration version is not currently available for free public use.
-
-## Support latex formulas [v1.3.0]
-
-Now, latex formulas can be added in local comments!
-
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
 
 ## Why Do We Need Local Comments?
 
@@ -223,182 +221,7 @@ If you encounter problems during use, please provide feedback through:
 
 ## 📝 Changelog
 
-### Change Log
-
-## [1.3.2] - 2026-1-22
-
-- ✨ Code in Markdown preview now has syntax highlighting, and users can adjust code color themes in settings
-- 🔨 Adjusted the layout of the Markdown editor, reduced margins to free up more content space
-- 🔨 Other code structure optimizations
-
-## [1.3.1] - 2025-12-26
-
-- 🔨 Redefined the way users jump to tags. To avoid conflicts with `$latex$` definition in latex formulas, the format has been changed from `$tag` to `${tag}`. Users who previously used tag labels need to manually modify the tag format.
-- ✨ Now supports Chinese tags: `${中文标签}`
-- ✨ Added tag list in right-click context menu for current page, click to jump to specified position
-- 🔨 Fixed some other issues
-
-## [1.3.0] - 2025-11-26
-
-- ✨ Added support for latex formulas!!
-- ✨ Allows log information to be output in the output of the editor
-- 🔨 Optimized the code, slightly improving performance in rendering
-
-## [1.2.2] - 2025-10-28
-
-- Fixed the issue where an error occurred when cleaning bookmarks for the current file
-- When there are no shared comments, unlogged-in users do not need pop-up prompts
-- Removed some useless code
-
-## [1.2.1] - 2025-09-03
-
-- Fixed the issue of being unable to normally save and exit when entering markdown editing from a mouse click
-- Some other optimizations
-
-## [1.2.0] - 2025-08-23
-
-- ✨ Biggest highlight: Support for multi-user collaboration, allowing users to share local comments to the cloud and pull local comments from the cloud
-- ✨ Optimize mermaid diagrams, allowing ctrl+mouse wheel to zoom flowcharts
-- ✨ Add mermaid diagram hand-drawn mode
-- ✨ Support preview of shared comments
-- ✨ Allow users to directly import contributed comments into local comments
-- ✨ Allow users to click context content in markdown editor to switch comment line numbers
-- 🔨 Fix some known issues
-- 🎉 Additional note: Although this version already supports multi-user comments, I don't have a cloud server yet, so it can't be tested for now
-
-## [1.1.3] - 2025-08-07
-
-- ✨ Support for mermaid flowcharts, now users can freely use mermaid syntax in markdown comments
-- 🔨 Fix some known issues
-- 🎉 Additional note: In this release, many features about multi-user collaborative comment content have actually been implemented, but still need some time to polish the functionality. This is just a preview of the next major version's features
-
-## [1.1.2] - 2025-07-24
-
-- ✨ Support using ctrl+s to save text while editing Markdown
-- ✨ Add clear all bookmarks in all files functionality to local comment commands
-- 🔨 Fix icon style display issues on Linux platforms
-- 🔨 Fix some known issues
-
-## [1.1.1] - 2025-07-08
-
-- ✨ Optimize Markdown preview position, using tab selection box style
-- 🔨 Fix issue where @ tag autocomplete position appears incorrectly and doesn't display when markdown has too many lines
-- 🔨 Other issues
-
-## [1.1.0] - 2025-06-29
-
-- ✨ Add bookmark functionality, use ctrl+alt+k to add bookmarks, use ctrl+alt+j to jump to next bookmark position
-- ✨ For unmatched code, can also see initial snapshot content in markdown editor
-- 🔨 Fix some known issues
-
-## [1.0.10] - 2025-06-28
-
-- ✨ Add user manual matching of comments to code functionality
-- ✨ File items in local comment panel are sorted by user usage frequency
-- ✨ Add jump to file functionality for file items in local comment panel, can serve as auxiliary file tab jumping
-- 🔨 Fix some known issues
-
-## [1.0.9] - 2025-06-25
-
-- ✨ When using markdown editor, will display in split screen
-- ✨ User data import and export functionality, more flexible options (import/export by project path, import/export by comment content)
-- ✨ When using markdown editor, context content hints are increased
-- 🔨 Fix some known issues
-
-## [1.0.8] - 2025-06-14
-
-- 🔨 Use stricter matching algorithm, fix issue where comments don't match code positions after large code block changes
-- ✨ Remove some useless commands from command line panel
-- 🔨 Other issues
-
-## [1.0.7] - 2025-06-04
-
-### 🔨 Changes
-
-- ✨ Add markdown edit preview functionality
-- ✨ Add multi-language support for operation commands
-- 🔨 Fix issue where comment styles are incorrect in comment tree after switching branches
-
-## [1.0.6] - 2025-06-02
-
-### 🔨 Optimize comment tree
-
-- ✨ Local comments not found in comment tree panel will display in darker colors
-
-## [1.0.5] - 2025-05-31
-
-### 🔨 Fix bugs
-
-- ✨ When switching git branches, incorrectly executed code for updating comment code snapshots, causing comment position confusion. This issue has now been fixed
-
-## [1.0.4] - 2025-05-31
-
-### ✨ Optimize user experience
-
-- 🎉 Add new shortcut ctrl+shift+m allowing direct entry into markdown mode for adding and modifying local comments
-
-### 🔨 Fix bugs
-
-- 🔨 Fix issue where cursor focus is lost when returning to code editor after completing editing in markdown editor
-
-## [1.0.3] - 2025-05-31
-
-### 🔨 Fix bugs
-
-- 🔨 Fix issue where different projects use the same local comment storage file
-- 🎯 Other known errors
-
-## [1.0.2] - 2025-05-30
-
-### 🔨 Fix bugs
-
-- 🔨 Fix issue where comment positions are incorrect after switching branches
-- 💻 Fix issue where smart completion positions are incorrect during Markdown editing
-
-## [1.0.1] - 2025-05-30
-
-### 🎉 New Features
-
-- ✨ **Convert Selected Text to Comment**: Right-click selected text can directly convert to local comment and delete original text
-- 📝 **Multi-line Editor**: New professional multi-line comment editing interface with rich editing features
-- 🎨 **Dual Edit Mode**:
-  - Quick Mode: Single-line quick editing
-  - Detailed Mode: Multi-line rich text editing
-- ⌨️ **Enhanced Shortcuts**:
-  - Ctrl+Enter: Save editing
-- 🏷️ **Improved Tag Completion**: Automatically display tag dropdown when typing @ in editor
-- 🖱️ **Hover Action Buttons**:
-  - ✏️ Edit: Quick single-line editing
-  - 📝 Markdown Edit: Multi-line detailed editing
-  - 🗑️ Delete: Delete comment
-
-### 📖 New Usage Scenarios
-
-#### Quick Marking of Code Segments
-
-1. Select code that needs marking
-2. Right-click and choose "Convert to Local Comment"
-3. Selected code becomes comment, original code automatically deleted
-
-#### Writing Long Comments
-
-1. Hover over comment
-2. Click "📝 Markdown Edit"
-3. Write detailed explanation in multi-line editor
-4. Support line breaks (\n) and tag references
-
-## [1.0.0] - 2025-05-29
-
-### New Features
-
-- ✨ Local comment functionality: Add local comments in code without modifying original files
-- 🏷️ Tag system: Support `${tagName}` declaration and `@tagName` reference
-- 🔗 Smart navigation: Click tag references to jump to declaration positions
-- 💡 Auto-completion: Automatically suggest available tags when typing `@`
-- 🌲 Tree view: View all comments in sidebar
-- ⌨️ Shortcut support: Ctrl+Shift+C to add comments
-- 🎨 Syntax highlighting: Tags highlighted in comments
-- 📁 Cross-file support: Tags can be referenced across different files
+- The changelog has been moved to `CHANGELOG.md`. See: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## 📄 License
 
