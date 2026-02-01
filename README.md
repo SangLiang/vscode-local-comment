@@ -53,8 +53,8 @@ In daily development, we often encounter scenarios like:
 
 ### Problems with Traditional Solutions
 
-- ❌ **Code Comments**: Will pollute source code and affect code cleanliness
-- ❌ **External Documentation**: This is our most commonly used solution, but it also has the most problems. Good ones don't support markdown, markdown-supporting ones don't support multi-point login, multi-point login ones don't have mermaid diagram rendering, and those with everything require payment.
+- **Code Comments**: Will pollute source code and affect code cleanliness
+- **External Documentation**: This is our most commonly used solution, but it also has the most problems. Good ones don't support markdown, markdown-supporting ones don't support multi-point login, multi-point login ones don't have mermaid diagram rendering, and those with everything require payment.
 
 ### Local Comment's Solution
 
@@ -74,7 +74,7 @@ In daily development, we often encounter scenarios like:
 
 **Multi-user Collaboration**: Previous generations plant trees, future generations enjoy the shade. Users' completed code analysis and functional understanding can be shared with the team, everyone can enjoy the learning results.
 
-## 🚀 Core Features
+## Core Features
 
 ### 1. Local Comment System
 
@@ -113,7 +113,7 @@ function test { // local comment is best placed on this line
 
 This reduces the problem of local comments not matching code positions after switching branches or making large-scale code modifications. **Please do not add local comments on empty lines or meaningless code lines**.
 
-## ⌨️ Complete Shortcut Keys
+## Complete Shortcut Keys
 
 ### Local Comment Shortcuts
 
@@ -133,7 +133,7 @@ This reduces the problem of local comments not matching code positions after swi
 | `Ctrl+Alt+J` | Next Bookmark | Jump to next bookmark position |
 | `Ctrl+Alt+Shift+J` | Previous Bookmark | Jump to previous bookmark position |
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Add First Comment**: Press `Ctrl+Shift+M` on a code line
 2. **Add First Bookmark**: Press `Ctrl+Alt+K` on a code line
@@ -183,7 +183,7 @@ A: You can export backup through the "Export Comment Data" function in the comma
 **Q: Can others see my comments?**
 A: No. Comment data is only stored locally, completely private, and won't be seen by others.
 
-## 💾 Data Storage
+## Data Storage
 
 ### Storage Location
 
@@ -210,7 +210,7 @@ another-project-g7h8i9j0k1l2.json
 - Persists across VSCode sessions
 - Each project maintains independent comment database
 
-## 🤝 Contribution and Feedback
+## Contribution and Feedback
 
 ### Issue Feedback
 
@@ -219,10 +219,10 @@ If you encounter problems during use, please provide feedback through:
 - GitHub Issues: [Project Address](https://github.com/SangLiang/vscode-local-commet/issues)
 - Email Contact: sangliang_sa@qq.com
 
-## 📝 Changelog
+## Changelog
 
 - The changelog has been moved to `CHANGELOG.md`. See: [`CHANGELOG.md`](./CHANGELOG.md)
 
-## 📄 License
+## License
 
 MIT License
