@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2026-02-03
+
+### Added
+- Allow adjusting the font size of Markdown editor rendering in editor settings; it now defaults to match the code editor font size
+
+### Changed
+- Adjusted styles on the Markdown input page: removed the drag-to-resize input area (no longer needed), improved the basic feature hint icons
+- Adjusted some styles on the Code Corner login page
+- Adjusted some documentation structure
+
+### Friendly reminder
+- In the next version, the file save path will be changed. A path like `.vscode/vscode-local-comments/comments/comments.json` will be created under the project. The data read priority for local comments will be: `.vscode/vscode-local-comments/comments/comments.json` > `%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`. **Project-local storage path has higher priority than the global storage path.** A data migration option will be provided. **For data safety, please back up and export your data regularly to avoid loss.**
+
 ## [1.3.2] - 2026-01-22
 
 ### Added
