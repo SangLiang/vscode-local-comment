@@ -29,6 +29,7 @@ out/logger.config.json
 .vscode/settings.json
 .vscode/launch.json
 .vscode/extensions.json
+.cursor
 
 # 环境变量
 .env
