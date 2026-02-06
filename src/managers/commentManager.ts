@@ -178,27 +178,20 @@ export class CommentManager {
             } else if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
                 await this.loadCommentsFromPath(paths.oldCommentsFile);
             } else {
-                const choice = await vscode.window.showWarningMessage(
-                    '未找到注释配置文件。是否创建默认配置文件？',
-                    '创建默认配置',
-                    '稍后'
-                );
-
-                if (choice === '创建默认配置' || choice === '稍后') {
-                    try {
-                        StoragePathUtils.ensureNewPathExists(paths);
-                        const defaultFile = path.join(paths.commentsDir, 'comments.json');
-                        const defaultData = { comments: {}, shareComments: {} };
-                        fs.writeFileSync(defaultFile, JSON.stringify(defaultData, null, 2));
-                        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
-                        config.comments = 'comments.json';
-                        await StoragePathUtils.saveConfig(paths.configFile, config, true);
-                    } catch (err) {
-                        if (StoragePathUtils.isWritePermissionError(err)) {
-                            logger.warn('无法创建默认配置（只读或权限不足）', err);
-                        } else {
-                            throw err;
-                        }
+                // 新项目目录：直接创建项目下的默认配置文件，不弹窗
+                try {
+                    StoragePathUtils.ensureNewPathExists(paths);
+                    const defaultFile = path.join(paths.commentsDir, 'comments.json');
+                    const defaultData = { comments: {}, shareComments: {} };
+                    fs.writeFileSync(defaultFile, JSON.stringify(defaultData, null, 2));
+                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    config.comments = 'comments.json';
+                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                } catch (err) {
+                    if (StoragePathUtils.isWritePermissionError(err)) {
+                        logger.warn('无法创建默认配置（只读或权限不足）', err);
+                    } else {
+                        throw err;
                     }
                 }
                 this.comments = {};

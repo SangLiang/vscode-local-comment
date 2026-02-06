@@ -24,6 +24,12 @@ export interface AuthSession {
     expiresAt: number;
 }
 
+/** 默认会话过期时间：24 小时（毫秒） */
+const DEFAULT_SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+/** 会话过期时间：7 天（毫秒） */
+const SESSION_EXPIRY_7D_MS = 7 * 24 * 60 * 60 * 1000;
+
 export class AuthManager {
     public context: vscode.ExtensionContext;
     private sessionFile: string;
@@ -157,7 +163,7 @@ export class AuthManager {
             const session: AuthSession = {
                 token: access_token,
                 user: null as any, // 临时设置为null
-                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 默认1周过期
+                expiresAt: Date.now() + SESSION_EXPIRY_7D_MS,
             };
             
             this.currentSession = session;
@@ -276,7 +282,7 @@ export class AuthManager {
             const { access_token, token_type } = response;
 
             this.currentSession.token = access_token;
-            this.currentSession.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 默认24小时过期
+            this.currentSession.expiresAt = Date.now() + DEFAULT_SESSION_EXPIRY_MS;
             
             // 更新用户信息
             try {
