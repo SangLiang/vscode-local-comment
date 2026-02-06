@@ -21,6 +21,7 @@ import { UserInfoWebview } from '../userInfoWebview';
 import { apiService } from '../../apiService';
 import { COMMANDS } from '../../constants';
 import { DialogUtils } from '../../utils/dialogUtils';
+import { StoragePathUtils } from '../../utils/storagePathUtils';
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -34,28 +35,203 @@ export function registerCommands(
 
     const showStorageLocationCommand = vscode.commands.registerCommand(COMMANDS.SHOW_STORAGE_LOCATION, () => {
         const projectInfo = commentManager.getProjectInfo();
-        const storageFile = commentManager.getStorageFilePath();
-        
-        let message = `项目注释存储信息:\n\n`;
-        message += `项目名称: ${projectInfo.name}\n`;
-        message += `项目路径: ${projectInfo.path}\n`;
-        message += `存储文件: ${storageFile}\n\n`;
-        message += `️注意: 每个项目的注释数据独立存储`;
-        
-        vscode.window.showInformationMessage(
-            message,
-            '打开文件夹', '复制路径', '查看项目目录'
-        ).then(selection => {
-            if (selection === '打开文件夹') {
-                vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(storageFile));
-            } else if (selection === '复制路径') {
-                vscode.env.clipboard.writeText(storageFile);
-                vscode.window.showInformationMessage('路径已复制到剪贴板');
-            } else if (selection === '查看项目目录') {
-                const projectDir = path.dirname(path.dirname(storageFile)); // 返回到projects目录
-                vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(projectDir));
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspacePath = workspaceFolders[0].uri.fsPath;
+            const paths = StoragePathUtils.getStoragePaths(commentManager.getContext(), workspacePath);
+            const currentCommentsFile = StoragePathUtils.getCurrentCommentsFile(paths, workspacePath);
+            const currentCommentsConfig = commentManager.getCurrentCommentsConfig();
+            const availableCommentsConfigs = commentManager.listAvailableCommentsConfigs();
+
+            let message = `项目注释存储信息:\n\n`;
+            message += `项目名称: ${projectInfo.name}\n`;
+            message += `项目路径: ${projectInfo.path}\n`;
+            message += `存储目录: ${paths.commentsDir}\n`;
+            message += `当前配置: ${currentCommentsConfig}\n`;
+            message += `配置文件: ${currentCommentsFile || '(无)'}\n`;
+            message += `可用配置: ${availableCommentsConfigs.join(', ') || '(无)'}\n`;
+            if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                message += `\n⚠️ 检测到旧路径仍有数据: ${paths.oldCommentsFile}`;
+            }
+
+            const buttons = ['打开文件夹', '复制路径', '切换配置', '迁移旧数据'];
+            vscode.window.showInformationMessage(message, ...buttons).then(selection => {
+                if (selection === '打开文件夹') {
+                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(paths.commentsDir));
+                } else if (selection === '复制路径') {
+                    vscode.env.clipboard.writeText(paths.newPath);
+                    vscode.window.showInformationMessage('路径已复制到剪贴板');
+                } else if (selection === '切换配置') {
+                    vscode.commands.executeCommand(COMMANDS.SWITCH_COMMENTS_CONFIG);
+                } else if (selection === '迁移旧数据') {
+                    commentManager.migrateOldData();
+                    if (bookmarkManager) {
+                        bookmarkManager.migrateOldData();
+                    }
+                }
+            });
+        } else {
+            const storageFile = commentManager.getStorageFilePath();
+            let message = `项目注释存储信息:\n\n`;
+            message += `项目名称: ${projectInfo.name}\n`;
+            message += `项目路径: ${projectInfo.path}\n`;
+            message += `存储文件: ${storageFile}\n\n`;
+            message += `注意: 每个项目的注释数据独立存储`;
+            vscode.window.showInformationMessage(message, '打开文件夹', '复制路径').then(selection => {
+                if (selection === '打开文件夹') {
+                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path.dirname(storageFile)));
+                } else if (selection === '复制路径') {
+                    vscode.env.clipboard.writeText(storageFile);
+                    vscode.window.showInformationMessage('路径已复制到剪贴板');
+                }
+            });
+        }
+    });
+
+    // 切换注释配置文件命令
+    const switchCommentsConfigCommand = vscode.commands.registerCommand(COMMANDS.SWITCH_COMMENTS_CONFIG, async () => {
+        const availableConfigs = commentManager.listAvailableCommentsConfigs();
+        const currentConfig = commentManager.getCurrentCommentsConfig();
+
+        if (availableConfigs.length === 0) {
+            const createChoice = await vscode.window.showInformationMessage(
+                '没有找到可用的注释配置文件，是否创建默认配置文件？',
+                '创建默认配置',
+                '取消'
+            );
+            if (createChoice === '创建默认配置') {
+                await commentManager.createCommentsConfig('comments');
+                await commentManager.switchCommentsConfig('comments.json');
+            }
+            return;
+        }
+
+        const items: vscode.QuickPickItem[] = availableConfigs.map(file => ({
+            label: `$(file) ${file}`,
+            description: file === currentConfig ? '$(check) 当前使用' : '',
+            detail: '位于 .vscode/local-comment/comments/ 目录',
+            picked: file === currentConfig
+        }));
+        items.push({ label: '', kind: vscode.QuickPickItemKind.Separator });
+        items.push({
+            label: '$(add) 创建新配置文件...',
+            description: '创建新的注释配置文件',
+            detail: '输入文件名后创建并自动切换',
+            alwaysShow: true
+        });
+
+        const quickPick = vscode.window.createQuickPick();
+        quickPick.items = items;
+        quickPick.title = '选择注释配置文件';
+        quickPick.placeholder = '选择要使用的配置文件';
+        quickPick.matchOnDescription = false;
+        quickPick.matchOnDetail = false;
+
+        quickPick.onDidAccept(async () => {
+            const selected = quickPick.selectedItems[0];
+            if (selected) {
+                if (selected.label.includes('创建新配置文件')) {
+                    const fileName = await vscode.window.showInputBox({
+                        prompt: '请输入配置文件名（不需要 .json 后缀）',
+                        placeHolder: '例如: comments-dev',
+                        validateInput: (value) => {
+                            if (!value || value.trim().length === 0) return '文件名不能为空';
+                            if (!/^[a-zA-Z0-9_-]+$/.test(value)) return '文件名只能包含字母、数字、下划线和连字符';
+                            if (availableConfigs.includes(`${value}.json`)) return '配置文件已存在';
+                            return null;
+                        }
+                    });
+                    if (fileName) {
+                        await commentManager.createCommentsConfig(fileName);
+                        await commentManager.switchCommentsConfig(`${fileName}.json`);
+                        vscode.window.showInformationMessage(`已创建并切换到配置文件: ${fileName}.json`);
+                    }
+                } else {
+                    const fileName = selected.label.replace(/^\$\([^)]+\)\s*/, '').trim();
+                    await commentManager.switchCommentsConfig(fileName);
+                }
+                quickPick.dispose();
             }
         });
+        quickPick.show();
+    });
+
+    // 切换书签配置文件命令
+    const switchBookmarksConfigCommand = vscode.commands.registerCommand(COMMANDS.SWITCH_BOOKMARKS_CONFIG, async () => {
+        if (!bookmarkManager) return;
+        const availableConfigs = bookmarkManager.listAvailableBookmarksConfigs();
+        const currentConfig = bookmarkManager.getCurrentBookmarksConfig();
+
+        if (availableConfigs.length === 0) {
+            const createChoice = await vscode.window.showInformationMessage(
+                '没有找到可用的书签配置文件，是否创建默认配置文件？',
+                '创建默认配置',
+                '取消'
+            );
+            if (createChoice === '创建默认配置') {
+                await bookmarkManager.createBookmarksConfig('bookmarks');
+                await bookmarkManager.switchBookmarksConfig('bookmarks.json');
+            }
+            return;
+        }
+
+        const items: vscode.QuickPickItem[] = availableConfigs.map(file => ({
+            label: `$(file) ${file}`,
+            description: file === currentConfig ? '$(check) 当前使用' : '',
+            detail: '位于 .vscode/local-comment/bookmarks/ 目录',
+            picked: file === currentConfig
+        }));
+        items.push({ label: '', kind: vscode.QuickPickItemKind.Separator });
+        items.push({
+            label: '$(add) 创建新配置文件...',
+            description: '创建新的书签配置文件',
+            detail: '输入文件名后创建并自动切换',
+            alwaysShow: true
+        });
+
+        const quickPick = vscode.window.createQuickPick();
+        quickPick.items = items;
+        quickPick.title = '选择书签配置文件';
+        quickPick.placeholder = '选择要使用的配置文件';
+        quickPick.matchOnDescription = false;
+        quickPick.matchOnDetail = false;
+
+        quickPick.onDidAccept(async () => {
+            const selected = quickPick.selectedItems[0];
+            if (selected) {
+                if (selected.label.includes('创建新配置文件')) {
+                    const fileName = await vscode.window.showInputBox({
+                        prompt: '请输入配置文件名（不需要 .json 后缀）',
+                        placeHolder: '例如: bookmarks-dev',
+                        validateInput: (value) => {
+                            if (!value || value.trim().length === 0) return '文件名不能为空';
+                            if (!/^[a-zA-Z0-9_-]+$/.test(value)) return '文件名只能包含字母、数字、下划线和连字符';
+                            if (availableConfigs.includes(`${value}.json`)) return '配置文件已存在';
+                            return null;
+                        }
+                    });
+                    if (fileName) {
+                        await bookmarkManager.createBookmarksConfig(fileName);
+                        await bookmarkManager.switchBookmarksConfig(`${fileName}.json`);
+                        vscode.window.showInformationMessage(`已创建并切换到配置文件: ${fileName}.json`);
+                    }
+                } else {
+                    const fileName = selected.label.replace(/^\$\([^)]+\)\s*/, '').trim();
+                    await bookmarkManager.switchBookmarksConfig(fileName);
+                }
+                quickPick.dispose();
+            }
+        });
+        quickPick.show();
+    });
+
+    // 迁移旧数据命令（注释+书签）
+    const migrateOldDataCommand = vscode.commands.registerCommand(COMMANDS.MIGRATE_OLD_DATA, async () => {
+        await commentManager.migrateOldData();
+        if (bookmarkManager) {
+            await bookmarkManager.migrateOldData();
+        }
     });
 
     const showStorageStatsCommand = vscode.commands.registerCommand(COMMANDS.SHOW_STORAGE_STATS, () => {
@@ -1029,6 +1205,9 @@ export function registerCommands(
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
         showStorageLocationCommand,
+        switchCommentsConfigCommand,
+        switchBookmarksConfigCommand,
+        migrateOldDataCommand,
         showStorageStatsCommand,
         manageProjectsCommand,
         toggleCommentsCommand,

@@ -138,6 +138,23 @@
         "category": "Local Comment"
       },
       {
+        "command": "localComment.switchCommentsConfig",
+        "title": "切换注释配置文件",
+        "category": "Local Comment",
+        "icon": "$(file-submodule)"
+      },
+      {
+        "command": "localComment.switchBookmarksConfig",
+        "title": "切换书签配置文件",
+        "category": "Local Comment",
+        "icon": "$(file-submodule)"
+      },
+      {
+        "command": "localComment.migrateOldData",
+        "title": "迁移旧数据到项目本地存储",
+        "category": "Local Comment"
+      },
+      {
         "command": "localComment.showStorageStats",
         "title": "%showStorageStats%",
         "category": "Local Comment"
@@ -311,6 +328,18 @@
         {
           "command": "localComment.goToBookmark",
           "when": "false"
+        },
+        {
+          "command": "localComment.switchCommentsConfig",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "localComment.switchBookmarksConfig",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "localComment.migrateOldData",
+          "when": "workspaceFolderCount > 0"
         }
       ],
       "editor/context": [
@@ -515,6 +544,16 @@
           "description": "Markdown 预览区域的字体大小（像素）。设置为 0 时使用编辑器字体大小，设置为其他值时使用自定义大小。",
           "minimum": 0,
           "maximum": 100
+        },
+        "local-comment.storage.commentsConfig": {
+          "type": "string",
+          "default": "comments.json",
+          "description": "当前使用的注释配置文件名（位于 .vscode/local-comment/comments/ 目录下）"
+        },
+        "local-comment.storage.bookmarksConfig": {
+          "type": "string",
+          "default": "bookmarks.json",
+          "description": "当前使用的书签配置文件名（位于 .vscode/local-comment/bookmarks/ 目录下）"
         }
       }
     }

@@ -37,4 +37,25 @@ export class DialogUtils {
         
         return confirmed;
     }
+
+    /**
+     * 显示多选对话框（信息类）
+     * @param message 提示消息
+     * @param choices 按钮文本列表，如 ['立即迁移', '稍后提醒', '不再提醒']
+     * @param options 选项
+     * @param options.modal 是否模态对话框
+     * @returns 用户点击的按钮文本，若关闭或 Esc 则返回 undefined
+     */
+    static async showChoiceDialog<T extends string>(
+        message: string,
+        choices: readonly T[],
+        options?: { modal?: boolean }
+    ): Promise<T | undefined> {
+        const result = await vscode.window.showInformationMessage(
+            message,
+            { modal: options?.modal ?? false },
+            ...choices
+        );
+        return result as T | undefined;
+    }
 }

@@ -9,6 +9,7 @@ import { registerCommands } from '../modules/command/commands';
 import { UserInfoWebview } from '../modules/userInfoWebview';
 import { logger } from '../utils/logger';
 import { COMMANDS } from '../constants';
+import { checkUnifiedMigration } from '../utils/migrationPrompt';
 
 /**
  * 扩展生命周期管理器 - 管理扩展的激活和停用流程
@@ -79,6 +80,20 @@ export class ExtensionLifecycle {
                 this.container.authManager
             );
             this.disposables.push(...commandDisposables);
+
+            // 统一迁移提示（仅弹一次，确认后同时迁移注释和书签）
+            const runUnifiedMigrationCheck = () => {
+                checkUnifiedMigration(
+                    this.context,
+                    this.container.commentManager,
+                    this.container.bookmarkManager
+                ).catch(err => logger.error('统一迁移检查失败', err));
+            };
+            runUnifiedMigrationCheck();
+            const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders(() => {
+                runUnifiedMigrationCheck();
+            });
+            this.disposables.push(workspaceWatcher);
 
             // 步骤6：注册用户信息命令
             const showUserInfoCommand = vscode.commands.registerCommand(

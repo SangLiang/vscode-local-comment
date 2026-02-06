@@ -91,6 +91,9 @@ export const COMMANDS = {
     MANAGE_PROJECTS: 'localComment.manageProjects',
     EXPORT_COMMENTS: 'localComment.exportComments',
     IMPORT_COMMENTS: 'localComment.importComments',
+    SWITCH_COMMENTS_CONFIG: 'localComment.switchCommentsConfig',
+    SWITCH_BOOKMARKS_CONFIG: 'localComment.switchBookmarksConfig',
+    MIGRATE_OLD_DATA: 'localComment.migrateOldData',
     
     // 认证相关命令
     LOGOUT: 'localComment.logout',

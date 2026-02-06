@@ -8,6 +8,7 @@ import { apiService, ApiRoutes } from '../apiService';
 import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
 import { DELAY_TIMES, COMMANDS } from '../constants';
+import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
 
 export interface LocalComment {
     id: string;
@@ -67,6 +68,17 @@ export class CommentManager {
         this.storageFile = this.getProjectStorageFile(context);
         this.commentMatcher = new CommentMatcher(); // 实例化注释匹配器
         this.loadComments();
+
+        // 监听配置变更
+        const configWatcher = vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('local-comment.storage.commentsConfig')) {
+                this.loadComments().catch(error => {
+                    logger.error('配置变更后重新加载失败:', error);
+                });
+                logger.info('注释配置文件已切换');
+            }
+        });
+        context.subscriptions.push(configWatcher);
         
         // 监听工作区变化，重新加载注释数据
         const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders(() => {
@@ -119,70 +131,78 @@ export class CommentManager {
     }
 
     /**
-     * 根据当前工作区生成项目特定的存储文件路径
+     * 根据当前工作区生成项目特定的存储文件路径（当前选择的注释配置文件）
      */
     private getProjectStorageFile(context: vscode.ExtensionContext): string {
-        const globalStorageDir = context.globalStorageUri?.fsPath || context.extensionPath;
-        
-        // 获取当前工作区的根路径
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders && workspaceFolders.length > 0) {
-            // 使用第一个工作区文件夹路径
             const workspacePath = workspaceFolders[0].uri.fsPath;
-            
-            // 创建工作区路径的哈希值作为文件名
-            const pathHash = crypto.createHash('md5').update(workspacePath).digest('hex');
-            const projectName = path.basename(workspacePath);
-            
-            // 确保项目存储目录存在
-            const projectStorageDir = path.join(globalStorageDir, 'projects');
-            if (!fs.existsSync(projectStorageDir)) {
-                fs.mkdirSync(projectStorageDir, { recursive: true });
-            }
-            
-            return path.join(projectStorageDir, `${projectName}-${pathHash}.json`);
-        } else {
-            // 如果没有工作区，使用默认的全局存储（向后兼容）
-            return path.join(globalStorageDir, 'local-comments.json');
+            const paths = StoragePathUtils.getStoragePaths(context, workspacePath);
+            const currentFile = StoragePathUtils.getCurrentCommentsFile(paths, workspacePath);
+            return currentFile || (context.globalStorageUri?.fsPath || context.extensionPath) + path.sep + 'local-comments.json';
         }
+        const globalStorageDir = context.globalStorageUri?.fsPath || context.extensionPath;
+        return path.join(globalStorageDir, 'local-comments.json');
     }
 
     private async loadComments(): Promise<void> {
         try {
-            // 确保存储目录存在
-            // localCommnet和sharedComment的存储文件是同一个storageFile中，
-            // 只是使用了不同的key来区分
-            const storageDir = path.dirname(this.storageFile);
-            if (!fs.existsSync(storageDir)) {
-                fs.mkdirSync(storageDir, { recursive: true });
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                await this.loadCommentsFromPath(this.storageFile);
+                return;
             }
 
-            if (fs.existsSync(this.storageFile)) {
-                const data = fs.readFileSync(this.storageFile, 'utf8');
-                // logger.info('🔍 调试存储文件原始内容:', data);
-                
-                try {
-                    const parsedData = JSON.parse(data);
-                    
-                    // 处理新的存储格式（包含comments和shareComments）
-                    if (parsedData.comments && parsedData.shareComments) {
-                        this.comments = parsedData.comments;
-                        this.shareComments = parsedData.shareComments;
-                    } else {
-                        // 向后兼容：只有comments字段的旧格式
-                        this.comments = parsedData;
-                        this.shareComments = {};
-                    }
-                } catch (parseError) {
-                    logger.error('解析存储文件失败:', parseError);
-                    this.comments = {};
-                    this.shareComments = {};
+            const workspacePath = workspaceFolders[0].uri.fsPath;
+            const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+
+            try {
+                StoragePathUtils.ensureNewPathExists(paths);
+            } catch (err) {
+                if (StoragePathUtils.isWritePermissionError(err)) {
+                    logger.warn('无法创建新路径目录（只读或权限不足），使用旧路径', err);
+                } else {
+                    throw err;
                 }
+            }
+
+            const currentCommentsFile = StoragePathUtils.getCurrentCommentsFile(paths, workspacePath);
+
+            if (currentCommentsFile) {
+                try {
+                    await this.loadCommentsFromPath(currentCommentsFile);
+                    await this.checkAndPromptMigration(paths);
+                } catch (error) {
+                    return;
+                }
+            } else if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                await this.loadCommentsFromPath(paths.oldCommentsFile);
             } else {
-                // 如果项目特定的文件不存在，尝试迁移旧数据
+                const choice = await vscode.window.showWarningMessage(
+                    '未找到注释配置文件。是否创建默认配置文件？',
+                    '创建默认配置',
+                    '稍后'
+                );
+
+                if (choice === '创建默认配置' || choice === '稍后') {
+                    try {
+                        StoragePathUtils.ensureNewPathExists(paths);
+                        const defaultFile = path.join(paths.commentsDir, 'comments.json');
+                        const defaultData = { comments: {}, shareComments: {} };
+                        fs.writeFileSync(defaultFile, JSON.stringify(defaultData, null, 2));
+                        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                        config.comments = 'comments.json';
+                        await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                    } catch (err) {
+                        if (StoragePathUtils.isWritePermissionError(err)) {
+                            logger.warn('无法创建默认配置（只读或权限不足）', err);
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
                 this.comments = {};
                 this.shareComments = {};
-                await this.tryMigrateOldData();
             }
         } catch (error) {
             logger.error('加载注释失败:', error);
@@ -191,68 +211,164 @@ export class CommentManager {
         }
     }
 
-    /**
-     * 尝试从旧的全局存储迁移数据到项目特定存储
-     */
-    private async tryMigrateOldData(): Promise<void> {
-        try {
-            const globalStorageDir = this.context.globalStorageUri?.fsPath || this.context.extensionPath;
-            const oldStorageFile = path.join(globalStorageDir, 'local-comments.json');
-            
-            if (!fs.existsSync(oldStorageFile)) {
-                return; // 没有旧数据需要迁移
-            }
-
-            const oldData = fs.readFileSync(oldStorageFile, 'utf8');
-            const allComments: FileComments = JSON.parse(oldData);
-            
-            // 获取当前工作区路径
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (!workspaceFolders || workspaceFolders.length === 0) {
-                return; // 没有工作区，无法迁移
-            }
-            
-            const workspacePath = workspaceFolders[0].uri.fsPath;
-            const projectComments: FileComments = {};
-            
-            // 筛选出属于当前项目的注释
-            for (const [filePath, comments] of Object.entries(allComments)) {
-                if (filePath.startsWith(workspacePath)) {
-                    const migratedComments = comments;
-                    projectComments[filePath] = migratedComments;
-                }
-            }
-            
-            // 如果有属于当前项目的注释，保存到项目特定文件
-            if (Object.keys(projectComments).length > 0) {
-                this.comments = projectComments;
-                await this.saveComments();
-                logger.info(`已迁移 ${Object.keys(projectComments).length} 个文件的注释到项目存储`);
-            }
-            
-        } catch (error) {
-            logger.error('迁移旧数据失败:', error);
+    private async loadCommentsFromPath(filePath: string): Promise<void> {
+        const storageDir = path.dirname(filePath);
+        if (!fs.existsSync(storageDir)) {
+            fs.mkdirSync(storageDir, { recursive: true });
         }
+
+        if (fs.existsSync(filePath)) {
+            try {
+                const data = fs.readFileSync(filePath, 'utf8');
+                const parsedData = JSON.parse(data);
+
+                if (typeof parsedData !== 'object' || parsedData === null) {
+                    throw new Error('配置文件格式错误：根对象必须是对象类型');
+                }
+
+                if (parsedData.comments && parsedData.shareComments) {
+                    this.comments = parsedData.comments;
+                    this.shareComments = parsedData.shareComments;
+                } else if (parsedData.comments || Object.keys(parsedData).length > 0) {
+                    this.comments = parsedData.comments || parsedData;
+                    this.shareComments = parsedData.shareComments || {};
+                } else {
+                    this.comments = {};
+                    this.shareComments = {};
+                }
+            } catch (parseError) {
+                logger.error('配置文件格式错误:', parseError);
+                const errorMessage = `配置文件格式错误: ${filePath}\n请检查文件是否为有效的 JSON 格式。`;
+                vscode.window.showErrorMessage(errorMessage, '打开文件').then(choice => {
+                    if (choice === '打开文件') {
+                        vscode.workspace.openTextDocument(filePath).then(doc => {
+                            vscode.window.showTextDocument(doc);
+                        });
+                    }
+                });
+                this.comments = {};
+                this.shareComments = {};
+                throw parseError;
+            }
+        } else {
+            this.comments = {};
+            this.shareComments = {};
+        }
+    }
+
+    private async migrateToNewPath(paths: StoragePaths, workspacePath: string): Promise<void> {
+        try {
+            StoragePathUtils.ensureNewPathExists(paths);
+            if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                const oldData = fs.readFileSync(paths.oldCommentsFile, 'utf8');
+                const defaultCommentsFile = path.join(paths.commentsDir, 'comments.json');
+                fs.writeFileSync(defaultCommentsFile, oldData);
+                const currentConfig = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                const config: StorageConfig = {
+                    comments: 'comments.json',
+                    bookmarks: currentConfig.bookmarks || 'bookmarks.json'
+                };
+                await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                this.comments = {};
+                this.shareComments = {};
+                await this.loadCommentsFromPath(defaultCommentsFile);
+                logger.info('注释数据已迁移到默认配置文件: comments.json');
+            }
+        } catch (error) {
+            if (StoragePathUtils.isWritePermissionError(error)) {
+                vscode.window.showErrorMessage('迁移失败：无法写入 .vscode/local-comment（只读或权限不足）');
+            } else {
+                logger.error('迁移注释数据失败:', error);
+                vscode.window.showErrorMessage('迁移注释数据失败，请手动迁移');
+            }
+        }
+    }
+
+    private async checkAndPromptMigration(paths: StoragePaths): Promise<void> {
+        if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+            const migrationKey = `migration_checked_${paths.oldCommentsFile}`;
+            const alreadyChecked = this.context.globalState.get<boolean>(migrationKey, false);
+            if (!alreadyChecked) {
+                logger.info('检测到旧路径仍有数据，新路径数据已优先使用');
+                this.context.globalState.update(migrationKey, true);
+            }
+        }
+    }
+
+    /**
+     * 公开的迁移方法，供命令调用
+     */
+    public async migrateOldData(): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showWarningMessage('没有打开的工作区');
+            return;
+        }
+        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+        await this.migrateToNewPath(paths, workspacePath);
     }
 
     private async saveComments(): Promise<void> {
         try {
-            const storageDir = path.dirname(this.storageFile);
-            if (!fs.existsSync(storageDir)) {
-                fs.mkdirSync(storageDir, { recursive: true });
-            }
-            
-            // 保存本地注释和共享注释
             const dataToSave = {
                 comments: this.comments,
                 shareComments: this.shareComments
             };
-            
-            fs.writeFileSync(this.storageFile, JSON.stringify(dataToSave, null, 2));
-            
-            // 触发注释变化事件
+
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (workspaceFolders && workspaceFolders.length > 0) {
+                const workspacePath = workspaceFolders[0].uri.fsPath;
+                const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+
+                try {
+                    StoragePathUtils.ensureNewPathExists(paths);
+                } catch (err) {
+                    if (StoragePathUtils.isWritePermissionError(err)) {
+                        if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                            fs.writeFileSync(paths.oldCommentsFile, JSON.stringify(dataToSave, null, 2));
+                        } else {
+                            vscode.window.showErrorMessage('无法写入项目目录（只读或权限不足），请检查 .vscode 目录权限');
+                        }
+                        this._onDidChangeComments.fire();
+                        this._onDidChangeSharedComments.fire();
+                        return;
+                    }
+                    throw err;
+                }
+
+                const currentCommentsFile = StoragePathUtils.getCurrentCommentsFile(paths, workspacePath);
+
+                if (currentCommentsFile) {
+                    try {
+                        fs.writeFileSync(currentCommentsFile, JSON.stringify(dataToSave, null, 2));
+                    } catch (err) {
+                        if (StoragePathUtils.isWritePermissionError(err) && StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                            fs.writeFileSync(paths.oldCommentsFile, JSON.stringify(dataToSave, null, 2));
+                        } else {
+                            throw err;
+                        }
+                    }
+                } else if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                    fs.writeFileSync(paths.oldCommentsFile, JSON.stringify(dataToSave, null, 2));
+                } else {
+                    const defaultFile = path.join(paths.commentsDir, 'comments.json');
+                    fs.writeFileSync(defaultFile, JSON.stringify(dataToSave, null, 2));
+                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    config.comments = 'comments.json';
+                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                }
+            } else {
+                const storageDir = path.dirname(this.storageFile);
+                if (!fs.existsSync(storageDir)) {
+                    fs.mkdirSync(storageDir, { recursive: true });
+                }
+                fs.writeFileSync(this.storageFile, JSON.stringify(dataToSave, null, 2));
+            }
+
+            this.storageFile = this.getProjectStorageFile(this.context);
             this._onDidChangeComments.fire();
-            this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
+            this._onDidChangeSharedComments.fire();
         } catch (error) {
             logger.error('保存注释失败:', error);
         }
@@ -954,6 +1070,92 @@ export class CommentManager {
      */
     public getContext(): vscode.ExtensionContext {
         return this.context;
+    }
+
+    /**
+     * 切换到指定的注释配置文件
+     */
+    public async switchCommentsConfig(configFileName: string): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showWarningMessage('没有打开的工作区');
+            return;
+        }
+
+        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+        const configFile = path.join(paths.commentsDir, configFileName);
+
+        if (!StoragePathUtils.fileExists(configFile)) {
+            const choice = await vscode.window.showWarningMessage(
+                `配置文件不存在: ${configFileName}\n是否创建新的配置文件？`,
+                '创建',
+                '取消'
+            );
+            if (choice === '创建') {
+                StoragePathUtils.ensureNewPathExists(paths);
+                const defaultData = { comments: {}, shareComments: {} };
+                fs.writeFileSync(configFile, JSON.stringify(defaultData, null, 2));
+            } else {
+                return;
+            }
+        }
+
+        await this.saveComments();
+        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        config.comments = configFileName;
+        await StoragePathUtils.saveConfig(paths.configFile, config, true);
+        await this.loadComments();
+        vscode.window.showInformationMessage(`已切换到注释配置: ${configFileName}`);
+    }
+
+    /**
+     * 列出所有可用的注释配置文件
+     */
+    public listAvailableCommentsConfigs(): string[] {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) return [];
+        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+        StoragePathUtils.ensureDirectoryExists(paths.commentsDir);
+        return StoragePathUtils.listConfigFiles(paths.commentsDir);
+    }
+
+    /**
+     * 创建新的注释配置文件
+     */
+    public async createCommentsConfig(configFileName: string): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showWarningMessage('没有打开的工作区');
+            return;
+        }
+        if (!configFileName.endsWith('.json')) {
+            configFileName += '.json';
+        }
+        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+        const configFile = path.join(paths.commentsDir, configFileName);
+        if (fs.existsSync(configFile)) {
+            vscode.window.showWarningMessage(`配置文件已存在: ${configFileName}`);
+            return;
+        }
+        StoragePathUtils.ensureNewPathExists(paths);
+        const defaultData = { comments: {}, shareComments: {} };
+        fs.writeFileSync(configFile, JSON.stringify(defaultData, null, 2));
+        vscode.window.showInformationMessage(`已创建注释配置文件: ${configFileName}`);
+    }
+
+    /**
+     * 获取当前使用的注释配置文件名
+     */
+    public getCurrentCommentsConfig(): string {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) return 'default';
+        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
+        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        return config.comments || 'comments.json';
     }
 
     /**
