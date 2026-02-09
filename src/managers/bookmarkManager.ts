@@ -130,9 +130,9 @@ export class BookmarkManager {
                     StoragePathUtils.ensureNewPathExists(paths);
                     const defaultFile = path.join(paths.bookmarksDir, 'bookmarks.json');
                     fs.writeFileSync(defaultFile, JSON.stringify({}, null, 2));
-                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    const config = StoragePathUtils.loadConfig(workspacePath);
                     config.bookmarks = 'bookmarks.json';
-                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                    await StoragePathUtils.saveConfig(config);
                 } catch (err) {
                     if (StoragePathUtils.isWritePermissionError(err)) {
                         logger.warn('无法创建默认书签配置（只读或权限不足）', err);
@@ -168,12 +168,12 @@ export class BookmarkManager {
                 const oldData = fs.readFileSync(paths.oldBookmarksFile, 'utf8');
                 const defaultBookmarksFile = path.join(paths.bookmarksDir, 'bookmarks.json');
                 fs.writeFileSync(defaultBookmarksFile, oldData);
-                const currentConfig = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                const currentConfig = StoragePathUtils.loadConfig(workspacePath);
                 const config: StorageConfig = {
                     comments: currentConfig.comments || 'comments.json',
                     bookmarks: 'bookmarks.json'
                 };
-                await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                await StoragePathUtils.saveConfig(config);
                 this.bookmarks = {};
                 await this.loadBookmarksFromPath(defaultBookmarksFile);
                 logger.info('书签数据已迁移到默认配置文件: bookmarks.json');
@@ -285,9 +285,9 @@ export class BookmarkManager {
                 } else {
                     const defaultFile = path.join(paths.bookmarksDir, 'bookmarks.json');
                     fs.writeFileSync(defaultFile, JSON.stringify(dataToSave, null, 2));
-                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    const config = StoragePathUtils.loadConfig(workspacePath);
                     config.bookmarks = 'bookmarks.json';
-                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                    await StoragePathUtils.saveConfig(config);
                 }
             } else {
                 const storageDir = path.dirname(this.storageFile);
@@ -540,9 +540,9 @@ export class BookmarkManager {
             }
         }
         await this.saveBookmarks();
-        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        const config = StoragePathUtils.loadConfig(workspacePath);
         config.bookmarks = configFileName;
-        await StoragePathUtils.saveConfig(paths.configFile, config, true);
+        await StoragePathUtils.saveConfig(config);
         await this.loadBookmarks();
         vscode.window.showInformationMessage(`已切换到书签配置: ${configFileName}`);
     }
@@ -591,7 +591,7 @@ export class BookmarkManager {
         if (!workspaceFolders || workspaceFolders.length === 0) return 'default';
         const workspacePath = workspaceFolders[0].uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
-        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        const config = StoragePathUtils.loadConfig(workspacePath);
         return config.bookmarks || 'bookmarks.json';
     }
 

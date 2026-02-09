@@ -184,9 +184,9 @@ export class CommentManager {
                     const defaultFile = path.join(paths.commentsDir, 'comments.json');
                     const defaultData = { comments: {}, shareComments: {} };
                     fs.writeFileSync(defaultFile, JSON.stringify(defaultData, null, 2));
-                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    const config = StoragePathUtils.loadConfig(workspacePath);
                     config.comments = 'comments.json';
-                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                    await StoragePathUtils.saveConfig(config);
                 } catch (err) {
                     if (StoragePathUtils.isWritePermissionError(err)) {
                         logger.warn('无法创建默认配置（只读或权限不足）', err);
@@ -256,12 +256,12 @@ export class CommentManager {
                 const oldData = fs.readFileSync(paths.oldCommentsFile, 'utf8');
                 const defaultCommentsFile = path.join(paths.commentsDir, 'comments.json');
                 fs.writeFileSync(defaultCommentsFile, oldData);
-                const currentConfig = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                const currentConfig = StoragePathUtils.loadConfig(workspacePath);
                 const config: StorageConfig = {
                     comments: 'comments.json',
                     bookmarks: currentConfig.bookmarks || 'bookmarks.json'
                 };
-                await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                await StoragePathUtils.saveConfig(config);
                 this.comments = {};
                 this.shareComments = {};
                 await this.loadCommentsFromPath(defaultCommentsFile);
@@ -347,9 +347,9 @@ export class CommentManager {
                 } else {
                     const defaultFile = path.join(paths.commentsDir, 'comments.json');
                     fs.writeFileSync(defaultFile, JSON.stringify(dataToSave, null, 2));
-                    const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+                    const config = StoragePathUtils.loadConfig(workspacePath);
                     config.comments = 'comments.json';
-                    await StoragePathUtils.saveConfig(paths.configFile, config, true);
+                    await StoragePathUtils.saveConfig(config);
                 }
             } else {
                 const storageDir = path.dirname(this.storageFile);
@@ -1095,9 +1095,9 @@ export class CommentManager {
         }
 
         await this.saveComments();
-        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        const config = StoragePathUtils.loadConfig(workspacePath);
         config.comments = configFileName;
-        await StoragePathUtils.saveConfig(paths.configFile, config, true);
+        await StoragePathUtils.saveConfig(config);
         await this.loadComments();
         vscode.window.showInformationMessage(`已切换到注释配置: ${configFileName}`);
     }
@@ -1147,7 +1147,7 @@ export class CommentManager {
         if (!workspaceFolders || workspaceFolders.length === 0) return 'default';
         const workspacePath = workspaceFolders[0].uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
-        const config = StoragePathUtils.loadConfig(paths.configFile, workspacePath);
+        const config = StoragePathUtils.loadConfig(workspacePath);
         return config.comments || 'comments.json';
     }
 
