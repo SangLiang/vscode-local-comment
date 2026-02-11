@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { CommentMatcher } from './commentMatcher';
-import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData } from '../utils/utils';
+import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData, remapFileCommentsToWorkspace } from '../utils/utils';
 import { apiService, ApiRoutes } from '../apiService';
 import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
@@ -228,6 +228,13 @@ export class CommentManager {
                 } else {
                     this.comments = {};
                     this.shareComments = {};
+                }
+                // 将存储中的路径重映射到当前工作区，解决拷贝 .vscode 到另一台电脑后无法跳转的问题
+                const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                if (workspaceFolder) {
+                    const workspacePath = workspaceFolder.uri.fsPath;
+                    this.comments = remapFileCommentsToWorkspace(this.comments, workspacePath);
+                    this.shareComments = remapFileCommentsToWorkspace(this.shareComments, workspacePath);
                 }
             } catch (parseError) {
                 logger.error('配置文件格式错误:', parseError);

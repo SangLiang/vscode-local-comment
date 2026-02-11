@@ -74,6 +74,55 @@ export function normalizeFileComments(fileComments: { [filePath: string]: any[] 
 }
 
 /**
+ * 将注释数据中的文件路径重映射到当前工作区
+ * 用于解决从一台电脑拷贝 .vscode 存储到另一台电脑后，JSON 中存的是旧机器绝对路径导致无法跳转的问题
+ * @param fileComments 文件注释对象，键可能为其他机器的绝对路径
+ * @param workspacePath 当前工作区根路径
+ * @returns 键已重映射为当前工作区绝对路径的注释对象
+ */
+export function remapFileCommentsToWorkspace(
+    fileComments: { [filePath: string]: any[] },
+    workspacePath: string
+): { [filePath: string]: any[] } {
+    const result: { [filePath: string]: any[] } = {};
+    const projectName = path.basename(workspacePath);
+    const normalizedWorkspace = path.normalize(workspacePath);
+
+    for (const [filePath, comments] of Object.entries(fileComments)) {
+        const normalizedKey = path.normalize(filePath);
+        let targetKey: string;
+
+        if (!path.isAbsolute(normalizedKey)) {
+            targetKey = path.join(normalizedWorkspace, normalizedKey);
+        } else {
+            const relativePath = path.relative(normalizedWorkspace, normalizedKey);
+            const isOutsideWorkspace = relativePath.startsWith('..') || path.isAbsolute(relativePath);
+
+            if (!isOutsideWorkspace) {
+                targetKey = path.join(normalizedWorkspace, relativePath);
+            } else {
+                const projectIndex = normalizedKey.indexOf(projectName);
+                if (projectIndex >= 0) {
+                    let suffix = normalizedKey.slice(projectIndex + projectName.length);
+                    if (suffix.startsWith(path.sep)) {
+                        suffix = suffix.slice(path.sep.length);
+                    }
+                    targetKey = path.join(normalizedWorkspace, suffix);
+                } else {
+                    targetKey = filePath;
+                }
+            }
+        }
+
+        if (!result[targetKey]) {
+            result[targetKey] = [];
+        }
+        result[targetKey].push(...comments);
+    }
+    return result;
+}
+
+/**
  * 项目信息接口
  */
 export interface ProjectInfo {
