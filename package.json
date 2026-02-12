@@ -139,19 +139,19 @@
       },
       {
         "command": "localComment.switchCommentsConfig",
-        "title": "切换注释配置文件",
+        "title": "%switchCommentsConfig%",
         "category": "Local Comment",
         "icon": "$(file-submodule)"
       },
       {
         "command": "localComment.switchBookmarksConfig",
-        "title": "切换书签配置文件",
+        "title": "%switchBookmarksConfig%",
         "category": "Local Comment",
         "icon": "$(file-submodule)"
       },
       {
         "command": "localComment.migrateOldData",
-        "title": "迁移旧数据到项目本地存储",
+        "title": "%migrateOldData%",
         "category": "Local Comment"
       },
       {
