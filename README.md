@@ -187,7 +187,13 @@ A: No. Comment data is only stored locally, completely private, and won't be see
 
 ### Storage Location
 
-- **Base Directory**:
+- **Current project storage**:
+  - Since v1.3.4, data is stored under `.vscode/local-comment/` in the current project
+  - For projects with existing legacy data, you can migrate to the project directory `.vscode/local-comment/` in two ways:
+    - 1. Click the migrate button in the project popup
+    - 2. Open the Command Palette (F1), search for "local comment", find and run the migrate command
+
+- **Base directory**:
   - **Windows**: `%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`
   - **macOS**: `~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/`
   - **Linux**: `~/.config/Code/User/globalStorage/vscode-local-comment/projects/`
@@ -196,11 +202,23 @@ A: No. Comment data is only stored locally, completely private, and won't be see
 
 Each project has its own storage file, named: `[Project Name]-[Hash Value].json`
 
+**Using project-local storage (`.vscode/local-comment/`) avoids the need to manually import/export the local comment storage file; you can copy the data under `.vscode/local-comment/` to a new project directly.**
+
 For example:
 ```
 my-project-a1b2c3d4e5f6.json
 another-project-g7h8i9j0k1l2.json
 ```
+
+### Multi-group comments and bookmarks
+
+Since v1.3.4, you can use multiple independent groups of local comments and bookmarks in the same project.
+
+- **Comment data files**: Stored under `.vscode/local-comment/comments/`. The default file is `comments.json`. You can add multiple json files (e.g. `work.json`, `study.json`) in this directory to separate groups such as "work notes" and "study notes".
+- **Bookmark data files**: Stored under `.vscode/local-comment/bookmarks/`. The default file is `bookmarks.json`; multiple bookmark config files are supported in the same way.
+- **Switching groups**: Open VSCode Settings, search for "local comment", and under **Local Comment: Storage** change "Current comments config file name" or "Current bookmarks config file name" to switch between groups—no import/export needed.
+
+![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 
 ### Data Characteristics
 

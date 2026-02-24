@@ -3,6 +3,18 @@
 本文件记录本项目所有重要变更。
 
 
+## [1.3.4] - 2026-02-25
+
+### 变更
+
+- 调整了存储文件的路径，默认将会在当前项目下的.vscode/路径下创建local comment所需要的存储文件，对于旧数据可以从全局目录迁移到当前路径下
+
+- 导入导出的功能优化，允许通过直接复制粘贴存储文件(如 .vscode/local-commnet/comments/comments.json)到新项目的.vscode相同路径下，而不需要使用命令面板中的导入导出功能。
+
+- 允许多分组的local comment注释，可以通过打开local comment设置，选择不同的comment.json文件，来实现不同分组的注释切换。 
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+
 ## [1.3.3] - 2026-02-03
 
 ### 新增

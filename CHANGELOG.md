@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.4] - 2026-02-25
+
+### Changed
+
+- Storage path updated: by default, local comment data is now created under `.vscode/` in the current project; legacy data can be migrated from the global directory to this project path.
+
+- Import/export improved: you can copy storage files (e.g. `.vscode/local-comment/comments/comments.json`) into the same path under `.vscode/` in a new project instead of using the import/export commands in the Command Palette.
+
+- Multi-group local comments: you can use multiple comment groups by opening Local Comment settings and choosing a different comment config file (e.g. a different `comments.json` or custom `.json` in the comments folder) to switch between groups.
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+
 ## [1.3.3] - 2026-02-03
 
 ### Added
