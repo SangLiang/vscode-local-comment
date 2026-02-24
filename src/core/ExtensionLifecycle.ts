@@ -81,7 +81,7 @@ export class ExtensionLifecycle {
             );
             this.disposables.push(...commandDisposables);
 
-            // 统一迁移提示（仅弹一次，确认后同时迁移注释和书签）
+            // 统一迁移提示：确认后同时迁移注释和书签
             const runUnifiedMigrationCheck = () => {
                 checkUnifiedMigration(
                     this.context,

@@ -156,29 +156,35 @@ export class CommentManager {
             const workspacePath = workspaceFolders[0].uri.fsPath;
             const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
 
-            try {
-                StoragePathUtils.ensureNewPathExists(paths);
-            } catch (err) {
-                if (StoragePathUtils.isWritePermissionError(err)) {
-                    logger.warn('无法创建新路径目录（只读或权限不足），使用旧路径', err);
-                } else {
-                    throw err;
-                }
-            }
-
             const currentCommentsFile = StoragePathUtils.getCurrentCommentsFile(paths, workspacePath);
+            const hasOldComments = StoragePathUtils.fileExists(paths.oldCommentsFile);
+            const hasOldBookmarks = StoragePathUtils.fileExists(paths.oldBookmarksFile);
 
             if (currentCommentsFile) {
+                try {
+                    StoragePathUtils.ensureNewPathExists(paths);
+                } catch (err) {
+                    if (StoragePathUtils.isWritePermissionError(err)) {
+                        logger.warn('无法创建新路径目录（只读或权限不足），使用旧路径', err);
+                    } else {
+                        throw err;
+                    }
+                }
                 try {
                     await this.loadCommentsFromPath(currentCommentsFile);
                     await this.checkAndPromptMigration(paths);
                 } catch (error) {
                     return;
                 }
-            } else if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+            } else if (hasOldComments) {
+                // 旧路径有注释数据、新路径无配置文件：仅加载，不创建本地目录；迁移由统一弹窗确认后再执行
                 await this.loadCommentsFromPath(paths.oldCommentsFile);
+            } else if (hasOldBookmarks) {
+                // 仅有旧书签无旧注释：不创建本地目录，注释为空，等用户迁移书签后再统一
+                this.comments = {};
+                this.shareComments = {};
             } else {
-                // 新项目目录：直接创建项目下的默认配置文件，不弹窗
+                // 完全没有旧数据的新项目：静默创建项目下的默认配置文件
                 try {
                     StoragePathUtils.ensureNewPathExists(paths);
                     const defaultFile = path.join(paths.commentsDir, 'comments.json');

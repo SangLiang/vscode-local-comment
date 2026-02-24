@@ -105,27 +105,32 @@ export class BookmarkManager {
             const workspacePath = workspaceFolders[0].uri.fsPath;
             const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
 
-            try {
-                StoragePathUtils.ensureNewPathExists(paths);
-            } catch (err) {
-                if (StoragePathUtils.isWritePermissionError(err)) {
-                    logger.warn('无法创建新路径目录（只读或权限不足），使用旧路径', err);
-                } else {
-                    throw err;
-                }
-            }
-
             const currentBookmarksFile = StoragePathUtils.getCurrentBookmarksFile(paths, workspacePath);
+            const hasOldComments = StoragePathUtils.fileExists(paths.oldCommentsFile);
+            const hasOldBookmarks = StoragePathUtils.fileExists(paths.oldBookmarksFile);
 
             if (currentBookmarksFile) {
+                try {
+                    StoragePathUtils.ensureNewPathExists(paths);
+                } catch (err) {
+                    if (StoragePathUtils.isWritePermissionError(err)) {
+                        logger.warn('无法创建新路径目录（只读或权限不足），使用旧路径', err);
+                    } else {
+                        throw err;
+                    }
+                }
                 await this.loadBookmarksFromPath(currentBookmarksFile);
                 await this.checkAndPromptMigration(paths);
                 await this.migrateBookmarksWithLineContent();
-            } else if (StoragePathUtils.fileExists(paths.oldBookmarksFile)) {
+            } else if (hasOldBookmarks) {
+                // 旧路径有书签数据、新路径无配置文件：仅加载，不创建本地目录；迁移由统一弹窗确认后再执行
                 await this.loadBookmarksFromPath(paths.oldBookmarksFile);
                 await this.migrateBookmarksWithLineContent();
+            } else if (hasOldComments) {
+                // 仅有旧注释无旧书签：不创建本地目录，书签为空，等用户迁移注释后再统一
+                this.bookmarks = {};
             } else {
-                // 新项目目录：直接创建项目下的默认配置文件，不弹窗
+                // 完全没有旧数据的新项目：静默创建项目下的默认配置文件
                 try {
                     StoragePathUtils.ensureNewPathExists(paths);
                     const defaultFile = path.join(paths.bookmarksDir, 'bookmarks.json');

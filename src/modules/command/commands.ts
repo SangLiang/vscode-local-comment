@@ -95,15 +95,9 @@ export function registerCommands(
         const currentConfig = commentManager.getCurrentCommentsConfig();
 
         if (availableConfigs.length === 0) {
-            const createChoice = await vscode.window.showInformationMessage(
-                '没有找到可用的注释配置文件，是否创建默认配置文件？',
-                '创建默认配置',
-                '取消'
-            );
-            if (createChoice === '创建默认配置') {
-                await commentManager.createCommentsConfig('comments');
-                await commentManager.switchCommentsConfig('comments.json');
-            }
+            // 无配置时直接创建默认配置，不弹窗确认
+            await commentManager.createCommentsConfig('comments');
+            await commentManager.switchCommentsConfig('comments.json');
             return;
         }
 
@@ -164,15 +158,9 @@ export function registerCommands(
         const currentConfig = bookmarkManager.getCurrentBookmarksConfig();
 
         if (availableConfigs.length === 0) {
-            const createChoice = await vscode.window.showInformationMessage(
-                '没有找到可用的书签配置文件，是否创建默认配置文件？',
-                '创建默认配置',
-                '取消'
-            );
-            if (createChoice === '创建默认配置') {
-                await bookmarkManager.createBookmarksConfig('bookmarks');
-                await bookmarkManager.switchBookmarksConfig('bookmarks.json');
-            }
+            // 无配置时直接创建默认配置，不弹窗确认
+            await bookmarkManager.createBookmarksConfig('bookmarks');
+            await bookmarkManager.switchBookmarksConfig('bookmarks.json');
             return;
         }
 
