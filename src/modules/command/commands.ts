@@ -139,7 +139,6 @@ export function registerCommands(
                     if (fileName) {
                         await commentManager.createCommentsConfig(fileName);
                         await commentManager.switchCommentsConfig(`${fileName}.json`);
-                        vscode.window.showInformationMessage(`已创建并切换到配置文件: ${fileName}.json`);
                     }
                 } else {
                     const fileName = selected.label.replace(/^\$\([^)]+\)\s*/, '').trim();
@@ -202,7 +201,6 @@ export function registerCommands(
                     if (fileName) {
                         await bookmarkManager.createBookmarksConfig(fileName);
                         await bookmarkManager.switchBookmarksConfig(`${fileName}.json`);
-                        vscode.window.showInformationMessage(`已创建并切换到配置文件: ${fileName}.json`);
                     }
                 } else {
                     const fileName = selected.label.replace(/^\$\([^)]+\)\s*/, '').trim();
