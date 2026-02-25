@@ -56,5 +56,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# 计划文档目录
+planning/**
+
 # 排除 GIF 文件
 **/*.gif 
