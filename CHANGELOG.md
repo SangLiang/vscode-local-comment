@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+[中文版](./CHANGELOG.zh-CN.md)
+
 ## [1.4.0] - 2026-02-25
 
 ### Changed
@@ -12,7 +14,13 @@ All notable changes to this project will be documented in this file.
 
 - Multi-group local comments: you can use multiple comment groups by opening Local Comment settings and choosing a different comment config file (e.g. a different `comments.json` or custom `.json` in the comments folder) to switch between groups.
 
+Press F1 to open the Command Palette, then run `switch comments config` to switch local comments groups or create a new local comment config.
+
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
+
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+
 
 ## [1.3.3] - 2026-02-03
 

@@ -11,7 +11,11 @@
 
 - 导入导出的功能优化，允许通过直接复制粘贴存储文件(如 .vscode/local-commnet/comments/comments.json)到新项目的.vscode相同路径下，而不需要使用命令面板中的导入导出功能。
 
-- 允许多分组的local comment注释，可以通过打开local comment设置，选择不同的comment.json文件，来实现不同分组的注释切换。 
+- 允许多分组的local comment注释，可以通过打开local comment设置，选择不同的comment.json文件，来实现不同分组的注释切换。
+
+按F1调出命令行，执行`switch comments config`即可切换local comments分组或者创建新的local comment
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
 
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 

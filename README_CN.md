@@ -221,8 +221,11 @@ another-project-g7h8i9j0k1l2.json
 - **注释数据文件**：位于 `.vscode/local-comment/comments/` 目录下，默认使用 `comments.json`。您可以在该目录下放置多个 json 文件（如 `work.json`、`study.json`），通过不同的文件区分「工作笔记」「学习笔记」等分组。
 - **书签数据文件**：位于 `.vscode/local-comment/bookmarks/` 目录下，默认使用 `bookmarks.json`，同样支持多个书签配置文件并存。
 - **切换分组**：打开 VSCode 设置，搜索「local comment」，在 **Local Comment: Storage** 中修改「当前使用的注释配置文件名」或「当前使用的书签配置文件名」，即可在不同分组之间切换，无需导入导出。
+- **命令面板快速切换注释配置**：按 `F1` 调出命令面板，执行 `switch comments config`，即可切换 local comments 分组或创建新的 local comment 配置文件。
 
 ![多分组注释设置](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+
+![切换注释配置命令](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
 
 ### 数据特性
 

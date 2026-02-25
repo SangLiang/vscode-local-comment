@@ -217,6 +217,9 @@ Since v1.4.0, you can use multiple independent groups of local comments and book
 - **Comment data files**: Stored under `.vscode/local-comment/comments/`. The default file is `comments.json`. You can add multiple json files (e.g. `work.json`, `study.json`) in this directory to separate groups such as "work notes" and "study notes".
 - **Bookmark data files**: Stored under `.vscode/local-comment/bookmarks/`. The default file is `bookmarks.json`; multiple bookmark config files are supported in the same way.
 - **Switching groups**: Open VSCode Settings, search for "local comment", and under **Local Comment: Storage** change "Current comments config file name" or "Current bookmarks config file name" to switch between groups—no import/export needed.
+- **Quick switching via Command Palette**: Press `F1` to open the Command Palette, then run `switch comments config` to switch local comments groups or create a new local comment config file.
+
+![Switch comments config command](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
 
 ![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 
