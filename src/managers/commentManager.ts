@@ -265,21 +265,29 @@ export class CommentManager {
     private async migrateToNewPath(paths: StoragePaths, workspacePath: string): Promise<void> {
         try {
             StoragePathUtils.ensureNewPathExists(paths);
-            if (StoragePathUtils.fileExists(paths.oldCommentsFile)) {
-                const oldData = fs.readFileSync(paths.oldCommentsFile, 'utf8');
-                const defaultCommentsFile = path.join(paths.commentsDir, 'comments.json');
-                fs.writeFileSync(defaultCommentsFile, oldData);
-                const currentConfig = StoragePathUtils.loadConfig(workspacePath);
-                const config: StorageConfig = {
-                    comments: 'comments.json',
-                    bookmarks: currentConfig.bookmarks || 'bookmarks.json'
-                };
-                await StoragePathUtils.saveConfig(config);
-                this.comments = {};
-                this.shareComments = {};
-                await this.loadCommentsFromPath(defaultCommentsFile);
-                logger.info('注释数据已迁移到默认配置文件: comments.json');
+            if (!StoragePathUtils.fileExists(paths.oldCommentsFile)) {
+                return;
             }
+            const oldData = fs.readFileSync(paths.oldCommentsFile, 'utf8');
+            const defaultCommentsFile = path.join(paths.commentsDir, 'comments.json');
+            fs.writeFileSync(defaultCommentsFile, oldData);
+            const currentConfig = StoragePathUtils.loadConfig(workspacePath);
+            const config: StorageConfig = {
+                comments: 'comments.json',
+                bookmarks: currentConfig.bookmarks || 'bookmarks.json'
+            };
+            await StoragePathUtils.saveConfig(config);
+            // 写入文件并保存配置成功即视为迁移成功；加载若失败只打日志，不误报迁移失败
+            this.comments = {};
+            this.shareComments = {};
+            try {
+                await this.loadCommentsFromPath(defaultCommentsFile);
+            } catch (loadErr) {
+                logger.warn('迁移后加载注释数据时出错（数据已写入新路径）:', loadErr);
+            }
+            this.storageFile = defaultCommentsFile;
+            logger.info('注释数据已迁移到默认配置文件: comments.json');
+            vscode.window.showInformationMessage('注释数据已迁移到项目本地存储 (.vscode/local-comment/)');
         } catch (error) {
             if (StoragePathUtils.isWritePermissionError(error)) {
                 vscode.window.showErrorMessage('迁移失败：无法写入 .vscode/local-comment（只读或权限不足）');
