@@ -336,13 +336,8 @@
             toggleButton.addEventListener('click', () => {
                 container.classList.toggle('maximized');
                 const isMaximized = container.classList.contains('maximized');
-                toggleButton.title = isMaximized ? '还原预览大小' : '最大化预览';
-                const svg = toggleButton.querySelector('svg');
-                if (svg) {
-                    svg.innerHTML = isMaximized 
-                        ? '<path d="M10 14v-4h4v4h-4zm-6-4h4v4H4v-4zm12-2h-2v6h2v-6zM8 8H6v6h2V8z" transform="rotate(45 12 12)"/>'
-                        : '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 2h-2v3h-3v2h5v-5zm-2-4h2V5h-5v2h3v3z"/>';
-                }
+                toggleButton.title = isMaximized ? '编辑' : '预览';
+                toggleButton.textContent = isMaximized ? '编辑' : '预览';
             });
         }
     }

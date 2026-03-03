@@ -1,10 +1,8 @@
 (function() {
     const vscode = acquireVsCodeApi();
     const previewArea = document.getElementById('previewArea');
-    const toggleSizeBtn = document.getElementById('toggle-preview-size-btn');
     let markedInitialized = false;
     let mermaidInitialized = false;
-    let isMaximized = false;
     let currentPreviewFontSize = null; // 保存当前预览字体大小
 
     // 全局、一次性的初始化任务
@@ -561,20 +559,6 @@
             command: 'exportToLocalComment'
         });
     };
-
-    // 切换预览大小
-    toggleSizeBtn.addEventListener('click', () => {
-        const container = document.querySelector('.container');
-        if (isMaximized) {
-            container.classList.remove('maximized');
-            isMaximized = false;
-            toggleSizeBtn.title = '最大化预览';
-        } else {
-            container.classList.add('maximized');
-            isMaximized = true;
-            toggleSizeBtn.title = '最小化预览';
-        }
-    });
 
     // 监听来自扩展的消息
     window.addEventListener('message', event => {
