@@ -276,7 +276,12 @@ export class CommentManager {
                 comments: 'comments.json',
                 bookmarks: currentConfig.bookmarks || 'bookmarks.json'
             };
-            await StoragePathUtils.saveConfig(config);
+            try {
+                await StoragePathUtils.saveConfig(config);
+            } catch (configErr) {
+                // 若配置未在 package.json 注册（如旧版扩展）会抛 CodeExpectedError，数据已写入新路径，仅打日志不误报迁移失败
+                logger.warn('保存工作区配置失败（数据已写入 .vscode/local-comment/）:', configErr);
+            }
             // 写入文件并保存配置成功即视为迁移成功；加载若失败只打日志，不误报迁移失败
             this.comments = {};
             this.shareComments = {};
