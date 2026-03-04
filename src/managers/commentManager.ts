@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { CommentMatcher } from './commentMatcher';
-import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData, remapFileCommentsToWorkspace } from '../utils/utils';
+import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData, remapFileCommentsToWorkspace, getErrorMessage } from '../utils/utils';
 import { apiService, ApiRoutes } from '../apiService';
 import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
@@ -1457,7 +1457,7 @@ export class CommentManager {
             logger.error('导入注释数据失败:', error);
             return {
                 success: false,
-                message: `导入失败: ${error instanceof Error ? error.message : '未知错误'}`
+                message: `导入失败: ${getErrorMessage(error)}`
             };
         }
     }
@@ -1538,7 +1538,7 @@ export class CommentManager {
         } catch (error) {
             return {
                 success: false,
-                message: `路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`
+                message: `路径分析失败: ${getErrorMessage(error)}`
             };
         }
     }
@@ -1593,7 +1593,7 @@ export class CommentManager {
         } catch (error) {
             return {
                 valid: false,
-                message: `文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`
+                message: `文件解析失败: ${getErrorMessage(error)}`
             };
         }
     }

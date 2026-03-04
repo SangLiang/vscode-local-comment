@@ -10,7 +10,7 @@ import { getFileNameFromPath } from '../../utils/pathUtils';
 
 import { ApiRoutes } from '../../apiService';
 import { ProjectManager } from '../../managers/projectManager';
-import { buildExportData, ProjectInfo } from '../../utils/utils';
+import { buildExportData, ProjectInfo, getErrorMessage } from '../../utils/utils';
 import { registerCommentCommands } from './comment';
 import { registerBookmarkCommands } from './bookmark';
 import { registerTagCommands } from './tagCommands';
@@ -444,7 +444,7 @@ export function registerCommands(
 
         } catch (error) {
             logger.error('导出注释数据时发生错误:', error);
-            vscode.window.showErrorMessage(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`导出失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -615,7 +615,7 @@ export function registerCommands(
 
             } catch (error) {
                 logger.error('云端上传失败:', error);
-                vscode.window.showErrorMessage(`云端上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+                vscode.window.showErrorMessage(`云端上传失败: ${getErrorMessage(error)}`);
             }
         });
     }
@@ -658,7 +658,7 @@ export function registerCommands(
 
         } catch (error) {
             logger.error('导入注释数据时发生错误:', error);
-            vscode.window.showErrorMessage(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`导入失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -832,7 +832,7 @@ export function registerCommands(
 
         } catch (error) {
             logger.error('导入注释数据时发生错误:', error);
-            vscode.window.showErrorMessage(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`导入失败: ${getErrorMessage(error)}`);
         }
     }
 
@@ -1041,13 +1041,13 @@ export function registerCommands(
 
                 } catch (error) {
                     logger.error('服务端导入失败:', error);
-                    vscode.window.showErrorMessage(`服务端导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+                    vscode.window.showErrorMessage(`服务端导入失败: ${getErrorMessage(error)}`);
                 }
             });
             
         } catch (error) {
             logger.error('服务端导入失败:', error);
-            vscode.window.showErrorMessage(`服务端导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`服务端导入失败: ${getErrorMessage(error)}`);
         }
     }
 
@@ -1117,7 +1117,7 @@ export function registerCommands(
             });
         } catch (error) {
             logger.error('刷新共享注释失败:', error);
-            vscode.window.showErrorMessage(`刷新共享注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`刷新共享注释失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -1175,7 +1175,7 @@ export function registerCommands(
             
         } catch (error) {
             logger.error('显示共享注释Webview失败:', error);
-            vscode.window.showErrorMessage(`显示注释内容失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`显示注释内容失败: ${getErrorMessage(error)}`);
         }
     });
 

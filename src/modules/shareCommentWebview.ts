@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
 import { WebviewUtils } from '../utils/webviewUtils';
+import { getErrorMessage } from '../utils/utils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
@@ -244,7 +245,7 @@ async function handleExportToLocalComment(
         }
     } catch (error) {
         logger.error('导出为本地注释失败:', error);
-        vscode.window.showErrorMessage(`导出失败：${error instanceof Error ? error.message : '未知错误'}`);
+        vscode.window.showErrorMessage(`导出失败：${getErrorMessage(error)}`);
     }
 }
 

@@ -5,6 +5,13 @@ import { logger } from './logger';
 import { FileComments } from '../managers/commentManager';
 
 /**
+ * 将 unknown 错误转为可展示的字符串（用于 showErrorMessage 等）
+ */
+export function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : '未知错误';
+}
+
+/**
  * 读取图标文件并将其转换为Base64数据URI。
  * 这对于将图像直接嵌入到webview或Markdown内容中非常有用。
  * @param context 扩展上下文，用于解析绝对文件路径。

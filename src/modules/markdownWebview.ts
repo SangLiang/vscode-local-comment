@@ -3,7 +3,7 @@ import { TagManager } from '../managers/tagManager';
 import { CommentManager } from '../managers/commentManager';
 import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
-import { normalizeFilePath } from '../utils/utils';
+import { normalizeFilePath, getErrorMessage } from '../utils/utils';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
@@ -377,7 +377,7 @@ export async function showMarkdownWebviewInput(
                             }
                         } catch (error) {
                             logger.error('分享注释失败:', error);
-                            const errorMessage = error instanceof Error ? error.message : '未知错误';
+                            const errorMessage = getErrorMessage(error);
                             vscode.window.showErrorMessage(`注释分享失败: ${errorMessage}`);
                             panel.webview.postMessage({
                                 command: IPC_MESSAGES.SHARE_ERROR,
@@ -413,7 +413,7 @@ export async function showMarkdownWebviewInput(
                                 }
                             } catch (error) {
                                 logger.error('跳转到tag声明失败:', error);
-                                vscode.window.showErrorMessage(`跳转失败: ${error instanceof Error ? error.message : '未知错误'}`);
+                                vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
                             }
                         }
                         break;

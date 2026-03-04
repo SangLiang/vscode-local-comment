@@ -8,6 +8,7 @@ import { AuthManager } from '../../managers/authManager';
 import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
+import { getErrorMessage } from '../../utils/utils';
 import { logger } from '../../utils/logger';
 import { COMMANDS } from '../../constants';
 import { DialogUtils } from '../../utils/dialogUtils';
@@ -35,6 +36,47 @@ export function registerCommentCommands(
     function refreshAllCommentViews(): void {
         commentProvider.refresh();      // 更新编辑器里的本地注释内容
         commentTreeProvider.refresh();  // 刷新注释树
+    }
+
+    /**
+     * 解析来自 hover 或命令调用的参数，并校验必填字段。
+     *
+     * 用于统一处理「编辑注释」「删除注释」「预览注释」等命令的入参：
+     * - 支持传入已解析的普通对象（如从树视图传入的 item）
+     * - 支持传入 JSON 字符串（如从 hover 或 Markdown 链接传入的序列化参数）
+     *
+     * @param args - 命令参数，可为 object 或 JSON 字符串
+     * @param requiredKeys - 必填字段名列表，如 ['uri', 'commentId', 'line'] 或 ['uri', 'content']
+     * @returns 解析并校验通过时返回键值对；失败时弹出错误提示并返回 null
+     *
+     * 失败情况与提示：
+     * - 传入 string 但 JSON 解析失败 → 「参数格式错误」
+     * - 传入既非 object 也非 string（如 number） → 「参数类型不正确」
+     * - 缺少 requiredKeys 中任一字段或值为 null/undefined → 「参数不完整」
+     */
+    function parseCommentCommandArgs(args: unknown, requiredKeys: string[]): Record<string, unknown> | null {
+        let parsed: Record<string, unknown>;
+        if (typeof args === 'object' && args !== null) {
+            parsed = args as Record<string, unknown>;
+        } else if (typeof args === 'string') {
+            try {
+                parsed = JSON.parse(args) as Record<string, unknown>;
+            } catch (parseError) {
+                logger.error('参数解析失败:', parseError);
+                vscode.window.showErrorMessage('参数格式错误');
+                return null;
+            }
+        } else {
+            vscode.window.showErrorMessage('参数类型不正确');
+            return null;
+        }
+        for (const key of requiredKeys) {
+            if (parsed[key] === undefined || parsed[key] === null) {
+                vscode.window.showErrorMessage('参数不完整');
+                return null;
+            }
+        }
+        return parsed;
     }
 
     // 辅助函数：创建保存并继续的回调函数
@@ -256,40 +298,19 @@ export function registerCommentCommands(
             );
         } catch (error) {
             logger.error('编辑注释失败:', error);
-            vscode.window.showErrorMessage(`编辑注释失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`编辑注释失败: ${getErrorMessage(error)}`);
         }
     }
 
     // 添加editCommentFromHover命令
     const editCommentFromHoverCommand = vscode.commands.registerCommand(COMMANDS.EDIT_COMMENT_FROM_HOVER, async (args) => {
         try {
-            let parsedArgs;
-            
-            // 检查参数是否已经是对象
-            if (typeof args === 'object') {
-                parsedArgs = args;
-            } else if (typeof args === 'string') {
-                try {
-                    parsedArgs = JSON.parse(args);
-                } catch (parseError) {
-                    logger.error('参数解析失败:', parseError);
-                    vscode.window.showErrorMessage('参数格式错误');
-                    return;
-                }
-            } else {
-                vscode.window.showErrorMessage('参数类型不正确');
-                return;
-            }
+            const parsedArgs = parseCommentCommandArgs(args, ['uri', 'commentId', 'line']);
+            if (!parsedArgs) return;
 
             const { uri, commentId, line } = parsedArgs;
-            
-            if (!uri || !commentId || line === undefined) {
-                vscode.window.showErrorMessage('参数不完整');
-                return;
-            }
-
-            const documentUri = vscode.Uri.parse(uri);
-            const comment = commentManager.getCommentById(documentUri, commentId);
+            const documentUri = vscode.Uri.parse(uri as string);
+            const comment = commentManager.getCommentById(documentUri, commentId as string);
             
             if (!comment) {
                 vscode.window.showWarningMessage(`找不到指定的注释`);
@@ -300,7 +321,7 @@ export function registerCommentCommands(
 
         } catch (error) {
             logger.error('从hover编辑注释时发生错误:', error);
-            vscode.window.showErrorMessage(`编辑注释时发生错误: ${error}`);
+            vscode.window.showErrorMessage(`编辑注释时发生错误: ${getErrorMessage(error)}`);
         }
     });
 
@@ -618,7 +639,7 @@ export function registerCommentCommands(
 
         } catch (error) {
             logger.error('模糊匹配失败:', error);
-            vscode.window.showErrorMessage(`模糊匹配失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`模糊匹配失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -661,7 +682,7 @@ export function registerCommentCommands(
 
         } catch (error) {
             logger.error('打开文件失败:', error);
-            vscode.window.showErrorMessage(`打开文件失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`打开文件失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -770,7 +791,7 @@ export function registerCommentCommands(
 
         } catch (error) {
             logger.error('更新注释行号失败:', error);
-            vscode.window.showErrorMessage(`更新失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            vscode.window.showErrorMessage(`更新失败: ${getErrorMessage(error)}`);
         }
     });
 
@@ -968,35 +989,14 @@ export function registerCommentCommands(
     // 从hover删除注释命令
     const removeCommentFromHoverCommand = vscode.commands.registerCommand(COMMANDS.REMOVE_COMMENT_FROM_HOVER, async (args) => {
         try {
-            let parsedArgs;
-            
-            // 检查参数是否已经是对象
-            if (typeof args === 'object') {
-                parsedArgs = args;
-            } else if (typeof args === 'string') {
-                try {
-                    parsedArgs = JSON.parse(args);
-                } catch (parseError) {
-                    logger.error('参数解析失败:', parseError);
-                    vscode.window.showErrorMessage('参数格式错误');
-                    return;
-                }
-            } else {
-                vscode.window.showErrorMessage('参数类型不正确');
-                return;
-            }
+            const parsedArgs = parseCommentCommandArgs(args, ['uri', 'commentId', 'line']);
+            if (!parsedArgs) return;
 
-            const { uri, commentId, line } = parsedArgs;
-            
-            if (!uri || !commentId || line === undefined) {
-                vscode.window.showErrorMessage('参数不完整');
-                return;
-            }
-
-            const documentUri = vscode.Uri.parse(uri);
+            const { uri, commentId } = parsedArgs;
+            const documentUri = vscode.Uri.parse(uri as string);
             
             // 通过commentId直接查找注释，不依赖光标位置
-            const comment = commentManager.getCommentById(documentUri, commentId);
+            const comment = commentManager.getCommentById(documentUri, commentId as string);
             
             if (!comment) {
                 vscode.window.showWarningMessage(`找不到指定的注释`);
@@ -1004,53 +1004,32 @@ export function registerCommentCommands(
             }
 
             // 删除注释
-            await commentManager.removeCommentById(documentUri, commentId);
+            await commentManager.removeCommentById(documentUri, commentId as string);
             tagManager.updateTags(commentManager.getAllComments());
             refreshAllCommentViews();
             // 删除注释无需提示，用户可以直接看到结果
         } catch (error) {
             logger.error('从hover删除注释时发生错误:', error);
-            vscode.window.showErrorMessage(`删除注释时发生错误: ${error}`);
+            vscode.window.showErrorMessage(`删除注释时发生错误: ${getErrorMessage(error)}`);
         }
     });
 
     // 预览注释内容命令
     const previewSharedCommentCommand = vscode.commands.registerCommand(COMMANDS.PREVIEW_SHARED_COMMENT, async (args) => {
         try {
-            let parsedArgs;
-            
-            // 检查参数是否已经是对象
-            if (typeof args === 'object') {
-                parsedArgs = args;
-            } else if (typeof args === 'string') {
-                try {
-                    parsedArgs = JSON.parse(args);
-                } catch (parseError) {
-                    logger.error('参数解析失败:', parseError);
-                    vscode.window.showErrorMessage('参数格式错误');
-                    return;
-                }
-            } else {
-                vscode.window.showErrorMessage('参数类型不正确');
-                return;
-            }
+            const parsedArgs = parseCommentCommandArgs(args, ['uri', 'content']);
+            if (!parsedArgs) return;
 
             const { uri, commentId, line, content } = parsedArgs;
-            
-            if (!uri || !content) {
-                vscode.window.showErrorMessage('参数不完整');
-                return;
-            }
-
-            const documentUri = vscode.Uri.parse(uri);
+            const documentUri = vscode.Uri.parse(uri as string);
             const fileName = getFileNameFromUri(documentUri) || '未知文件';
-            const lineNumber = line !== undefined ? line : 0;
+            const lineNumber = line !== undefined ? (line as number) : 0;
             
             // 构建上下文信息
             const contextInfo = {
                 fileName: fileName,
                 lineNumber: lineNumber,
-                lineContent: content,
+                lineContent: content as string,
                 filePath: documentUri.fsPath
             };
 
@@ -1062,13 +1041,13 @@ export function registerCommentCommands(
             }
             await showShareCommentWebview(
                 context,
-                content,
+                content as string,
                 `注释预览 - ${fileName}:${lineNumber + 1}`,
                 contextInfo
             );
         } catch (error) {
             logger.error('预览注释时发生错误:', error);
-            vscode.window.showErrorMessage(`预览注释时发生错误: ${error}`);
+            vscode.window.showErrorMessage(`预览注释时发生错误: ${getErrorMessage(error)}`);
         }
     });
 
