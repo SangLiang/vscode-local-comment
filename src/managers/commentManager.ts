@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { CommentMatcher } from './commentMatcher';
-import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData, remapFileCommentsToWorkspace, getErrorMessage } from '../utils/utils';
+import { normalizeFilePath, toAbsolutePath, normalizeFileComments, buildExportData, remapFileCommentsToWorkspace, getErrorMessage, getFirstWorkspaceFolder, getFirstWorkspacePathOrWarn } from '../utils/utils';
 import { apiService, ApiRoutes } from '../apiService';
 import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
@@ -318,12 +318,8 @@ export class CommentManager {
      * 公开的迁移方法，供命令调用
      */
     public async migrateOldData(): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         await this.migrateToNewPath(paths, workspacePath);
     }
@@ -1095,13 +1091,9 @@ export class CommentManager {
      * 切换到指定的注释配置文件
      */
     public async switchCommentsConfig(configFileName: string): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
 
-        const workspacePath = workspaceFolders[0].uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const configFile = path.join(paths.commentsDir, configFileName);
 
@@ -1132,9 +1124,9 @@ export class CommentManager {
      * 列出所有可用的注释配置文件
      */
     public listAvailableCommentsConfigs(): string[] {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) return [];
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const folder = getFirstWorkspaceFolder();
+        if (!folder) return [];
+        const workspacePath = folder.uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         StoragePathUtils.ensureDirectoryExists(paths.commentsDir);
         return StoragePathUtils.listConfigFiles(paths.commentsDir);
@@ -1144,15 +1136,11 @@ export class CommentManager {
      * 创建新的注释配置文件
      */
     public async createCommentsConfig(configFileName: string): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
         if (!configFileName.endsWith('.json')) {
             configFileName += '.json';
         }
-        const workspacePath = workspaceFolders[0].uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const configFile = path.join(paths.commentsDir, configFileName);
         if (fs.existsSync(configFile)) {
@@ -1169,9 +1157,9 @@ export class CommentManager {
      * 获取当前使用的注释配置文件名
      */
     public getCurrentCommentsConfig(): string {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) return 'default';
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const folder = getFirstWorkspaceFolder();
+        if (!folder) return 'default';
+        const workspacePath = folder.uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const config = StoragePathUtils.loadConfig(workspacePath);
         return config.comments || 'comments.json';

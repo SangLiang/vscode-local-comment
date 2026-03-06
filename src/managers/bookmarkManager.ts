@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { TimerManager } from '../utils/timerUtils';
 import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
+import { getFirstWorkspaceFolder, getFirstWorkspacePathOrWarn } from '../utils/utils';
 
 export interface Bookmark {
     id: string;
@@ -221,12 +222,8 @@ export class BookmarkManager {
      * 公开的迁移方法，供命令调用
      */
     public async migrateOldData(): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         await this.migrateToNewPath(paths, workspacePath);
     }
@@ -536,12 +533,8 @@ export class BookmarkManager {
      * 切换到指定的书签配置文件
      */
     public async switchBookmarksConfig(configFileName: string): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const configFile = path.join(paths.bookmarksDir, configFileName);
         if (!StoragePathUtils.fileExists(configFile)) {
@@ -569,9 +562,9 @@ export class BookmarkManager {
      * 列出所有可用的书签配置文件
      */
     public listAvailableBookmarksConfigs(): string[] {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) return [];
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const folder = getFirstWorkspaceFolder();
+        if (!folder) return [];
+        const workspacePath = folder.uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         StoragePathUtils.ensureDirectoryExists(paths.bookmarksDir);
         return StoragePathUtils.listConfigFiles(paths.bookmarksDir);
@@ -581,15 +574,11 @@ export class BookmarkManager {
      * 创建新的书签配置文件
      */
     public async createBookmarksConfig(configFileName: string): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showWarningMessage('没有打开的工作区');
-            return;
-        }
+        const workspacePath = getFirstWorkspacePathOrWarn();
+        if (workspacePath === null) return;
         if (!configFileName.endsWith('.json')) {
             configFileName += '.json';
         }
-        const workspacePath = workspaceFolders[0].uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const configFile = path.join(paths.bookmarksDir, configFileName);
         if (fs.existsSync(configFile)) {
@@ -605,9 +594,9 @@ export class BookmarkManager {
      * 获取当前使用的书签配置文件名
      */
     public getCurrentBookmarksConfig(): string {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) return 'default';
-        const workspacePath = workspaceFolders[0].uri.fsPath;
+        const folder = getFirstWorkspaceFolder();
+        if (!folder) return 'default';
+        const workspacePath = folder.uri.fsPath;
         const paths = StoragePathUtils.getStoragePaths(this.context, workspacePath);
         const config = StoragePathUtils.loadConfig(workspacePath);
         return config.bookmarks || 'bookmarks.json';

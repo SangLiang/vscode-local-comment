@@ -12,6 +12,29 @@ export function getErrorMessage(error: unknown): string {
 }
 
 /**
+ * 获取当前工作区的第一个 WorkspaceFolder（单文件夹工作区即该文件夹）。
+ * @returns 有工作区时返回该文件夹，否则返回 null
+ */
+export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | null {
+    const folders = vscode.workspace.workspaceFolders;
+    return folders && folders.length > 0 ? folders[0] : null;
+}
+
+/**
+ * 获取当前工作区根路径；无工作区时弹出「没有打开的工作区」并返回 null。
+ * 适用于需要工作区才能继续、且需提示用户的操作（如迁移、切换配置）。
+ * @returns 工作区根路径（fsPath），无工作区时返回 null
+ */
+export function getFirstWorkspacePathOrWarn(): string | null {
+    const folder = getFirstWorkspaceFolder();
+    if (!folder) {
+        vscode.window.showWarningMessage('没有打开的工作区');
+        return null;
+    }
+    return folder.uri.fsPath;
+}
+
+/**
  * 读取图标文件并将其转换为Base64数据URI。
  * 这对于将图像直接嵌入到webview或Markdown内容中非常有用。
  * @param context 扩展上下文，用于解析绝对文件路径。

@@ -5,68 +5,64 @@ import { COMMANDS } from '../../constants';
 export function registerBookmarkCommands(
     bookmarkManager?: BookmarkManager
 ): vscode.Disposable[] {
-    // 添加书签命令
-    const addBookmarkCommand = vscode.commands.registerCommand(COMMANDS.ADD_BOOKMARK, async () => {
+    /** 无工作区时提示并返回 null；有则返回管理器（用于类型收窄）。 */
+    function requireBookmarkManager(): BookmarkManager | null {
         if (!bookmarkManager) {
             vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
+            return null;
         }
-
+        return bookmarkManager;
+    }
+    /** 无活动编辑器时提示并返回 null。 */
+    function requireEditor(): vscode.TextEditor | null {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('请先打开一个文件');
-            return;
+            return null;
         }
+        return editor;
+    }
 
+    // 添加书签命令
+    const addBookmarkCommand = vscode.commands.registerCommand(COMMANDS.ADD_BOOKMARK, async () => {
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        const editor = requireEditor();
+        if (!editor) return;
         const line = editor.selection.active.line;
-        await bookmarkManager.addBookmark(editor.document.uri, line);
+        await manager.addBookmark(editor.document.uri, line);
     });
 
     // 切换书签命令
     const toggleBookmarkCommand = vscode.commands.registerCommand(COMMANDS.TOGGLE_BOOKMARK, async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        const editor = requireEditor();
+        if (!editor) return;
         const line = editor.selection.active.line;
-        await bookmarkManager.toggleBookmark(editor.document.uri, line);
+        await manager.toggleBookmark(editor.document.uri, line);
     });
 
     // 跳转到书签命令
     const goToBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_BOOKMARK, async (filePath: string, line: number) => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        await bookmarkManager.goToBookmark(filePath, line);
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        await manager.goToBookmark(filePath, line);
     });
 
     // 从树中删除书签命令
     const deleteBookmarkFromTreeCommand = vscode.commands.registerCommand(COMMANDS.DELETE_BOOKMARK_FROM_TREE, async (item) => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
+        const manager = requireBookmarkManager();
+        if (!manager) return;
         if (item && item.contextValue === 'bookmark' && item.bookmark) {
-            await bookmarkManager.removeBookmarkById(item.bookmark.id);
+            await manager.removeBookmarkById(item.bookmark.id);
         }
     });
 
     // 清除文件书签命令
     const clearFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_BOOKMARKS, async (arg: any) => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
+        const manager = requireBookmarkManager();
+        if (!manager) return;
 
         let uri: vscode.Uri | undefined;
 
@@ -90,7 +86,7 @@ export function registerBookmarkCommands(
 
         // 执行清除操作
         if (uri) {
-            await bookmarkManager.clearFileBookmarks(uri);
+            await manager.clearFileBookmarks(uri);
             return;
         }
 
@@ -100,48 +96,33 @@ export function registerBookmarkCommands(
 
     // 清除所有书签命令
     const clearAllBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_ALL_BOOKMARKS, async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-        await bookmarkManager.clearAllBookmarks();
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        await manager.clearAllBookmarks();
     });
 
     // 跳转到下一个书签命令
     const goToNextBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_NEXT_BOOKMARK, async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        await bookmarkManager.goToNextBookmark();
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        await manager.goToNextBookmark();
     });
 
     // 跳转到上一个书签命令
     const goToPreviousBookmarkCommand = vscode.commands.registerCommand(COMMANDS.GO_TO_PREVIOUS_BOOKMARK, async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        await bookmarkManager.goToPreviousBookmark();
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        await manager.goToPreviousBookmark();
     });
 
     // 显示当前文件书签命令
     const showCurrentFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.SHOW_CURRENT_FILE_BOOKMARKS, async () => {
-        if (!bookmarkManager) {
-            vscode.window.showErrorMessage('书签管理器未初始化');
-            return;
-        }
-
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('请先打开一个文件');
-            return;
-        }
-
+        const manager = requireBookmarkManager();
+        if (!manager) return;
+        const editor = requireEditor();
+        if (!editor) return;
         const currentUri = editor.document.uri;
-        const bookmarks = bookmarkManager.getBookmarks(currentUri);
+        const bookmarks = manager.getBookmarks(currentUri);
 
         if (bookmarks.length === 0) {
             vscode.window.showInformationMessage('当前文件没有书签');
@@ -190,7 +171,7 @@ export function registerBookmarkCommands(
 
         if (selectedItem && (selectedItem as any).userData) {
             const bookmark = (selectedItem as any).userData;
-            await bookmarkManager.goToBookmark(bookmark.filePath, bookmark.line);
+            await manager.goToBookmark(bookmark.filePath, bookmark.line);
         }
     });
 

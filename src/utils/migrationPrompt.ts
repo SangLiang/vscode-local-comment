@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { StoragePathUtils } from './storagePathUtils';
 import { DialogUtils } from './dialogUtils';
+import { getFirstWorkspaceFolder } from './utils';
 import type { CommentManager } from '../managers/commentManager';
 import type { BookmarkManager } from '../managers/bookmarkManager';
 import { logger } from './logger';
@@ -13,10 +14,10 @@ export async function checkUnifiedMigration(
     commentManager: CommentManager,
     bookmarkManager: BookmarkManager
 ): Promise<void> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) return;
+    const folder = getFirstWorkspaceFolder();
+    if (!folder) return;
 
-    const workspacePath = workspaceFolders[0].uri.fsPath;
+    const workspacePath = folder.uri.fsPath;
     const paths = StoragePathUtils.getStoragePaths(context, workspacePath);
 
     const hasOldComments = StoragePathUtils.fileExists(paths.oldCommentsFile);
