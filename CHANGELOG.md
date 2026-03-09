@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [1.4.1] - 2026-02-25
+
+### Changed
+
+- Fixed unexpected errors when migrating from legacy storage to project-local storage
+- Code structure optimizations
+
 ## [1.4.0] - 2026-02-25
 
 ### Changed
