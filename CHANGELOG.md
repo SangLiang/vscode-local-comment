@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
-## [1.4.1] - 2026-02-25
+## [1.4.1] - 2026-03-09
 
 ### Changed
 
