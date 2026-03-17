@@ -701,7 +701,7 @@ export class CommentManager {
         }
 
         // 文件首次加载场景：使用支持全文搜索的批量匹配功能
-        logger.debug(`🔍 文件首次加载场景，使用全文搜索进行智能匹配 (本地: ${localComments.length}, 共享: ${sharedComments.length})`);
+        logger.debug(`文件首次加载场景，使用全文搜索进行智能匹配 (本地: ${localComments.length}, 共享: ${sharedComments.length})`);
         const matchResults = this.commentMatcher.batchMatchCommentsWithFullSearch(document, allComments);
         
         const matchedComments: (LocalComment | SharedComment)[] = [];
@@ -773,7 +773,7 @@ export class CommentManager {
 
         // 如果没有键盘活动，可能是Git分支切换，需要立即执行智能匹配
         if (!hasRecentKeyboardActivity) {
-            logger.debug('⚠️ 检测到Git分支切换，立即执行智能匹配');
+            logger.debug('检测到Git分支切换，立即执行智能匹配');
             await this.performSmartMatchingForFile(event.document);
             
             // 刷新注释显示
@@ -836,7 +836,7 @@ export class CommentManager {
                         hasDirectLineEdit = true;
                     }
                 } catch (error) {
-                    logger.warn(`⚠️ 更新注释内容快照失败:`, error);
+                    logger.warn(`更新注释内容快照失败:`, error);
                 }
             }
         }
@@ -844,7 +844,7 @@ export class CommentManager {
         // 如果有直接编辑，保存更改
         if (hasDirectLineEdit) {
             await this.saveComments();
-            logger.debug(`✅ 直接更新完成，共更新 ${directUpdates} 个注释`);
+            logger.debug(`直接更新完成，共更新 ${directUpdates} 个注释`);
         }
     }
 
@@ -859,7 +859,7 @@ export class CommentManager {
             return;
         }
 
-        logger.debug(`💾 文件保存，开始智能匹配更新注释位置: ${path.basename(filePath)}`);
+        logger.debug(`文件保存，开始智能匹配更新注释位置: ${path.basename(filePath)}`);
         
         // 执行智能匹配
         let fileUpdates = 0;
@@ -887,16 +887,16 @@ export class CommentManager {
                         fileUpdates++;
                     }
                 } catch (error) {
-                    logger.warn(`⚠️ 无法更新注释 ${comment.id}:`, error);
+                    logger.warn(`无法更新注释 ${comment.id}:`, error);
                 }
             }
         }
         
         if (fileUpdates > 0) {
             await this.saveComments();
-            logger.debug(`✅ 智能匹配完成，更新了 ${fileUpdates} 个注释`);
+            logger.debug(`智能匹配完成，更新了 ${fileUpdates} 个注释`);
         } else {
-            logger.debug(`✅ 智能匹配完成，注释位置无需更新`);
+            logger.debug(`智能匹配完成，注释位置无需更新`);
         }
         
                 // 更新完成后刷新注释树显示
@@ -919,7 +919,7 @@ export class CommentManager {
         let fileUpdates = 0;
         
         // Git分支切换场景：使用支持全文搜索的批量匹配功能
-        logger.debug(`🔍 Git分支切换场景，使用全文搜索进行智能匹配`);
+        logger.debug(`Git分支切换场景，使用全文搜索进行智能匹配`);
         const matchResults = this.commentMatcher.batchMatchCommentsWithFullSearch(document, fileComments);
         
         for (const comment of fileComments) {
@@ -942,16 +942,16 @@ export class CommentManager {
                         fileUpdates++;
                     }
                 } catch (error) {
-                    logger.warn(`⚠️ Git分支切换时无法更新注释 ${comment.id}:`, error);
+                    logger.warn(`Git分支切换时无法更新注释 ${comment.id}:`, error);
                 }
             }
         }
         
         if (fileUpdates > 0) {
             await this.saveComments();
-            logger.debug(`✅ Git分支切换智能匹配完成，更新了 ${fileUpdates} 个注释`);
+            logger.debug(`Git分支切换智能匹配完成，更新了 ${fileUpdates} 个注释`);
         } else {
-            logger.debug(`✅ Git分支切换智能匹配完成，注释位置无需更新`);
+            logger.debug(`Git分支切换智能匹配完成，注释位置无需更新`);
         }
     }
 
@@ -991,16 +991,16 @@ export class CommentManager {
                         fileUpdates++;
                     }
                 } catch (error) {
-                    logger.warn(`⚠️ 大块代码变化时无法更新注释 ${comment.id}:`, error);
+                    logger.warn(`大块代码变化时无法更新注释 ${comment.id}:`, error);
                 }
             }
         }
         
         if (fileUpdates > 0) {
             await this.saveComments();
-            logger.debug(`✅ 大块代码变化智能匹配完成，更新了 ${fileUpdates} 个注释`);
+            logger.debug(`大块代码变化智能匹配完成，更新了 ${fileUpdates} 个注释`);
         } else {
-            logger.debug(`✅ 大块代码变化智能匹配完成，注释位置无需更新`);
+            logger.debug(`大块代码变化智能匹配完成，注释位置无需更新`);
         }
     }
 
@@ -1291,7 +1291,7 @@ export class CommentManager {
             // 写入导出文件
             fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2), 'utf8');
             
-            logger.info(`✅ 注释数据已导出到: ${exportPath}`);
+            logger.info(`注释数据已导出到: ${exportPath}`);
             return true;
         } catch (error) {
             logger.error('导出注释数据失败:', error);
@@ -1430,7 +1430,7 @@ export class CommentManager {
                 message += `，重映射了 ${remappedFiles} 个文件路径`;
             }
 
-            logger.info(`✅ ${message}`);
+            logger.info(`${message}`);
             
             return {
                 success: true,
@@ -1639,69 +1639,6 @@ export class CommentManager {
         } catch (error) {
             logger.error('从共享注释添加本地注释失败:', error);
             throw error;
-        }
-    }
-
-    /**
-     * 将共享注释保存到本地
-     * @param sharedComment 共享注释
-     */
-    private async saveSharedCommentToLocal(sharedComment: SharedComment): Promise<void> {
-        try {
-            // 由于 SharedComment 没有 filePath 属性，我们需要通过其他方式确定文件路径
-            // 这里我们可以通过当前活动文档或者让用户选择文件
-            const activeEditor = vscode.window.activeTextEditor;
-            if (!activeEditor) {
-                logger.warn('没有活动的文本编辑器，无法确定文件路径');
-                vscode.window.showWarningMessage('请先打开一个文件，然后重试');
-                return;
-            }
-
-            const filePath = activeEditor.document.uri.fsPath;
-            
-            // 确保文件注释数组存在
-            if (!this.comments[filePath]) {
-                this.comments[filePath] = [];
-            }
-
-            // 检查是否已存在相同的共享注释（只检查ID，避免覆盖localComment）
-            const existingSharedIndex = this.comments[filePath].findIndex(c => 
-                c.id === sharedComment.id && c.isShared === true
-            );
-
-            // 转换为本地注释格式
-            const localComment: LocalComment = {
-                id: sharedComment.id,
-                line: sharedComment.line,
-                content: sharedComment.content,
-                timestamp: sharedComment.timestamp,
-                originalLine: sharedComment.originalLine,
-                lineContent: sharedComment.lineContent,
-                isMatched: sharedComment.isMatched,
-                isShared: true // 标记为共享注释
-            };
-
-            if (existingSharedIndex >= 0) {
-                // 更新现有的共享注释
-                this.comments[filePath][existingSharedIndex] = localComment;
-            } else {
-                // 检查是否在同一行有localComment
-                const existingLocalIndex = this.comments[filePath].findIndex(c => 
-                    c.line === sharedComment.line && c.isShared !== true
-                );
-
-                
-                
-                // 添加新的共享注释（无论是否有localComment都添加）
-                this.comments[filePath].push(localComment);
-            }
-
-            // 保存到本地存储
-            await this.saveComments();
-            
-        } catch (error) {
-            logger.error('保存共享注释到本地失败:', error);
-            vscode.window.showErrorMessage(`保存共享注释到本地失败: ${error}`);
         }
     }
 
