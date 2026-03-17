@@ -294,16 +294,20 @@ button {
     background-color: var(--vscode-button-secondaryHoverBackground);
 }
 .share-btn {
-    background-color: var(--vscode-textLink-foreground);
-    color: var(--vscode-button-foreground);
-    border: 1px solid var(--vscode-textLink-foreground);
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-secondaryBorder);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 .share-btn:hover {
-    background-color: var(--vscode-textLink-activeForeground);
-    border-color: var(--vscode-textLink-activeForeground);
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-button-secondaryBorder);
+}
+.share-btn:disabled {
+    opacity: 0.75;
+    cursor: default;
 }
 .share-btn svg {
     width: 16px;

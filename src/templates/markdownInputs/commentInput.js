@@ -976,8 +976,6 @@
                         已分享
                     `;
                     shareButton.disabled = true;
-                    shareButton.style.backgroundColor = 'var(--vscode-button-secondaryBackground)';
-                    shareButton.style.borderColor = 'var(--vscode-button-secondaryBorder)';
                 }
                 break;
             case 'shareError':
