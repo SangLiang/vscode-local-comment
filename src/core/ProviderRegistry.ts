@@ -82,6 +82,13 @@ export class ProviderRegistry {
         );
         disposables.push(sharedHoverDisposable);
 
+        // 注册注释行上方的 CodeLens：点击「打开 Markdown 预览」即可打开该行注释的编辑/预览面板
+        const codeLensDisposable = vscode.languages.registerCodeLensProvider(
+            { scheme: 'file' },
+            this.container.commentCodeLensProvider
+        );
+        disposables.push(codeLensDisposable);
+
         return disposables;
     }
 

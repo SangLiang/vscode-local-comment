@@ -8,6 +8,7 @@ import { TagManager } from '../managers/tagManager';
 import { FileHeatManager } from '../managers/fileHeatManager';
 import { BookmarkManager } from '../managers/bookmarkManager';
 import { BookmarkDecorationProvider } from '../providers/bookmarkDecorationProvider';
+import { CommentCodeLensProvider } from '../providers/commentCodeLensProvider';
 import { AuthManager } from '../managers/authManager';
 import { ProjectManager } from '../managers/projectManager';
 import { setCommentManager } from '../modules/shareCommentWebview';
@@ -30,6 +31,7 @@ export class ExtensionContainer {
     readonly commentTreeProvider: CommentTreeProvider;
     readonly sharedCommentTreeProvider: SharedCommentTreeProvider;
     readonly bookmarkDecorationProvider: BookmarkDecorationProvider;
+    readonly commentCodeLensProvider: CommentCodeLensProvider;
 
     constructor(context: vscode.ExtensionContext) {
         // 初始化管理器（按依赖顺序）
@@ -44,6 +46,7 @@ export class ExtensionContainer {
         this.commentProvider = new CommentProvider(this.commentManager);
         this.sharedCommentProvider = new SharedCommentProvider(this.commentManager);
         this.bookmarkDecorationProvider = new BookmarkDecorationProvider(this.bookmarkManager);
+        this.commentCodeLensProvider = new CommentCodeLensProvider(this.commentManager);
         this.commentTreeProvider = new CommentTreeProvider(
             this.commentManager,
             this.fileHeatManager,
@@ -51,10 +54,13 @@ export class ExtensionContainer {
         );
         this.sharedCommentTreeProvider = new SharedCommentTreeProvider(this.commentManager);
 
-        // 设置本地注释提供器的刷新回调，以便同步更新共享注释装饰器
+        // 设置本地注释提供器的刷新回调，以便同步更新共享注释装饰器和 CodeLens
         this.commentProvider.setRefreshCallback(() => {
             if (this.sharedCommentProvider) {
                 this.sharedCommentProvider.refresh();
+            }
+            if (this.commentCodeLensProvider) {
+                this.commentCodeLensProvider.refresh();
             }
         });
 
@@ -88,6 +94,9 @@ export class ExtensionContainer {
         
         if (this.sharedCommentProvider) {
             this.sharedCommentProvider.dispose();
+        }
+        if (this.commentCodeLensProvider) {
+            this.commentCodeLensProvider.dispose();
         }
     }
 }
