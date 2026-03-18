@@ -45,6 +45,16 @@ export class CommentProvider implements vscode.Disposable {
             // vscode.window.onDidChangeTextEditorSelection(() => this.debouncedUpdateDecorations())
         );
 
+        // 监听配置变更，gutter 开关变化时重新创建装饰类型并刷新
+        this.disposables.push(
+            vscode.workspace.onDidChangeConfiguration(e => {
+                if (e.affectsConfiguration('local-comment.enableGutterProvider')) {
+                    this.recreateDecorationType();
+                    this.refresh();
+                }
+            })
+        );
+
         // 异步加载图标，加载完成后重新创建装饰类型
         this.loadAllIcons().then(() => {
             this.recreateDecorationType();
@@ -74,24 +84,31 @@ export class CommentProvider implements vscode.Disposable {
         }
 
     // 重新创建装饰类型（加载图标后）
+    // 行内文字始终显示；gutter 图标根据配置决定是否显示
     private recreateDecorationType(): void {
         // 先释放旧的装饰类型
         this.decorationType.dispose();
 
-        // 创建新的装饰类型，包含图标
-        this.decorationType = vscode.window.createTextEditorDecorationType({
-            // 在行号区域显示注释图标
-            gutterIconPath: this.commentIconUri ? vscode.Uri.parse(this.commentIconUri) : undefined,
-            gutterIconSize: 'contain', // 使图标适应行号区域大小
+        const config = vscode.workspace.getConfiguration('local-comment');
+        const enableGutter = config.get<boolean>('enableGutterProvider', true);
 
-            // 行内显示注释内容（不包含图标）
+        const options: vscode.DecorationRenderOptions = {
+            // 行内显示注释内容（始终显示）
             after: {
                 color: '#888888',
                 fontStyle: 'italic',
                 margin: '0 0 0 1em'
             },
             rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
-        });
+        };
+
+        // 仅在启用时添加行号旁的 gutter 图标
+        if (enableGutter && this.commentIconUri) {
+            options.gutterIconPath = vscode.Uri.parse(this.commentIconUri);
+            options.gutterIconSize = 'contain';
+        }
+
+        this.decorationType = vscode.window.createTextEditorDecorationType(options);
     }
 
     public refresh(): void {

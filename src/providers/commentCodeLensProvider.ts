@@ -10,8 +10,15 @@ export class CommentCodeLensProvider implements vscode.CodeLensProvider, vscode.
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
+    private configChangeDisposable?: vscode.Disposable;
+
     constructor(private commentManager: CommentManager) {
-        // 注释数据变化时刷新 CodeLens（与 commentProvider 一致，由外部 refresh 触发）
+        // 监听配置变更，CodeLens 开关变化时刷新
+        this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('local-comment.enableCodeLensProvider')) {
+                this.refresh();
+            }
+        });
     }
 
     /**
@@ -25,6 +32,12 @@ export class CommentCodeLensProvider implements vscode.CodeLensProvider, vscode.
         document: vscode.TextDocument,
         _token: vscode.CancellationToken
     ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
+        // 检查是否启用 CodeLens
+        const config = vscode.workspace.getConfiguration('local-comment');
+        if (!config.get<boolean>('enableCodeLensProvider', true)) {
+            return [];
+        }
+
         const uri = document.uri;
         const comments = this.commentManager.getComments(uri);
         if (comments.length === 0) {
@@ -66,6 +79,7 @@ export class CommentCodeLensProvider implements vscode.CodeLensProvider, vscode.
     }
 
     dispose(): void {
+        this.configChangeDisposable?.dispose();
         this._onDidChangeCodeLenses.dispose();
     }
 }

@@ -554,6 +554,16 @@
           "type": "string",
           "default": "bookmarks.json",
           "description": "当前使用的书签配置文件名（位于 .vscode/local-comment/bookmarks/ 目录下）"
+        },
+        "local-comment.enableGutterProvider": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否在行号旁（gutter）显示注释图标。"
+        },
+        "local-comment.enableCodeLensProvider": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否在注释行上方显示[local comment:]快捷操作）"
         }
       }
     }
