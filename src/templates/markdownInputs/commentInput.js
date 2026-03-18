@@ -278,9 +278,18 @@
             // 7. 使用marked将整个内容（包括已插入的SVG和LaTeX公式）转换为HTML
             const finalHtml = marked.parse(finalContent);
             
-            // 8. 一次性更新DOM
+            // 8. 一次性更新DOM（更新前保存输入框滚动比例，更新后恢复预览滚动，避免输入时预览总回到顶部）
+            const inputMax = textarea.scrollHeight - textarea.clientHeight;
+            const inputRatio = inputMax > 0 ? textarea.scrollTop / inputMax : 0; // 0~1，表示当前看到的是全文的多少比例
             previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
             console.log("预览区域已使用包含SVG的完整HTML更新。");
+            // 下一帧再设置 scrollTop：等新 DOM 布局完成后再按比例恢复预览滚动位置
+            requestAnimationFrame(function() {
+                const previewMax = previewArea.scrollHeight - previewArea.clientHeight;
+                if (previewMax > 0 && inputRatio >= 0) {
+                    previewArea.scrollTop = Math.round(inputRatio * previewMax);
+                }
+            });
             
             // 应用字体大小（如果有设置）
             if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
@@ -909,8 +918,6 @@
         }
     });
     
-
-    
     // 监听失去焦点时保存状态
     textarea.addEventListener('blur', function() {
         saveState();
@@ -918,6 +925,39 @@
     
     // 初始化tab切换功能
     initTabSwitching();
+
+    // ========== 预览滚动同步到输入框 ==========
+    // 说明：预览内容（渲染后的 HTML）与输入内容（Markdown 源码）高度不一致，
+    // 所以这里用「滚动进度比例」(0~1) 来对齐：ratio = scrollTop / (scrollHeight - clientHeight)。
+    let scrollSyncInProgress = false; // 防止程序设置 scrollTop 时引发递归触发
+
+    // 页面内开关：默认勾选，不做持久化（用户关闭后，本次面板内生效即可）
+    const scrollSyncCheckbox = document.getElementById('scroll-sync-checkbox');
+    let scrollSyncEnabled = true;
+    if (scrollSyncCheckbox) {
+        scrollSyncEnabled = !!scrollSyncCheckbox.checked;
+        scrollSyncCheckbox.addEventListener('change', function() {
+            scrollSyncEnabled = !!scrollSyncCheckbox.checked;
+        });
+    }
+
+    /** 预览区域滚动时，把相同进度比例应用到输入框 */
+    function syncScrollFromPreviewToInput() {
+        if (!scrollSyncEnabled) return;
+        if (scrollSyncInProgress || currentTab !== 'preview-tab') return;
+        const preview = previewArea;
+        const previewMax = preview.scrollHeight - preview.clientHeight; // 可滚动最大距离
+        if (previewMax <= 0) return;
+        scrollSyncInProgress = true;
+        const ratio = preview.scrollTop / previewMax; // 当前进度 0~1
+        const inputMax = textarea.scrollHeight - textarea.clientHeight;
+        if (inputMax > 0) {
+            textarea.scrollTop = Math.round(ratio * inputMax);
+        }
+        requestAnimationFrame(function() { scrollSyncInProgress = false; }); // 下一帧再放开，避免本次 set 触发对方 scroll 又同步回来
+    }
+
+    previewArea.addEventListener('scroll', syncScrollFromPreviewToInput);
     
     // 恢复tab状态
     if (previousState && previousState.currentTab) {

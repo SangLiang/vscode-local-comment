@@ -420,6 +420,26 @@ button {
 .preview-controls {
     display: flex;
     gap: 8px;
+    align-items: center;
+}
+
+/* 放在 .prompt-row 里时靠右对齐 */
+.prompt-row .scroll-sync-toggle {
+    margin-left: auto;
+}
+
+.scroll-sync-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.scroll-sync-toggle input {
+    cursor: pointer;
+}
+
+.scroll-sync-toggle span {
+    line-height: 1;
 }
 
 .control-btn {

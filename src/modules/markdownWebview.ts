@@ -143,8 +143,8 @@ export async function showMarkdownWebviewInput(
             resourceUris.highlightJsUri || '',
             resourceUris.highlightCssUri || '',
             tagSuggestions, 
-            isUserLoggedIn, 
-            isCommentShared, 
+            isUserLoggedIn,
+            isCommentShared,
             panel.webview,
             resourceUris
         );
@@ -204,7 +204,7 @@ export async function showMarkdownWebviewInput(
                         });
                     })
                 );
-                
+
                 // 如果需要代码上下文且当前没有提供，异步加载
                 if (contextInfo && contextInfo.lineNumber !== undefined && !contextInfo.contextLines) {
                     const activeEditor = vscode.window.activeTextEditor;
