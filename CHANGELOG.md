@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [1.5.0] - 2026-03-19
+
+### Added
+
+- Added a CodeLens action button on code lines that contain local comments, so users can preview and edit local comment content via mouse click without using shortcuts.
+
+- Allow users to toggle local comment gutter markers and CodeLens markers via VS Code settings.
+
+- Added synchronized scroll progress between the preview area and the edit area in the Local Comments Markdown editor page, making it easier to locate and edit content in long documents.
+
+### Changed
+
+- Fixed an incorrect release date in the previous version.
+
+- Adjusted the shared comment button color to match the other buttons.
+
 ## [1.4.1] - 2026-03-09
 
 ### Changed
