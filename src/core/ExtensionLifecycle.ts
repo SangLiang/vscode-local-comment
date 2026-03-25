@@ -7,6 +7,7 @@ import { AuthEventHandler } from './eventHandlers/AuthEventHandler';
 import { ProviderRegistry } from './ProviderRegistry';
 import { registerCommands } from '../modules/command/commands';
 import { UserInfoWebview } from '../modules/userInfoWebview';
+import { AuthWebview } from '../modules/authWebview';
 import { logger } from '../utils/logger';
 import { COMMANDS } from '../constants';
 import { checkUnifiedMigration } from '../utils/migrationPrompt';
@@ -106,7 +107,6 @@ export class ExtensionLifecycle {
                     
                     // 如果未登录，显示登录界面
                     if (!this.container.authManager.isLoggedIn()) {
-                        const { AuthWebview } = require('../modules/authWebview');
                         AuthWebview.createOrShow(
                             this.context.extensionUri,
                             this.container.authManager

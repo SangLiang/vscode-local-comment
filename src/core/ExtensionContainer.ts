@@ -12,11 +12,15 @@ import { CommentCodeLensProvider } from '../providers/commentCodeLensProvider';
 import { AuthManager } from '../managers/authManager';
 import { ProjectManager } from '../managers/projectManager';
 import { setCommentManager } from '../modules/shareCommentWebview';
+import { logger } from '../utils/logger';
 
 /**
  * 扩展容器 - 管理所有组件实例和依赖关系
  */
 export class ExtensionContainer {
+    // 统一管理的资源数组
+    private readonly disposables: vscode.Disposable[] = [];
+
     // 核心管理器
     readonly authManager: AuthManager;
     readonly commentManager: CommentManager;
@@ -24,7 +28,7 @@ export class ExtensionContainer {
     readonly tagManager: TagManager;
     readonly fileHeatManager: FileHeatManager;
     readonly projectManager: ProjectManager;
-    
+
     // 提供器
     readonly commentProvider: CommentProvider;
     readonly sharedCommentProvider: SharedCommentProvider;
@@ -54,14 +58,20 @@ export class ExtensionContainer {
         );
         this.sharedCommentTreeProvider = new SharedCommentTreeProvider(this.commentManager);
 
+        // 收集所有需要清理的资源
+        this.disposables.push(
+            this.fileHeatManager,
+            this.bookmarkManager,
+            this.bookmarkDecorationProvider,
+            this.commentProvider,
+            this.sharedCommentProvider,
+            this.commentCodeLensProvider
+        );
+
         // 设置本地注释提供器的刷新回调，以便同步更新共享注释装饰器和 CodeLens
         this.commentProvider.setRefreshCallback(() => {
-            if (this.sharedCommentProvider) {
-                this.sharedCommentProvider.refresh();
-            }
-            if (this.commentCodeLensProvider) {
-                this.commentCodeLensProvider.refresh();
-            }
+            this.sharedCommentProvider.refresh();
+            this.commentCodeLensProvider.refresh();
         });
 
         // 设置共享注释webview的全局注释管理器引用
@@ -75,29 +85,14 @@ export class ExtensionContainer {
      * 释放所有资源
      */
     dispose(): void {
-        // 释放各个管理器
-        if (this.fileHeatManager) {
-            this.fileHeatManager.dispose();
-        }
-        
-        if (this.bookmarkManager) {
-            this.bookmarkManager.dispose();
-        }
-        
-        if (this.bookmarkDecorationProvider) {
-            this.bookmarkDecorationProvider.dispose();
-        }
-        
-        if (this.commentProvider) {
-            this.commentProvider.dispose();
-        }
-        
-        if (this.sharedCommentProvider) {
-            this.sharedCommentProvider.dispose();
-        }
-        if (this.commentCodeLensProvider) {
-            this.commentCodeLensProvider.dispose();
-        }
+        this.disposables.forEach(d => {
+            try {
+                d.dispose();
+            } catch (error) {
+                logger.error('清理资源失败:', error);
+            }
+        });
+        this.disposables.length = 0;
     }
 }
 
