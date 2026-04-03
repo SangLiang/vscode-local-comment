@@ -36,18 +36,9 @@ export async function showShareCommentWebview(
 ): Promise<void> {
     // 保存当前活动编辑器的引用，以便稍后恢复焦点
     const activeEditor = vscode.window.activeTextEditor;
-    
-    // 智能分屏：限制最多两个列，在第一列和第二列之间切换
-    let viewColumn = vscode.ViewColumn.One;
-    if (activeEditor) {
-        if (activeEditor.viewColumn === vscode.ViewColumn.One) {
-            // 如果当前在第一列，在第二列打开编辑器
-            viewColumn = vscode.ViewColumn.Two;
-        } else {
-            // 如果当前在第二列或更高列，在第一列打开编辑器
-            viewColumn = vscode.ViewColumn.One;
-        }
-    }
+
+    // 智能分屏：在第一列和第二列之间切换，避免覆盖当前编辑器
+    const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
     
     // 创建WebView面板
     const panel = vscode.window.createWebviewPanel(

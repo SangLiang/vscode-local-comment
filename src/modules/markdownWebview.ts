@@ -72,17 +72,8 @@ export async function showMarkdownWebviewInput(
     const activeEditor = vscode.window.activeTextEditor;
     
     return new Promise((resolve) => {
-        // 智能分屏：限制最多两个列，在第一列和第二列之间切换
-        let viewColumn = vscode.ViewColumn.One;
-        if (activeEditor) {
-            if (activeEditor.viewColumn === vscode.ViewColumn.One) {
-                // 如果当前在第一列，在第二列打开编辑器
-                viewColumn = vscode.ViewColumn.Two;
-            } else {
-                // 如果当前在第二列或更高列，在第一列打开编辑器
-                viewColumn = vscode.ViewColumn.One;
-            }
-        }
+        // 智能分屏：在第一列和第二列之间切换，避免覆盖当前编辑器
+        const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
         
         // 优化：创建WebView面板，减少不必要的配置
         const panel = vscode.window.createWebviewPanel(
