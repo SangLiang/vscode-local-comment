@@ -1,11 +1,21 @@
 import * as vscode from 'vscode';
 import { DELAY_TIMES } from '../constants';
+import { TimerManager } from './timerUtils';
 
 /**
  * 编辑器工具类
  * 提供编辑器相关的工具方法
  */
 export class EditorUtils {
+    private static readonly _restoreTimers = new TimerManager();
+
+    /**
+     * 扩展停用时取消尚未执行的「恢复编辑器焦点」定时器，避免卸载后仍访问 VS Code API。
+     */
+    static disposeRestoreTimers(): void {
+        EditorUtils._restoreTimers.dispose();
+    }
+
     /**
      * 智能选择 WebView 面板的列
      * 在第一列和第二列之间切换，避免覆盖当前编辑器
@@ -29,7 +39,7 @@ export class EditorUtils {
     static restoreFocus(editor?: vscode.TextEditor, delay: number = DELAY_TIMES.RESTORE_EDITOR_FOCUS): void {
         const targetEditor = editor || vscode.window.activeTextEditor;
         if (targetEditor) {
-            setTimeout(() => {
+            EditorUtils._restoreTimers.setTimeout(() => {
                 vscode.window.showTextDocument(targetEditor.document, {
                     viewColumn: targetEditor.viewColumn,
                     selection: targetEditor.selection,
@@ -41,7 +51,7 @@ export class EditorUtils {
             }, delay);
         } else {
             // 如果没有编辑器，只是确保焦点回到编辑器组
-            setTimeout(() => {
+            EditorUtils._restoreTimers.setTimeout(() => {
                 vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
             }, delay);
         }

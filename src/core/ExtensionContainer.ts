@@ -13,6 +13,7 @@ import { AuthManager } from '../managers/authManager';
 import { ProjectManager } from '../managers/projectManager';
 import { setCommentManager } from '../modules/shareCommentWebview';
 import { logger } from '../utils/logger';
+import { EditorUtils } from '../utils/editorUtils';
 
 /**
  * 扩展容器 - 管理所有组件实例和依赖关系
@@ -65,7 +66,8 @@ export class ExtensionContainer {
             this.bookmarkDecorationProvider,
             this.commentProvider,
             this.sharedCommentProvider,
-            this.commentCodeLensProvider
+            this.commentCodeLensProvider,
+            this.commentManager
         );
 
         // 设置本地注释提供器的刷新回调，以便同步更新共享注释装饰器和 CodeLens
@@ -85,6 +87,7 @@ export class ExtensionContainer {
      * 释放所有资源
      */
     dispose(): void {
+        EditorUtils.disposeRestoreTimers();
         this.disposables.forEach(d => {
             try {
                 d.dispose();

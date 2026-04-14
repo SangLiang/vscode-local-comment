@@ -141,83 +141,86 @@ export async function showMarkdownWebviewInput(
         );
 
         // 异步加载标签建议和代码上下文，避免阻塞界面显示
-        setTimeout(async () => {
-            try {
-                // 并行加载标签建议和代码上下文
-                const promises: Promise<any>[] = [];
-                
-                // 加载标签建议
-                promises.push(
-                    Promise.resolve().then(() => {
-                        const commentManager = new CommentManager(context);
-                        const tagManager = new TagManager();
-                        tagManager.updateTags(commentManager.getAllComments());
-                        const asyncTagSuggestions = tagManager.getAvailableTagNames().map(tag => `@${tag}`).join(',');
-                        
-                        // 向webview发送标签建议数据
-                        panel.webview.postMessage({
-                            command: IPC_MESSAGES.UPDATE_TAG_SUGGESTIONS,
-                            tagSuggestions: asyncTagSuggestions
-                        });
-                    })
-                );
+        let asyncLoadTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+            asyncLoadTimer = undefined;
+            void (async () => {
+                try {
+                    // 并行加载标签建议和代码上下文
+                    const promises: Promise<any>[] = [];
+                    
+                    // 加载标签建议
+                    promises.push(
+                        Promise.resolve().then(() => {
+                            const commentManager = new CommentManager(context);
+                            const tagManager = new TagManager();
+                            tagManager.updateTags(commentManager.getAllComments());
+                            const asyncTagSuggestions = tagManager.getAvailableTagNames().map(tag => `@${tag}`).join(',');
+                            
+                            // 向webview发送标签建议数据
+                            panel.webview.postMessage({
+                                command: IPC_MESSAGES.UPDATE_TAG_SUGGESTIONS,
+                                tagSuggestions: asyncTagSuggestions
+                            });
+                        })
+                    );
 
-                // 发送Mermaid主题配置
-                promises.push(
-                    Promise.resolve().then(() => {
-                        const config = vscode.workspace.getConfiguration('local-comment');
-                        const mermaidTheme = config.get<string>('mermaid.theme', 'default');
-                        panel.webview.postMessage({
-                            command: IPC_MESSAGES.SET_MERMAID_THEME,
-                            theme: mermaidTheme
-                        });
-                    })
-                );
+                    // 发送Mermaid主题配置
+                    promises.push(
+                        Promise.resolve().then(() => {
+                            const config = vscode.workspace.getConfiguration('local-comment');
+                            const mermaidTheme = config.get<string>('mermaid.theme', 'default');
+                            panel.webview.postMessage({
+                                command: IPC_MESSAGES.SET_MERMAID_THEME,
+                                theme: mermaidTheme
+                            });
+                        })
+                    );
 
-                // 发送预览字体大小配置
-                promises.push(
-                    Promise.resolve().then(() => {
-                        const config = vscode.workspace.getConfiguration('local-comment');
-                        const previewFontSize = config.get<number>('markdownPreview.fontSize', 0);
-                        
-                        // 如果配置为 0，则使用编辑器字体大小
-                        let fontSize: number;
-                        if (previewFontSize === 0) {
-                            const editorConfig = vscode.workspace.getConfiguration('editor');
-                            fontSize = editorConfig.get<number>('fontSize', 14);
-                        } else {
-                            fontSize = previewFontSize;
+                    // 发送预览字体大小配置
+                    promises.push(
+                        Promise.resolve().then(() => {
+                            const config = vscode.workspace.getConfiguration('local-comment');
+                            const previewFontSize = config.get<number>('markdownPreview.fontSize', 0);
+                            
+                            // 如果配置为 0，则使用编辑器字体大小
+                            let fontSize: number;
+                            if (previewFontSize === 0) {
+                                const editorConfig = vscode.workspace.getConfiguration('editor');
+                                fontSize = editorConfig.get<number>('fontSize', 14);
+                            } else {
+                                fontSize = previewFontSize;
+                            }
+                            
+                            panel.webview.postMessage({
+                                command: IPC_MESSAGES.SET_PREVIEW_FONT_SIZE,
+                                fontSize: fontSize
+                            });
+                        })
+                    );
+
+                    // 如果需要代码上下文且当前没有提供，异步加载
+                    if (contextInfo && contextInfo.lineNumber !== undefined && !contextInfo.contextLines) {
+                        const activeEditorForContext = vscode.window.activeTextEditor;
+                        if (activeEditorForContext) {
+                            promises.push(
+                                getCodeContext(activeEditorForContext.document.uri, contextInfo.lineNumber).then(codeContext => {
+                                    // 向webview发送代码上下文数据
+                                    panel.webview.postMessage({
+                                        command: IPC_MESSAGES.UPDATE_CODE_CONTEXT,
+                                        contextLines: codeContext.contextLines,
+                                        contextStartLine: codeContext.contextStartLine,
+                                        lineNumber: contextInfo.lineNumber
+                                    });
+                                })
+                            );
                         }
-                        
-                        panel.webview.postMessage({
-                            command: IPC_MESSAGES.SET_PREVIEW_FONT_SIZE,
-                            fontSize: fontSize
-                        });
-                    })
-                );
-
-                // 如果需要代码上下文且当前没有提供，异步加载
-                if (contextInfo && contextInfo.lineNumber !== undefined && !contextInfo.contextLines) {
-                    const activeEditor = vscode.window.activeTextEditor;
-                    if (activeEditor) {
-                        promises.push(
-                            getCodeContext(activeEditor.document.uri, contextInfo.lineNumber).then(codeContext => {
-                                // 向webview发送代码上下文数据
-                                panel.webview.postMessage({
-                                    command: IPC_MESSAGES.UPDATE_CODE_CONTEXT,
-                                    contextLines: codeContext.contextLines,
-                                    contextStartLine: codeContext.contextStartLine,
-                                    lineNumber: contextInfo.lineNumber
-                                });
-                            })
-                        );
                     }
+                    
+                    await Promise.all(promises);
+                } catch (error) {
+                    logger.error('异步加载数据失败:', error);
                 }
-                
-                await Promise.all(promises);
-            } catch (error) {
-                logger.error('异步加载数据失败:', error);
-            }
+            })();
         }, 0);
 
         // 处理WebView消息
@@ -420,6 +423,10 @@ export async function showMarkdownWebviewInput(
 
         // 面板关闭时返回undefined
         panel.onDidDispose(() => {
+            if (asyncLoadTimer !== undefined) {
+                clearTimeout(asyncLoadTimer);
+                asyncLoadTimer = undefined;
+            }
             resolve(undefined);
             // WebView关闭后恢复编辑器焦点
             EditorUtils.restoreFocus(activeEditor);

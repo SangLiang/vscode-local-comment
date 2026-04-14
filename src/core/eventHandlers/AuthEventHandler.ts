@@ -3,16 +3,23 @@ import { ExtensionContainer } from '../ExtensionContainer';
 import { StatusBarManager } from '../StatusBarManager';
 import { logger } from '../../utils/logger';
 import { COMMANDS, CONTEXT_KEYS, DELAY_TIMES } from '../../constants';
+import { TimerManager } from '../../utils/timerUtils';
 
 /**
  * 认证事件处理器 - 处理认证相关事件（登录、登出、初始化）
  */
 export class AuthEventHandler {
+    private readonly _timerManager = new TimerManager();
+
     constructor(
         private container: ExtensionContainer,
         private context: vscode.ExtensionContext,
         private statusBarManager: StatusBarManager
     ) {}
+
+    dispose(): void {
+        this._timerManager.dispose();
+    }
 
     /**
      * 注册所有认证相关事件监听器
@@ -63,7 +70,7 @@ export class AuthEventHandler {
         }
         
         // 登录成功后自动打开用户信息界面
-        setTimeout(() => {
+        this._timerManager.setTimeout(() => {
             vscode.commands.executeCommand(COMMANDS.SHOW_USER_INFO);
         }, DELAY_TIMES.SHOW_USER_INFO_AFTER_LOGIN);
     }

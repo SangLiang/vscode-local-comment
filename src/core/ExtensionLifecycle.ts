@@ -161,6 +161,10 @@ export class ExtensionLifecycle {
                 this.documentEventHandler.dispose();
             }
 
+            if (this.authEventHandler) {
+                this.authEventHandler.dispose();
+            }
+
             // 清理状态栏管理器
             if (this.statusBarManager) {
                 this.statusBarManager.dispose();

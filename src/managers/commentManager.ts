@@ -9,6 +9,7 @@ import { AuthManager } from './authManager';
 import { logger } from '../utils/logger';
 import { DELAY_TIMES, COMMANDS } from '../constants';
 import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
+import { TimerManager } from '../utils/timerUtils';
 
 export interface LocalComment {
     id: string;
@@ -45,7 +46,7 @@ export interface FileComments {
     [filePath: string]: (LocalComment | SharedComment)[];
 }
 
-export class CommentManager {
+export class CommentManager implements vscode.Disposable {
     private comments: FileComments = {};
     private shareComments: FileComments = {};
     private storageFile: string;
@@ -53,6 +54,7 @@ export class CommentManager {
     private authManager?: AuthManager; // 认证管理器
     private _hasKeyboardActivity = false; // 记录键盘活动状态，用于区分用户编辑和Git分支切换
     private commentMatcher: CommentMatcher; // 注释匹配器
+    private readonly _timerManager = new TimerManager();
     
     // 事件发射器，用于通知注释变化
     private _onDidChangeComments: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
@@ -86,6 +88,10 @@ export class CommentManager {
         });
         
         context.subscriptions.push(workspaceWatcher);
+    }
+
+    dispose(): void {
+        this._timerManager.dispose();
     }
 
     /**
@@ -777,7 +783,7 @@ export class CommentManager {
             await this.performSmartMatchingForFile(event.document);
             
             // 刷新注释显示
-            setTimeout(() => {
+            this._timerManager.setTimeout(() => {
                 vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
             }, DELAY_TIMES.REFRESH_COMMENTS);
             return;
@@ -812,7 +818,7 @@ export class CommentManager {
             await this.performSmartMatchingForFileWithExtendedRange(event.document);
             
             // 刷新注释显示
-            setTimeout(() => {
+            this._timerManager.setTimeout(() => {
                 vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
             }, DELAY_TIMES.REFRESH_COMMENTS);
             return;
@@ -900,7 +906,7 @@ export class CommentManager {
         }
         
                 // 更新完成后刷新注释树显示
-        setTimeout(() => {
+        this._timerManager.setTimeout(() => {
             vscode.commands.executeCommand(COMMANDS.REFRESH_COMMENTS);
         }, 10);
     }
@@ -1258,9 +1264,11 @@ export class CommentManager {
      */
     private async saveCommentsAsync(): Promise<void> {
         try {
-            setTimeout(async () => {
-                await this.saveComments();
-                this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
+            this._timerManager.setTimeout(() => {
+                void (async () => {
+                    await this.saveComments();
+                    this._onDidChangeSharedComments.fire(); // 触发共享注释变化事件
+                })();
             }, DELAY_TIMES.ASYNC_SAVE);
         } catch (error) {
             logger.error('异步保存注释失败:', error);

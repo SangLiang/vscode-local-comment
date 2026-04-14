@@ -96,7 +96,8 @@ export async function showShareCommentWebview(
     );
 
     // 异步发送Mermaid主题配置和字体大小配置
-    setTimeout(() => {
+    let configPostTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+        configPostTimer = undefined;
         try {
             const config = vscode.workspace.getConfiguration('local-comment');
             const mermaidTheme = config.get<string>('mermaid.theme', 'default');
@@ -145,6 +146,10 @@ export async function showShareCommentWebview(
 
     // 面板关闭时恢复编辑器焦点
     panel.onDidDispose(() => {
+        if (configPostTimer !== undefined) {
+            clearTimeout(configPostTimer);
+            configPostTimer = undefined;
+        }
         // WebView关闭后恢复编辑器焦点
         EditorUtils.restoreFocus(activeEditor);
     });
