@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [1.5.1] - 2026-04-14
+
+### Changed
+
+- Fixed incorrect Git repository URLs in package metadata.
+
+- Fixed several known issues.
+
+- Upgraded dependencies.
+
+- Removed redundant code.
+
 ## [1.5.0] - 2026-03-19
 
 ### Added
