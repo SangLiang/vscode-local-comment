@@ -50,8 +50,9 @@ export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contex
 
 export async function showMarkdownWebviewInput(
     context: vscode.ExtensionContext,
-    prompt: string, 
-    placeholder: string = '', 
+    prompt: string,
+    projectManager: ProjectManager,
+    placeholder: string = '',
     existingContent: string = '',
     contextInfo?: {
         fileName?: string;
@@ -310,8 +311,6 @@ export async function showMarkdownWebviewInput(
                                 vscode.window.showWarningMessage('无法获取文件路径信息，分享功能可能无法正常工作');
                             }
 
-                            // 获取项目ID（从项目管理器获取实际关联的项目ID）
-                            const projectManager = new ProjectManager(context);
                             const associatedProjectId = projectManager.getAssociatedProject();
                             const projectId = associatedProjectId ? parseInt(associatedProjectId, 10) : 0;
                             

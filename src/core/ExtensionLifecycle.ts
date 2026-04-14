@@ -77,8 +77,9 @@ export class ExtensionLifecycle {
                 this.container.tagManager,
                 this.container.commentProvider,
                 this.container.commentTreeProvider,
-                this.container.bookmarkManager,
-                this.container.authManager
+                this.container.authManager,
+                this.container.projectManager,
+                this.container.bookmarkManager
             );
             this.disposables.push(...commandDisposables);
 

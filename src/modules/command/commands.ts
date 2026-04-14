@@ -29,8 +29,9 @@ export function registerCommands(
     tagManager: TagManager,
     commentProvider: CommentProvider,
     commentTreeProvider: CommentTreeProvider,
-    bookmarkManager?: BookmarkManager,
-    authManager?: AuthManager
+    authManager: AuthManager,
+    projectManager: ProjectManager,
+    bookmarkManager?: BookmarkManager
 ) {
 
     const showStorageLocationCommand = vscode.commands.registerCommand(COMMANDS.SHOW_STORAGE_LOCATION, () => {
@@ -519,10 +520,7 @@ export function registerCommands(
             return;
         }
 
-        // 获取项目管理器实例
-        const projectManager = new ProjectManager(context);
-        
-        // 获取关联的项目ID
+        // 获取关联的项目ID（使用容器注入的 ProjectManager）
         const associatedProjectId = projectManager.getAssociatedProject();
                     if (!associatedProjectId) {
                 const associateChoice = await DialogUtils.showConfirmDialog(
@@ -865,10 +863,7 @@ export function registerCommands(
                 return;
             }
 
-            // 获取项目管理器实例
-            const projectManager = new ProjectManager(context);
-            
-            // 获取关联的项目ID
+            // 获取关联的项目ID（使用容器注入的 ProjectManager）
             const associatedProjectId = projectManager.getAssociatedProject();
             if (!associatedProjectId) {
                 const associateChoice = await DialogUtils.showConfirmDialog(
@@ -1053,11 +1048,6 @@ export function registerCommands(
 
     // 认证相关命令
     const logoutCommand = vscode.commands.registerCommand(COMMANDS.LOGOUT, async () => {
-        if (!authManager) {
-            vscode.window.showErrorMessage('认证管理器未初始化');
-            return;
-        }
-        
         if (!authManager.isLoggedIn()) {
             vscode.window.showInformationMessage('您尚未登录');
             return;
@@ -1079,13 +1069,11 @@ export function registerCommands(
     // 刷新共享注释命令
     const refreshSharedCommentsCommand = vscode.commands.registerCommand(COMMANDS.REFRESH_SHARED_COMMENTS, async () => {
         try {
-            if (!authManager || !authManager.isLoggedIn()) {
+            if (!authManager.isLoggedIn()) {
                 vscode.window.showWarningMessage('请先登录以刷新共享注释');
                 return;
             }
 
-            // 使用ProjectManager来获取项目绑定信息，而不是直接从workspaceState获取
-            const projectManager = new ProjectManager(context);
             const associatedProjectId = projectManager.getAssociatedProject();
             if (!associatedProjectId) {
                 vscode.window.showWarningMessage('请先关联项目以刷新共享注释');
@@ -1180,7 +1168,15 @@ export function registerCommands(
     });
 
     // 注册comment.ts中的命令
-    const commentCommands = registerCommentCommands(commentManager, tagManager, commentProvider, commentTreeProvider, context);
+    const commentCommands = registerCommentCommands(
+        commentManager,
+        tagManager,
+        commentProvider,
+        commentTreeProvider,
+        authManager,
+        projectManager,
+        context
+    );
 
     // 注册bookmark.ts中的命令
     const bookmarkCommands = registerBookmarkCommands(bookmarkManager);

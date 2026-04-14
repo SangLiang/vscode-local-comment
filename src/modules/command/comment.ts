@@ -5,6 +5,7 @@ import { CommentTreeProvider } from '../../providers/commentTreeProvider';
 import { CommentManager } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
 import { AuthManager } from '../../managers/authManager';
+import { ProjectManager } from '../../managers/projectManager';
 import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
@@ -26,6 +27,8 @@ export function registerCommentCommands(
     tagManager: TagManager,
     commentProvider: CommentProvider,
     commentTreeProvider: CommentTreeProvider,
+    authManager: AuthManager,
+    projectManager: ProjectManager,
     context?: vscode.ExtensionContext
 ): vscode.Disposable[] {
     
@@ -286,14 +289,15 @@ export function registerCommentCommands(
             const result = await showMarkdownWebviewInput(
                 context!,
                 fileExists ? '修改注释内容' : '修改注释内容 (原文件已删除)',
-                fileExists ? 
-                    '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签' : 
+                projectManager,
+                fileExists ?
+                    '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签' :
                     '原文件已删除，但您仍可以编辑注释内容。支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签',
                 comment.content,
                 contextInfo,
                 '',
                 createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
-                new AuthManager(context!).isLoggedIn(),
+                authManager.isLoggedIn(),
                 comment.isShared || false
             );
         } catch (error) {
@@ -812,8 +816,6 @@ export function registerCommentCommands(
         const comments = commentManager.getComments(editor.document.uri);
         const existingComment = comments.find(c => c.line === line);
         
-        // 获取用户登录状态
-        const authManager = new AuthManager(context!);
         const isUserLoggedIn = authManager.isLoggedIn();
         
         try {
@@ -832,6 +834,7 @@ export function registerCommentCommands(
                         const result = await showMarkdownWebviewInput(
                             context!,
                             '添加多行本地注释',
+                            projectManager,
                             '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签',
                             '',
                             {
@@ -872,6 +875,7 @@ export function registerCommentCommands(
                 const result = await showMarkdownWebviewInput(
                     context!,
                     '添加多行本地注释',
+                    projectManager,
                     '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
                     '',
                     {

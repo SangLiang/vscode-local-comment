@@ -90,8 +90,13 @@ export class CommentManager implements vscode.Disposable {
         context.subscriptions.push(workspaceWatcher);
     }
 
+    /**
+     * 扩展停用时由 ExtensionContainer 调用：清理定时器与事件发射器。
+     */
     dispose(): void {
         this._timerManager.dispose();
+        this._onDidChangeComments.dispose();
+        this._onDidChangeSharedComments.dispose();
     }
 
     /**
