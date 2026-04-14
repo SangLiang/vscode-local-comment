@@ -430,15 +430,6 @@ export class CommentManager implements vscode.Disposable {
             // 替换现有的本地注释
             this.comments[filePath][existingLocalIndex] = comment;
         } else {
-            // 检查是否有共享注释在同一行
-            const allSharedComments = this.shareComments[filePath] || [];
-            const existingSharedComments = allSharedComments.filter((comment): comment is SharedComment => 
-                'userId' in comment && comment.line === line
-            );
-            
-            if (existingSharedComments.length > 0) {
-            }
-            
             // 添加新的本地注释
             this.comments[filePath].push(comment);
         }
@@ -582,8 +573,6 @@ export class CommentManager implements vscode.Disposable {
             vscode.window.showWarningMessage('该文件没有本地注释');
             return;
         }
-
-        const commentCount = this.comments[filePath].length;
         
         // 删除该文件的所有注释记录
         delete this.comments[filePath];
@@ -703,9 +692,6 @@ export class CommentManager implements vscode.Disposable {
             // 如果文档未打开，返回空数组（暂时隐藏注释）
             return [];
         }
-
-        // 检查第一行是否有注释，如果没有则创建默认的文件注释
-        const hasFirstLineComment = allComments.some(comment => comment.line === 0);
 
         if (allComments.length === 0) {
             return [];
@@ -1016,7 +1002,7 @@ export class CommentManager implements vscode.Disposable {
     }
 
     private generateId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        return `${Date.now().toString(36)}${crypto.randomBytes(8).toString('hex')}`;
     }
 
     public getAllComments(): FileComments {
@@ -1245,12 +1231,6 @@ export class CommentManager implements vscode.Disposable {
             // 替换现有的本地注释
             this.comments[filePath][existingLocalIndex] = comment;
         } else {
-            // 检查是否有共享注释在同一行
-            const existingSharedComments = this.shareComments[filePath]?.filter(c => 
-                c.line === line
-            ) || [];
-            
-            
             // 添加新的本地注释
             this.comments[filePath].push(comment);
         }

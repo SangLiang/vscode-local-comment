@@ -233,6 +233,17 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
         
         // 合并注释和书签节点，按行号排序
         const allNodes = [...commentNodes, ...bookmarkNodes];
+        if (allNodes.length === 0) {
+            const fallbackNode = new CommentTreeItem(
+                '该文件暂无可展示条目',
+                vscode.TreeItemCollapsibleState.None,
+                'empty'
+            );
+            fallbackNode.iconPath = new vscode.ThemeIcon('info');
+            fallbackNode.tooltip = '当前文件节点包含数据，但未生成可展示的注释/书签子节点';
+            return [fallbackNode];
+        }
+
         return allNodes.sort((a, b) => {
             const lineA = a.comment?.line ?? a.bookmark?.line ?? Number.MAX_SAFE_INTEGER;
             const lineB = b.comment?.line ?? b.bookmark?.line ?? Number.MAX_SAFE_INTEGER;

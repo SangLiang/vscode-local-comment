@@ -161,7 +161,12 @@ export class BookmarkManager {
         }
         if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf8');
-            this.bookmarks = JSON.parse(data);
+            try {
+                this.bookmarks = JSON.parse(data);
+            } catch (error) {
+                logger.error(`解析书签文件失败: ${filePath}`, error);
+                this.bookmarks = {};
+            }
         } else {
             this.bookmarks = {};
         }

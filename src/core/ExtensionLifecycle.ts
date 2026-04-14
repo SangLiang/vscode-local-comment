@@ -128,17 +128,8 @@ export class ExtensionLifecycle {
             );
             this.disposables.push(showUserInfoCommand);
 
-            // 步骤7：注册所有 disposables 到上下文
-            this.disposables.push(
-                this.container.commentProvider,
-                this.container.sharedCommentProvider,
-                this.container.commentTreeProvider,
-                this.container.fileHeatManager,
-                this.container.bookmarkManager,
-                this.container.bookmarkDecorationProvider
-            );
-
-            // 将所有 disposables 添加到上下文订阅中
+            // 步骤7：将生命周期级别的 disposables 添加到上下文订阅中
+            // 注意：容器内资源由 ExtensionContainer 统一释放，避免重复 dispose
             this.disposables.forEach(disposable => {
                 this.context.subscriptions.push(disposable);
             });

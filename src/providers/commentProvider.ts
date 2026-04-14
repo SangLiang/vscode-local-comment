@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { CommentManager, LocalComment, SharedComment } from '../managers/commentManager';
 import { createDataUri } from '../utils/utils';
-import axios from 'axios';
 import { logger } from '../utils/logger';
 import { COMMANDS } from '../constants';
 import { TimerManager } from '../utils/timerUtils';
@@ -535,15 +534,21 @@ export class CommentProvider implements vscode.Disposable {
      */
     private async fetchImageAsBase64(imageUrl: string): Promise<string | null> {
         try {
-            const response = await axios.get(imageUrl, {
-                responseType: 'arraybuffer',
-                timeout: 5000,
-                validateStatus: (status) => status === 200
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const response = await fetch(imageUrl, {
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
-            const buffer = Buffer.from(response.data);
+            if (!response.ok) {
+                throw new Error(`图片请求失败，状态码: ${response.status}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
             const base64 = buffer.toString('base64');
-            const contentType = response.headers['content-type'] || 'image/png';
+            const contentType = response.headers.get('content-type') || 'image/png';
             const dataUri = `data:${contentType};base64,${base64}`;
 
             return dataUri;

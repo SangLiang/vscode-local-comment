@@ -11,11 +11,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SangLiang/vscode-local-commet.git"
+    "url": "https://github.com/SangLiang/vscode-local-comment.git"
   },
-  "homepage": "https://github.com/SangLiang/vscode-local-commet",
+  "homepage": "https://github.com/SangLiang/vscode-local-comment",
   "bugs": {
-    "url": "https://github.com/SangLiang/vscode-local-commet/issues"
+    "url": "https://github.com/SangLiang/vscode-local-comment/issues"
   },
   "keywords": [
     "local comment",
@@ -580,7 +580,7 @@
   },
   "devDependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
-    "@types/node": "16.x",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.74.0",
     "cross-env": "^7.0.3",
     "katex": "^0.16.9",

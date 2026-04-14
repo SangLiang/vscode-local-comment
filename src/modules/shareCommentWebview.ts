@@ -266,7 +266,7 @@ function getCommentManager(context: vscode.ExtensionContext): CommentManager | n
 
 // 生成注释ID
 function generateCommentId(): string {
-    return `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 function getShareCommentWebviewContent(
