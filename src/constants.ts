@@ -150,6 +150,8 @@ export const IPC_MESSAGES = {
     EDITOR_BASELINE_COMMITTED: 'editorBaselineCommitted',
     /** 保存被跳过（空内容 / 无变更）时通知 Webview，避免误将基线标为已提交 */
     EDITOR_SAVE_SKIPPED: 'editorSaveSkipped',
+    /** Webview →扩展：当前是否与已提交基线不一致，用于更新面板 Tab 标题等 */
+    EDITOR_DIRTY_STATE: 'editorDirtyState',
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',

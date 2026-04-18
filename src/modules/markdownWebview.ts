@@ -79,11 +79,13 @@ export async function showMarkdownWebviewInput(
     return new Promise((resolve) => {
         // 智能分屏：在第一列和第二列之间切换，避免覆盖当前编辑器
         const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
-        
+        const panelTabBaseTitle = '本地注释';
+        const panelTabDirtyTitle = `${panelTabBaseTitle}-未保存*`;
+
         // 优化：创建WebView面板，减少不必要的配置
         const panel = vscode.window.createWebviewPanel(
             'localCommentInput',
-            '本地注释编辑',
+            panelTabBaseTitle,
             viewColumn,
             {
                 enableScripts: true,
@@ -232,6 +234,11 @@ export async function showMarkdownWebviewInput(
         panel.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
+                    case IPC_MESSAGES.EDITOR_DIRTY_STATE:
+                        if (typeof message.isDirty === 'boolean') {
+                            panel.title = message.isDirty ? panelTabDirtyTitle : panelTabBaseTitle;
+                        }
+                        break;
                     case IPC_MESSAGES.SAVE:
                         // 返回内容和更新后的上下文信息（保存成功后才 dispose）
                         if (onSaveAndContinue) {
@@ -260,11 +267,13 @@ export async function showMarkdownWebviewInput(
                                         })
                                     );
                                     if (outcome === 'committed') {
+                                        panel.title = panelTabBaseTitle;
                                         panel.webview.postMessage({
                                             command: IPC_MESSAGES.EDITOR_BASELINE_COMMITTED,
                                             text: message.content
                                         });
                                     } else if (outcome === 'skipped-noop') {
+                                        panel.title = panelTabBaseTitle;
                                         panel.webview.postMessage({
                                             command: IPC_MESSAGES.EDITOR_SAVE_SKIPPED,
                                             reason: 'no-op',

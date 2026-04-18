@@ -56,6 +56,30 @@
         return normalizeForDirty(textarea.value) !== normalizeForDirty(committedText);
     }
 
+    /** 与扩展侧 Tab 标题同步：仅在实际变化时上报 */
+    let lastPostedDirty = undefined;
+    let dirtyTabPostTimer = null;
+    function postDirtyStateToHost() {
+        const d = isEditorDirty();
+        if (lastPostedDirty === d) {
+            return;
+        }
+        lastPostedDirty = d;
+        vscode.postMessage({
+            command: 'editorDirtyState',
+            isDirty: d
+        });
+    }
+    function scheduleDirtyPostToHost() {
+        if (dirtyTabPostTimer) {
+            clearTimeout(dirtyTabPostTimer);
+        }
+        dirtyTabPostTimer = setTimeout(function() {
+            dirtyTabPostTimer = null;
+            postDirtyStateToHost();
+        }, 120);
+    }
+
     function isDiscardOverlayVisible() {
         return discardOverlay && discardOverlay.classList.contains('is-visible');
     }
@@ -892,6 +916,7 @@
         }
         
         hideAutocomplete();
+        scheduleDirtyPostToHost();
     }
     
     const debouncedUpdatePreview = typeof window.debounce === 'function' ? window.debounce(updatePreview, 500) : updatePreview;
@@ -927,6 +952,7 @@
         
         // 保存输入状态
         saveState();
+        scheduleDirtyPostToHost();
     });
     
     // 处理键盘导航
@@ -1058,6 +1084,10 @@
     // 设置焦点
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    // 同步 Tab 脏标记（含 getState 恢复后与基线不一致的情况）
+    setTimeout(function() {
+        postDirtyStateToHost();
+    }, 0);
     
     // 暴露函数给全局作用域
     window.saveAndContinue = function() {
@@ -1092,6 +1122,7 @@
                     committedText = message.text;
                     saveState();
                 }
+                postDirtyStateToHost();
                 break;
             case 'editorSaveSkipped':
                 if (message.reason === 'no-op' && typeof message.text === 'string') {
@@ -1099,6 +1130,7 @@
                     saveState();
                 }
                 // reason === 'empty'：不更新基线（仍视为相对磁盘的未提交空稿）
+                postDirtyStateToHost();
                 break;
             case 'shareSuccess':
                 // 分享成功后可以更新UI状态
