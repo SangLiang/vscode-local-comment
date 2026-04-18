@@ -55,6 +55,17 @@
         </div>
     </div>
 
+    <div id="discard-confirm-overlay" class="discard-confirm-overlay" aria-hidden="true">
+        <div class="discard-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="discard-confirm-title">
+            <div id="discard-confirm-title" class="discard-confirm-title">放弃未保存的更改？</div>
+            <p class="discard-confirm-desc">关闭后当前编辑内容将丢失。</p>
+            <div class="discard-confirm-actions">
+                <button type="button" class="discard-confirm-btn discard-confirm-btn-secondary" id="discard-confirm-back">继续编辑</button>
+                <button type="button" class="discard-confirm-btn discard-confirm-btn-primary" id="discard-confirm-abandon">放弃更改</button>
+            </div>
+        </div>
+    </div>
+
     <script src="${markedJsUri}" onerror="console.error('marked.js 加载失败')"></script>
     <script src="${highlightJsUri}" onerror="console.error('highlight.js 加载失败')"></script>
     <script src="${mermaidJsUri}" onerror="console.error('mermaid.js 加载失败')"></script>

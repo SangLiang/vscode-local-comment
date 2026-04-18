@@ -146,6 +146,10 @@ export const IPC_MESSAGES = {
     UPDATE_CURRENT_LINE_CONTENT: 'updateCurrentLineContent',
     SET_MERMAID_THEME: 'setMermaidTheme',
     SET_PREVIEW_FONT_SIZE: 'setPreviewFontSize',
+    /** 保存成功后通知 Webview 更新「已提交基线」正文 */
+    EDITOR_BASELINE_COMMITTED: 'editorBaselineCommitted',
+    /** 保存被跳过（空内容 / 无变更）时通知 Webview，避免误将基线标为已提交 */
+    EDITOR_SAVE_SKIPPED: 'editorSaveSkipped',
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',

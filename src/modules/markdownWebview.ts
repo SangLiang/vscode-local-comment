@@ -7,7 +7,7 @@ import { normalizeFilePath, getErrorMessage } from '../utils/utils';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
-import { UpdatedContextInfo } from './command/comment';
+import { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
 import { EditorUtils } from '../utils/editorUtils';
 
 // 辅助函数：获取代码上下文（前后5行）
@@ -65,7 +65,11 @@ export async function showMarkdownWebviewInput(
         filePath?: string; // 文件路径
     },
     markedJsUri: string = '',
-    onSaveAndContinue?: (content: string, updatedContextInfo?: UpdatedContextInfo, callback?: () => void) => void,
+    onSaveAndContinue?: (
+        content: string,
+        updatedContextInfo?: UpdatedContextInfo,
+        callback?: () => void
+    ) => void | Promise<MarkdownSaveOutcome>,
     isUserLoggedIn: boolean = false,
     isCommentShared: boolean = false
 ): Promise<{content: string, contextInfo?: any} | undefined> {
@@ -229,21 +233,53 @@ export async function showMarkdownWebviewInput(
             async message => {
                 switch (message.command) {
                     case IPC_MESSAGES.SAVE:
-                        // 返回内容和更新后的上下文信息
+                        // 返回内容和更新后的上下文信息（保存成功后才 dispose）
                         if (onSaveAndContinue) {
-                            onSaveAndContinue(message.content, contextInfo,()=>{
-                                panel.dispose();
-                                // WebView关闭后恢复编辑器焦点
-                                EditorUtils.restoreFocus(activeEditor);
-                            });
+                            void (async () => {
+                                try {
+                                    await Promise.resolve(
+                                        onSaveAndContinue(message.content, contextInfo, () => {
+                                            panel.dispose();
+                                            EditorUtils.restoreFocus(activeEditor);
+                                        })
+                                    );
+                                } catch (err) {
+                                    logger.error('保存并退出时发生错误:', err);
+                                }
+                            })();
                         }
                         break;
                     case IPC_MESSAGES.SAVE_AND_CONTINUE:
-                        // 保存内容但不关闭编辑器
+                        // 保存内容但不关闭编辑器；根据结果通知 Webview 更新 dirty 基线
                         if (onSaveAndContinue) {
-                            onSaveAndContinue(message.content, contextInfo,()=>{
-                                vscode.window.showInformationMessage('保存成功');
-                            });
+                            void (async () => {
+                                try {
+                                    const outcome = await Promise.resolve(
+                                        onSaveAndContinue(message.content, contextInfo, () => {
+                                            vscode.window.showInformationMessage('保存成功');
+                                        })
+                                    );
+                                    if (outcome === 'committed') {
+                                        panel.webview.postMessage({
+                                            command: IPC_MESSAGES.EDITOR_BASELINE_COMMITTED,
+                                            text: message.content
+                                        });
+                                    } else if (outcome === 'skipped-noop') {
+                                        panel.webview.postMessage({
+                                            command: IPC_MESSAGES.EDITOR_SAVE_SKIPPED,
+                                            reason: 'no-op',
+                                            text: message.content
+                                        });
+                                    } else if (outcome === 'skipped-empty') {
+                                        panel.webview.postMessage({
+                                            command: IPC_MESSAGES.EDITOR_SAVE_SKIPPED,
+                                            reason: 'empty'
+                                        });
+                                    }
+                                } catch (err) {
+                                    logger.error('保存并继续时发生错误:', err);
+                                }
+                            })();
                         }
                         break;
                     case IPC_MESSAGES.UPDATE_SELECTED_LINE:
@@ -411,10 +447,12 @@ export async function showMarkdownWebviewInput(
                         }
                         break;
                     case IPC_MESSAGES.CANCEL:
-                        resolve(undefined);
-                        panel.dispose();
-                        // WebView关闭后恢复编辑器焦点
-                        EditorUtils.restoreFocus(activeEditor);
+                        // 仅当 Webview 已确认放弃未保存更改时才关闭，避免误触丢失
+                        if (message.abandonConfirmed === true) {
+                            resolve(undefined);
+                            panel.dispose();
+                            EditorUtils.restoreFocus(activeEditor);
+                        }
                         break;
                 }
             }

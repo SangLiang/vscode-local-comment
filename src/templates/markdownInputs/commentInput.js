@@ -2,6 +2,8 @@
     const vscode = acquireVsCodeApi();
     const textarea = document.getElementById('contentInput');
     const previewArea = document.getElementById('previewArea');
+    /** 打开面板时磁盘/模板上的正文，用于 dirty 判断（早于 getState 恢复） */
+    const diskCommittedBaseline = textarea.value;
     let previewVisible = false;
     let markedInitialized = false;
     let mermaidInitialized = false;
@@ -37,6 +39,83 @@
         if (previousState.currentTab) {
             currentTab = previousState.currentTab;
         }
+    }
+
+    /** 与磁盘或上次成功「保存并继续」一致的正文；严格全文比较 */
+    let committedText = diskCommittedBaseline;
+
+    const discardOverlay = document.getElementById('discard-confirm-overlay');
+    const discardBtnBack = document.getElementById('discard-confirm-back');
+    const discardBtnAbandon = document.getElementById('discard-confirm-abandon');
+
+    function normalizeForDirty(s) {
+        return s;
+    }
+
+    function isEditorDirty() {
+        return normalizeForDirty(textarea.value) !== normalizeForDirty(committedText);
+    }
+
+    function isDiscardOverlayVisible() {
+        return discardOverlay && discardOverlay.classList.contains('is-visible');
+    }
+
+    function showDiscardConfirm() {
+        if (!discardOverlay) {
+            postCancelAbandonConfirmed();
+            return;
+        }
+        discardOverlay.classList.add('is-visible');
+        discardOverlay.setAttribute('aria-hidden', 'false');
+        if (discardBtnBack) {
+            discardBtnBack.focus();
+        }
+    }
+
+    function hideDiscardConfirm() {
+        if (!discardOverlay) {
+            return;
+        }
+        discardOverlay.classList.remove('is-visible');
+        discardOverlay.setAttribute('aria-hidden', 'true');
+        textarea.focus();
+    }
+
+    function postCancelAbandonConfirmed() {
+        vscode.postMessage({
+            command: 'cancel',
+            abandonConfirmed: true
+        });
+    }
+
+    function requestCancelOrClose() {
+        if (isDiscardOverlayVisible()) {
+            return;
+        }
+        if (!isEditorDirty()) {
+            postCancelAbandonConfirmed();
+            return;
+        }
+        showDiscardConfirm();
+    }
+
+    if (discardBtnBack) {
+        discardBtnBack.addEventListener('click', function() {
+            hideDiscardConfirm();
+        });
+    }
+    if (discardBtnAbandon) {
+        discardBtnAbandon.addEventListener('click', function() {
+            hideDiscardConfirm();
+            postCancelAbandonConfirmed();
+        });
+    }
+    if (discardOverlay) {
+        discardOverlay.addEventListener('click', function(e) {
+            if (e.target === discardOverlay) {
+                hideDiscardConfirm();
+            }
+        });
     }
     
     // 保存状态的函数
@@ -590,9 +669,7 @@
     };
     
     window.cancel = function() {
-        vscode.postMessage({
-            command: 'cancel'
-        });
+        requestCancelOrClose();
     };
     
     // 自动补全功能
@@ -873,6 +950,7 @@
                     break;
                 case 'Escape':
                     e.preventDefault();
+                    e.stopPropagation();
                     hideAutocomplete();
                     break;
             }
@@ -904,6 +982,13 @@
     
     // 全局快捷键支持
     document.addEventListener('keydown', function(e) {
+        if (isDiscardOverlayVisible()) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hideDiscardConfirm();
+            }
+            return;
+        }
         if (!autocompleteVisible) {
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
@@ -1002,6 +1087,19 @@
     window.addEventListener('message', event => {
         const message = event.data;
         switch (message.command) {
+            case 'editorBaselineCommitted':
+                if (typeof message.text === 'string') {
+                    committedText = message.text;
+                    saveState();
+                }
+                break;
+            case 'editorSaveSkipped':
+                if (message.reason === 'no-op' && typeof message.text === 'string') {
+                    committedText = message.text;
+                    saveState();
+                }
+                // reason === 'empty'：不更新基线（仍视为相对磁盘的未提交空稿）
+                break;
             case 'shareSuccess':
                 // 分享成功后可以更新UI状态
                 console.log('注释分享成功，sharedId:', message.sharedId);

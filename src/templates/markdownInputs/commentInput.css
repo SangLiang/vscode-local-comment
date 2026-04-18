@@ -778,3 +778,80 @@ button {
 .tag-link:active {
     opacity: 0.6;
 }
+
+/* 放弃未保存更改确认层 */
+.discard-confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+.discard-confirm-overlay.is-visible {
+    display: flex;
+}
+
+.discard-confirm-dialog {
+    max-width: 400px;
+    width: 100%;
+    padding: 18px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+    color: var(--vscode-foreground);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+}
+
+.discard-confirm-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+}
+
+.discard-confirm-desc {
+    margin: 0 0 18px 0;
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.45;
+}
+
+.discard-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.discard-confirm-btn {
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.discard-confirm-btn-secondary {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border-color: var(--vscode-button-border, transparent);
+}
+
+.discard-confirm-btn-secondary:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.discard-confirm-btn-primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.discard-confirm-btn-primary:hover {
+    background: var(--vscode-button-hoverBackground);
+}

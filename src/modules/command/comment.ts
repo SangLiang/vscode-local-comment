@@ -22,6 +22,14 @@ export interface UpdatedContextInfo {
     lineContent?: string;
 }
 
+/** Markdown 编辑面板「保存并继续」回调的返回结果，供 Webview 更新 dirty 基线 */
+export type MarkdownSaveOutcome =
+    | 'committed'
+    | 'skipped-noop'
+    | 'skipped-empty'
+    | 'aborted'
+    | 'failed';
+
 export function registerCommentCommands(
     commentManager: CommentManager,
     tagManager: TagManager,
@@ -99,18 +107,18 @@ export function registerCommentCommands(
             return commentManager.editComment(uri, commentId, savedContent);
         }
 
-        return async (savedContent: string, updatedContextInfo?: UpdatedContextInfo, callback?: () => void) => {
+        return async (savedContent: string, updatedContextInfo?: UpdatedContextInfo, callback?: () => void): Promise<MarkdownSaveOutcome> => {
             try {
                 // 对于添加操作，检查内容是否为空
                 if (operation === 'add' && (!savedContent || savedContent.trim() === '')) {
                     callback && callback();
-                    return;
+                    return 'skipped-empty';
                 }
                 
                 // 对于编辑操作，检查内容是否发生变化
                 if (operation === 'edit' && savedContent === originalContent) {
                     callback && callback();
-                    return;
+                    return 'skipped-noop';
                 }
 
                 // 如果行号有变化，使用更新后的行号
@@ -131,7 +139,7 @@ export function registerCommentCommands(
                             );
                             
                             if (!replaceExisting) {
-                                return;
+                                return 'aborted';
                             }
                             
                             // 删除现有注释
@@ -150,9 +158,11 @@ export function registerCommentCommands(
                 tagManager.updateTags(commentManager.getAllComments());
                 refreshAllCommentViews();
                 callback && callback();
+                return 'committed';
             } catch (error) {
                 logger.error('保存注释时发生错误:', error);
                 vscode.window.showErrorMessage(`保存失败: ${error}`);
+                return 'failed';
             }
         };
     }
