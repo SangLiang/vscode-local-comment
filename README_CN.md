@@ -1,253 +1,241 @@
-# VSCode 本地注释插件 (Local Comment)
+# Local Comment（本地注释）
 
-一个专为大项目开发而设计的 VSCode 扩展，提供本地注释和书签功能，允许你在不修改源代码的情况下添加Markdown技术笔记。
+**在不改一行源代码的前提下**，在 VS Code 里为代码挂上可持久保存的笔记与书签：支持 **Markdown**、**Mermaid**、**LaTeX**，以及 **标签声明与跳转**，适合大项目阅读、调研和整理个人理解。
 
-> 现在你或许不需要他，但你面对难以应付的的巨量代码时候，希望你能想起他。
+> 平时可以当普通笔记用；当代码量上来、分支切来切去时，本地注释会帮你把「思路」留在编辑器里，而不是散落在聊天或外部文档里。
 
-## tag跳转
+---
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif)
+## 这个插件主要能做什么
 
-## markdown本地注释
+| 能力 | 说明 |
+|------|------|
+| **本地注释** | 注释存在独立数据里，**不写入源文件**，不污染 Git 提交内容。 |
+| **Markdown 长笔记** | 多行富文本编辑，适合写分析、流程、待办，而不是单行 `//`。 |
+| **标签跳转** | 用 `${标签名}` 声明、`@标签名` 引用，在注释间快速跳转，支持中文标签。 |
+| **智能锚定** | 代码改动后尽量跟随行位；建议绑在**有意义的代码行**（见下文最佳实践）。 |
+| **Mermaid / LaTeX** | 流程图与公式在预览中渲染，方便技术说明。 |
+| **书签** | 跨文件标记与顺序跳转，和注释配合做「阅读路线」。 |
+| **侧栏列表** | 统一浏览当前项目的注释与书签，从树里点回代码。 |
+| **项目 / 分组** | 支持多项目内多分组注释，可以 `.vscode/local-comment/` 下多份配置切换（分支1的注释 / 分支2的注释）。 |
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
+简单来说就是把「读代码时的脑子」留在 VS Code 里，且**默认完全本地、私有**。
 
-## 本地注释和书签列表
+---
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
+## 30 秒上手
 
-## Mermaid流程图支持！
+1. 光标放在某行代码上，按 **`Ctrl+Shift+M`** → 写一条 Markdown 本地注释（**最常用快捷键**）。
+2. 侧栏打开 **「本地注释」** 面板，查看列表与跳转。
+3. 需要打点跳转时，按 **`Ctrl+Alt+K`** 切换书签，**`Ctrl+Alt+J`** / **`Ctrl+Alt+Shift+J`** 在书签间移动。
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+完整快捷键见文末表格。
 
-## latex公式 
+---
 
-在本地注释中可以添加latex公式啦！
+## 功能演示
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+### 标签跳转
 
-## 多人合作
+![标签跳转](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif)
 
-在编辑器上显示其他人(此处为admin用户)的注释信息，你可以像看微信读书那样，看到别人对该段代码的评价:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+### Markdown 本地注释
 
-用户的本地注释信息和线上其他人的分享的信息区分：
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+![Markdown 本地注释](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
 
-在web页面，管理自己分享的comment:
+### 本地注释与书签列表
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+![侧栏列表面板](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
 
-**注意** :多人协作版暂不对外免费提供。
+### Mermaid 流程图
 
-## 为什么需要本地注释？
+![Mermaid 渲染](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
 
-在日常开发中，我们经常遇到这样的场景：
+### LaTeX 公式
 
-- **项目调研**：需要标记关键代码片段，记录分析思路
-- **开发思考**：想要记录设计想法和个人理解，但这些想法不适合提交到版本控制
-- **问题修复**: 对于一些问题的修复，想要记录下来相关的解决流程
-- **代码关联**：需要标记跨文件的代码关系，建立个人的逻辑连接
-- **学习他人代码**：想要添加学习理解笔记，但不想修改原文件
-- **AI辅助**: 让AI写完或者分析完的代码，知识点比较零碎，希望有个保存记录的地方。
+在本地注释中可插入 LaTeX 公式并在预览中渲染。
 
-### 传统方案的问题
+![LaTeX 支持](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
 
-- **代码注释**：会污染源代码，影响代码整洁性
+### 多人协作（可选）
 
-- **外部文档**：这是我们最常用的解决方案，但是问题也是最多的，好用的不支持markdown，支持markdown的不支持多点登录，支持多点登录的没有mermaid图渲染，全都有的要付钱。
+在编辑器中可区分**自己的本地注释**与**线上他人分享的解读**（类似在书里看别人划线）。
 
-### local comment 的解决方案
+![他人注释展示](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
 
-**完全独立**：注释数据与源代码完全分离，不影响原文件
+![本地与线上区分](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
 
-**项目隔离**：每个项目独立存储，互不干扰
+在网页端管理已分享的注释：
 
-**持久保存**：跨会话保持，重启VSCode后依然存在
+![管理已分享注释](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
 
-**智能跟踪**：代码变化时自动调整注释位置
+**注意**：多人协作版**暂不对外免费提供**。
 
-**富文本支持**：支持Markdown语法，内容更丰富
+---
 
-**Mermaid流程图支持**：支持Mermaid流程图，能更好的帮助理解代码
+## 为什么需要本地注释
 
-**个人专属**：完全本地化，注释内容完全私有
+常见场景：**项目调研**、**设计思路不想进仓库**、**修 Bug 的过程记录**、**跨文件逻辑串联**、**啃别人代码时的学习笔记**、**AI 生成代码后的零碎知识点归档**。
 
-**多人协作**：前人栽树，后人乘凉。用户完成的对代码的分析，对功能的理解可以分享到团队，大家都能享受到学习成果。
+### 和传统做法比
 
-## 核心功能
+- **写进源码注释**：会污染仓库与 Code Review，不适合长篇或私人笔记。
+- **外部文档 / 笔记应用**：与当前文件、当前行脱节，Markdown / Mermaid / 多点同步往往要折腾或付费。
 
-### 1.本地注释系统
+### Local Comment 的做法
 
-#### 基础注释功能
+- **与源码分离**：数据独立存储，原文件保持干净。  
+- **按项目隔离**：各项目互不干扰。  
+- **会话持久**：重启 VS Code 仍在。  
+- **尽量跟随代码变更**：减少「注释还在、代码已经面目全非」的错位感。  
+- **默认私有**：数据在本地；可选的团队分享见上文「多人协作」。
 
-- **快速添加**：`Ctrl+Shift+C` 在当前行添加注释(功能有点重复了，后面的版本会考虑移除)
-- **Markdown支持**：`Ctrl+Shift+M` 创建Markdown本地注释
-- **即时编辑**：`Ctrl+Shift+E` 快速编辑当前行注释
-- **便捷删除**：`Ctrl+Shift+D` 删除当前行注释
+---
 
-### 2.书签系统
+## 核心功能说明
 
-#### 快速标记
+### 1. 本地注释
 
-- **一键切换**：`Ctrl+Alt+K` 快速添加或删除书签
-- **可视化显示**：编辑器侧边栏显示书签图标
-- **滚动条标记**：滚动条上显示书签位置标记
-- **悬停信息**：鼠标悬停显示书签详细信息
+- **快速添加**：`Ctrl+Shift+C` 在当前行添加简单注释（与 Markdown 入口部分重叠，后续版本可能调整）。
+- **Markdown**：`Ctrl+Shift+M` 打开多行编辑器（**推荐主入口**）。
+- **编辑**：`Ctrl+Shift+E` 编辑当前行关联的注释。
+- **删除**：`Ctrl+Shift+D` 删除当前行注释。
+- **选区转注释**：`Ctrl+Shift+T` 将选中内容转为注释。
 
-#### 高效导航
+### 2. 书签
 
-- **顺序导航**：`Ctrl+Alt+J` 跳转到下一个书签
-- **逆序导航**：`Ctrl+Alt+Shift+J` 跳转到上一个书签
-- **跨文件支持**：在整个项目范围内导航书签
-- **循环跳转**：到达最后一个书签后自动回到第一个
+- **切换**：`Ctrl+Alt+K` 在当前行添加或移除书签。  
+- **可视化**：行号旁图标、滚动条标记、悬停详情。  
+- **导航**：`Ctrl+Alt+J` 下一个、`Ctrl+Alt+Shift+J` 上一个，支持跨文件、首尾循环。
 
-## 最佳实践(重要)
+---
 
-本地注释最好应用在函数声明的同一行。如：
+## 最佳实践（非常重要）
+
+本地注释尽量写在**有语义的代码行**上（例如函数声明同一行），**避免**空行或仅符号的行：
 
 ```javascript
-function test { // local comment 最好在此行注释
-  test code
+function test() { // 本地注释：写在这一行更稳
+  // ...
 }
 ```
 
-这样做可以减少因为在切换分支，或者大范围修改代码后，本地注释匹配不到代码位置的问题，**请不要在空行或者无意义的代码行添加本地注释**。
+这样在**切换分支**或**大块重构**后，仍更容易匹配到正确位置。
 
-## 快捷键大全
+---
 
-### 本地注释快捷键
+## 快捷键一览
+
+### 本地注释
 
 | 快捷键 | 功能 | 说明 |
 |--------|------|------|
-| `Ctrl+Shift+C` | 添加本地注释 | 在当前行添加简单注释 |
-| `Ctrl+Shift+M` | 添加Markdown注释 | 打开多行编辑器添加富文本注释，核心快捷键，只记住这一个就可以了 |
-| `Ctrl+Shift+E` | 编辑注释 | 快速编辑当前行注释 |
+| `Ctrl+Shift+C` | 添加本地注释 | 当前行简单注释 |
+| `Ctrl+Shift+M` | 添加 Markdown 注释 | **核心**：多行富文本 |
+| `Ctrl+Shift+E` | 编辑注释 | 快速改当前行注释 |
 | `Ctrl+Shift+D` | 删除注释 | 删除当前行注释 |
-| `Ctrl+Shift+T` | 选择转换 | 将选中文本转换为注释 |
+| `Ctrl+Shift+T` | 选区转注释 | 选中内容转注释 |
 
-### 书签快捷键
+### 书签
 
-| 快捷键 | 功能 | 说明 |
-|--------|------|------|
-| `Ctrl+Alt+K` | 切换书签 | 添加或删除当前行书签 |
-| `Ctrl+Alt+J` | 下一个书签 | 跳转到下一个书签位置 |
-| `Ctrl+Alt+Shift+J` | 上一个书签 | 跳转到上一个书签位置 |
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl+Alt+K` | 切换书签 |
+| `Ctrl+Alt+J` | 下一个书签 |
+| `Ctrl+Alt+Shift+J` | 上一个书签 |
 
+---
 
-## 快速开始
+## 标签用法
 
-1. **添加第一个注释**：在代码行上按 `Ctrl+Shift+M`
-2. **添加第一个书签**：在代码行上按 `Ctrl+Alt+K`
-3. **查看侧边栏**：在资源管理器中找到"本地注释"面板
-4. **尝试标签功能**：在注释中使用 `${tagName}` 和 `@tagName`
-
-### 使用标签
-
-标签系统支持中文标签名，您可以使用中文、英文或中英文混合的标签名。
-
-**标签声明格式**：`${标签名}` - 在注释中声明一个标签
-**标签引用格式**：`@标签名` - 在注释中引用已声明的标签
+标签支持中文。声明：`${标签名}`；引用：`@标签名`。
 
 ```javascript
-let userConfig = {};  // 本地注释: 这里是${userConfig}的声明地方
+let userConfig = {};  // 本地注释：${userConfig} 在此声明
 
-function loadConfig() {// 本地注释: 这里加载@userConfig的配置
+function loadConfig() { // 本地注释：此处加载 @userConfig
     userConfig = JSON.parse(localStorage.getItem('config'));
 }
 
 // 中文标签示例
-function handleError() { // 本地注释: ${错误处理} 这里是错误处理逻辑
-    // ...
+function handleError() { // 本地注释：${错误处理} 核心逻辑
 }
 
-function validate() { // 本地注释: 这里调用@错误处理进行验证
-    // ...
+function validate() { // 本地注释：校验失败走 @错误处理
 }
 ```
 
-**标签命名规则**：
-- 支持中文、英文字母、数字和下划线
-- 必须以中文、英文字母或下划线开头
-- 可以使用中英文混合，如 `${bug修复}`、`${待办事项}`
+**命名**：中英文、数字、下划线；须以中文、英文字母或下划线开头；可混用，如 `${bug修复}`。
 
-### 常见问题
+---
 
-**Q: 注释数据会被提交到版本控制吗？**
-A: 不会。注释数据存储在本地，不会影响源代码文件。
+## 常见问题
 
-**Q: 切换分支后注释会丢失吗？**
-A: 不会。注释数据独立于Git分支，切换分支不会影响注释。
+**Q: 注释会进 Git 吗？**  
+A: 默认数据在本地存储配置里，**不写入源文件**。若使用项目下 `.vscode/local-comment/`，是否提交由你是否把该目录纳入版本库决定。
 
-**Q: 如何备份注释数据？**
-A: 可以通过命令面板的"导出注释数据"功能导出备份。
+**Q: 切分支会丢注释吗？**  
+A: 注释数据与 Git 分支独立，**不会因切分支而清空**（仍建议把注释锚在稳定代码行上）。
 
-**Q: 其他人可以看到我的注释吗？**
-A: 不能。注释数据只存储在本地，完全私有，不会被其他人看到。
+**Q: 如何备份？**  
+A: 命令面板中可使用「导出注释数据」；使用 `.vscode/local-comment/` 时也可直接备份该目录。
 
+**Q: 别人能看到我的注释吗？**  
+A: **默认不能**；数据本地私有。仅在你使用并开通「多人协作」相关能力时才会按产品设计分享。
+
+---
 
 ## 数据存储
 
 ### 存储位置
 
-- **当前项目下的存储**:
-  - 在 v1.4.0版本以后会在当前项目下面使用 `.vscode/local-comment/` 路径储存
-  - 对于存在旧数据的项目，可以考虑从基础目录自动迁移数据到当前项目目录的`.vscode/local-comment/`中。迁移的方式有两种：
-    - 1.在项目的弹窗中直接点击迁移按钮.
-    - 2.手动在命令面板中（按F1弹出，输入local comment），找到迁移的指令，执行指令
+- **项目内（推荐，v1.4.0+）**：`.vscode/local-comment/`  
+  旧数据迁移：项目弹窗点迁移，或 `F1` 命令面板搜索 `local comment` 执行迁移命令。
 
-- **基础目录**:
-  - **Windows**: `%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`
-  - **macOS**: `~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/`
-  - **Linux**: `~/.config/Code/User/globalStorage/vscode-local-comment/projects/`
+- **全局基础目录（旧版 / 兼容）**  
+  - **Windows**：`%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`  
+  - **macOS**：`~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/`  
+  - **Linux**：`~/.config/Code/User/globalStorage/vscode-local-comment/projects/`
 
-### 项目特定存储
+### 项目文件命名
 
-每个项目都有自己的存储文件，命名为：`[项目名]-[哈希值].json`
+每个项目可有独立文件，形如：`[项目名]-[哈希].json`。
 
-**使用项目本地的存储路径将不再需要繁琐的导入导出 local comment的存储文件，可以直接复制.vscode/local-comment路径下的数据文件到新项目使用。**
+使用 **`.vscode/local-comment/`** 后，一般**不必再频繁导入导出**，复制该目录到新机器或新项目即可携带数据。
 
-例如：
-```
+### 多分组注释与书签（v1.4.0+）
 
-my-project-a1b2c3d4e5f6.json
-another-project-g7h8i9j0k1l2.json
-```
-
-### 多分组注释与书签
-
-自 v1.4.0 起，支持在同一项目下使用多组互不干扰的本地注释与书签数据。
-
-- **注释数据文件**：位于 `.vscode/local-comment/comments/` 目录下，默认使用 `comments.json`。您可以在该目录下放置多个 json 文件（如 `work.json`、`study.json`），通过不同的文件区分「工作笔记」「学习笔记」等分组。
-- **书签数据文件**：位于 `.vscode/local-comment/bookmarks/` 目录下，默认使用 `bookmarks.json`，同样支持多个书签配置文件并存。
-- **切换分组**：打开 VSCode 设置，搜索「local comment」，在 **Local Comment: Storage** 中修改「当前使用的注释配置文件名」或「当前使用的书签配置文件名」，即可在不同分组之间切换，无需导入导出。
-- **命令面板快速切换注释配置**：按 `F1` 调出命令面板，执行 `switch comments config`，即可切换 local comments 分组或创建新的 local comment 配置文件。
+- **注释**：`.vscode/local-comment/comments/`，默认 `comments.json`；可放多个 JSON（如 `work.json`、`study.json`）。
+- **书签**：`.vscode/local-comment/bookmarks/`，默认 `bookmarks.json`，同样可多文件。
+- **切换**：设置里搜索「local comment」，在 **Local Comment: Storage** 中修改当前使用的注释/书签配置文件名；或 `F1` 执行 `switch comments config`。
 
 ![多分组注释设置](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 
 ![切换注释配置命令](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
 
-### 数据特性
+### 数据特性小结
 
-- 注释数据按项目分别存储在本地
-- 不会被提交到版本控制系统
-- 支持手动备份和恢复
-- 跨VSCode会话持久化
-- 各项目维护独立的注释数据库
+- 按项目分别存放  
+- 不自动污染业务源码  
+- 可备份、可恢复  
+- 跨会话持久化  
+
+---
 
 ## 贡献与反馈
 
-### 问题反馈
-
-如果您在使用过程中遇到问题，请通过以下方式反馈：
-
-- GitHub Issues: [项目地址](https://github.com/SangLiang/vscode-local-commet/issues)
-
-- 邮件联系: sangliang_sa@qq.com
+- **GitHub Issues**：[https://github.com/SangLiang/vscode-local-comment/issues](https://github.com/SangLiang/vscode-local-comment/issues)  
+- **邮件**：sangliang_sa@qq.com  
 
 ## 更新日志
 
-- 变更日志已迁移至 `CHANGELOG.zh-CN.md`，请查看：[`CHANGELOG.zh-CN.md`](./CHANGELOG.zh-CN.md)
+变更说明见 [`CHANGELOG.zh-CN.md`](./CHANGELOG.zh-CN.md)。
+
+## 打赏作者
+
+我知道这有点傻，但帮作者补充点AI Token 或者点杯咖啡，会让我更有动力维护软件哦
+
+![打赏作者](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/donate.jpg)
 
 ## License
 

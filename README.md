@@ -1,248 +1,241 @@
-# VSCode Local Comment Extension
+# Local Comment
 
-A VSCode extension designed for large project development, providing local comment and bookmark functionality that allows you to add Markdown technical notes without modifying source code.
+**Without changing your source files**, attach durable notes and bookmarks to code in VS Code: **Markdown**, **Mermaid**, **LaTeX**, and **tag declarations with jump-to navigation**—built for reading large codebases, research, and capturing your own understanding.
 
-> You might not need it now, but when you face overwhelming amounts of code, I hope you'll remember it.
+> Use it as everyday notes; when the codebase grows and branches keep moving, Local Comment keeps your thinking **inside the editor** instead of scattered across chat or external docs.
 
-## Tag Navigation
+---
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif)
+## What it does
 
-## Local Markdown Comments
+| Capability | Description |
+|------------|-------------|
+| **Local comments** | Stored in separate data; **not written into source files**; does not clutter Git commits with notes. |
+| **Markdown notes** | Multi-line rich editing for analysis, flows, and todos—not only single-line `//` comments. |
+| **Tag jumps** | Declare with `${tagName}`, reference with `@tagName`, jump between notes; **Chinese tag names** supported. |
+| **Smart anchoring** | Tries to follow lines as code moves; anchor on **meaningful code lines** (see best practices below). |
+| **Mermaid / LaTeX** | Diagrams and formulas render in preview for technical explanations. |
+| **Bookmarks** | Mark lines across files and navigate in order—pairs well with comments as a reading path. |
+| **Sidebar tree** | Browse comments and bookmarks for the project and jump back to code. |
+| **Projects / groups** | Multiple independent comment groups per project: switch between several configs under `.vscode/local-comment/` (e.g. notes for one branch vs another). |
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
+**In short:** keep “how you read the code” in VS Code, **local and private by default**.
 
-## Local Comments and Bookmarks List
+---
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
+## 30-second start
 
-## Mermaid Flowchart Support!
+1. Put the cursor on a line of code and press **`Ctrl+Shift+M`** to write a Markdown local comment (**the shortcut to remember**).
+2. Open the **Local Comments** view in the sidebar for the list and navigation.
+3. For quick landmarks, **`Ctrl+Alt+K`** toggles a bookmark; **`Ctrl+Alt+J`** / **`Ctrl+Alt+Shift+J`** moves between bookmarks.
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+Full shortcut tables are at the end of this file.
 
-## LaTeX formulas
+---
 
-Now, LaTeX formulas can be added in local comments!
+## Feature demos
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+### Tag navigation
 
-## Multi-user Collaboration
+![Tag navigation](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif)
 
-Display other users' (here admin user) comment information in the editor. You can see others' evaluations of code segments like reading WeChat Books:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+### Markdown local comments
 
-Distinguish between users' local comment information and online shared information from others:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+![Markdown local comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
 
-Manage your shared comments in the web interface:
+### Comments and bookmarks list
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+![Sidebar list](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
 
-**Note**: The multi-user collaboration version is not currently available for free public use.
+### Mermaid diagrams
 
-## Why Do We Need Local Comments?
+![Mermaid rendering](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
 
-In daily development, we often encounter scenarios like:
+### LaTeX formulas
 
-- **Project Research**: Need to mark key code segments and record analysis thoughts
-- **Development Thinking**: Want to record design ideas and personal understanding, but these thoughts aren't suitable for version control
-- **Problem Fixing**: For some problem fixes, want to record the related solution process
-- **Code Association**: Need to mark cross-file code relationships and establish personal logical connections
-- **Learning Others' Code**: Want to add learning comprehension notes without modifying original files
-- **AI Assistance**: AI-written or analyzed code has scattered knowledge points, hope to have a place to save records
+You can embed LaTeX in local comments and render it in preview.
 
-### Problems with Traditional Solutions
+![LaTeX support](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
 
-- **Code Comments**: Will pollute source code and affect code cleanliness
-- **External Documentation**: This is our most commonly used solution, but it also has the most problems. Good ones don't support markdown, markdown-supporting ones don't support multi-point login, multi-point login ones don't have mermaid diagram rendering, and those with everything require payment.
+### Multi-user collaboration (optional)
 
-### Local Comment's Solution
+Distinguish **your local notes** from **shared online annotations** (similar to highlights in a shared book).
 
-**Completely Independent**: Comment data is completely separated from source code, not affecting original files
+![Others' comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
 
-**Project Isolation**: Each project stores independently without interference
+![Local vs online](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
 
-**Persistent Storage**: Maintains across sessions, still exists after restarting VSCode
+Manage comments you have shared from the web UI:
 
-**Smart Tracking**: Automatically adjusts comment positions when code changes
+![Manage shared comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
 
-**Rich Text Support**: Supports Markdown syntax for richer content
+**Note:** The multi-user collaboration offering is **not** currently available as a free public product.
 
-**Mermaid Flowchart Support**: Supports Mermaid flowcharts, better helping to understand code
+---
 
-**Personal Exclusive**: Completely localized, comment content completely private
+## Why local comments?
 
-**Multi-user Collaboration**: Previous generations plant trees, future generations enjoy the shade. Users' completed code analysis and functional understanding can be shared with the team, everyone can enjoy the learning results.
+Typical cases: **researching a codebase**, **design notes that should not land in the repo**, **recording how a bug was fixed**, **linking logic across files**, **study notes while reading others’ code**, **capturing scattered takeaways after AI-assisted edits**.
 
-## Core Features
+### Compared with common alternatives
 
-### 1. Local Comment System
+- **Comments in source**: Pollutes the repo and code review; poor fit for long or private write-ups.
+- **External docs / note apps**: Detached from the exact file and line; Markdown, Mermaid, and sync often mean extra tooling or cost.
 
-#### Basic Comment Functions
+### How Local Comment approaches it
 
-- **Quick Add**: `Ctrl+Shift+C` Add comment at current line (functionality is somewhat redundant, will consider removing in future versions)
-- **Markdown Support**: `Ctrl+Shift+M` Create Markdown local comment
-- **Instant Edit**: `Ctrl+Shift+E` Quickly edit current line comment
-- **Convenient Delete**: `Ctrl+Shift+D` Delete current line comment
+- **Separated from source**: Data lives in its own storage; files stay clean.  
+- **Per-project isolation**: Projects do not mix.  
+- **Persistent across sessions**: Survives restarting VS Code.  
+- **Tracks edits when possible**: Reduces “comment still there, code unrecognizable” drift.  
+- **Private by default**: Local data; optional team sharing is described under **Multi-user collaboration** above.
 
-### 2. Bookmark System
+---
 
-#### Quick Marking
+## Core features
 
-- **One-click Toggle**: `Ctrl+Alt+K` Quickly add or remove bookmark
-- **Visual Display**: Shows bookmark icons in editor sidebar
-- **Scrollbar Marking**: Shows bookmark position markers on scrollbar
-- **Hover Information**: Mouse hover displays bookmark detailed information
+### 1. Local comments
 
-#### Efficient Navigation
+- **Quick add**: `Ctrl+Shift+C` adds a simple comment on the current line (overlaps somewhat with the Markdown entry; may change in a future release).
+- **Markdown**: `Ctrl+Shift+M` opens the multi-line editor (**recommended main entry**).
+- **Edit**: `Ctrl+Shift+E` edits the comment bound to the current line.
+- **Delete**: `Ctrl+Shift+D` removes the comment on the current line.
+- **Selection to comment**: `Ctrl+Shift+T` turns the selection into a comment.
 
-- **Sequential Navigation**: `Ctrl+Alt+J` Jump to next bookmark
-- **Reverse Navigation**: `Ctrl+Alt+Shift+J` Jump to previous bookmark
-- **Cross-file Support**: Navigate bookmarks across entire project
-- **Circular Jump**: Automatically returns to first after reaching last bookmark
+### 2. Bookmarks
 
-## Best Practices (Important)
+- **Toggle**: `Ctrl+Alt+K` adds or removes a bookmark on the current line.  
+- **Visuals**: Gutter icons, scrollbar markers, hover details.  
+- **Navigate**: `Ctrl+Alt+J` next, `Ctrl+Alt+Shift+J` previous, cross-file, wraps end-to-start.
 
-Local comments are best applied on the same line as function declarations. For example:
+---
+
+## Best practices (very important)
+
+Prefer attaching comments to **meaningful code lines** (e.g. the same line as a function declaration). **Avoid** empty lines or lines that are only punctuation:
 
 ```javascript
-function test { // local comment is best placed on this line
-  test code
+function test() { // local comment: this line is a stable anchor
+  // ...
 }
 ```
 
-This reduces the problem of local comments not matching code positions after switching branches or making large-scale code modifications. **Please do not add local comments on empty lines or meaningless code lines**.
+That makes it easier to stay aligned after **branch switches** or **large refactors**.
 
-## Complete Shortcut Keys
+---
 
-### Local Comment Shortcuts
+## Shortcuts
 
-| Shortcut | Function | Description |
-|-----------|----------|-------------|
-| `Ctrl+Shift+C` | Add Local Comment | Add simple comment at current line |
-| `Ctrl+Shift+M` | Add Markdown Comment | Open multi-line editor for rich text comments, core shortcut, just remember this one |
-| `Ctrl+Shift+E` | Edit Comment | Quickly edit current line comment |
-| `Ctrl+Shift+D` | Delete Comment | Delete current line comment |
-| `Ctrl+Shift+T` | Select Convert | Convert selected text to comment |
+### Local comments
 
-### Bookmark Shortcuts
+| Shortcut | Action | Notes |
+|----------|--------|--------|
+| `Ctrl+Shift+C` | Add local comment | Simple one-line comment |
+| `Ctrl+Shift+M` | Add Markdown comment | **Core**: multi-line rich text |
+| `Ctrl+Shift+E` | Edit comment | Quick edit for current line |
+| `Ctrl+Shift+D` | Delete comment | Remove comment on current line |
+| `Ctrl+Shift+T` | Selection to comment | Convert selection |
 
-| Shortcut | Function | Description |
-|-----------|----------|-------------|
-| `Ctrl+Alt+K` | Toggle Bookmark | Add or remove bookmark at current line |
-| `Ctrl+Alt+J` | Next Bookmark | Jump to next bookmark position |
-| `Ctrl+Alt+Shift+J` | Previous Bookmark | Jump to previous bookmark position |
+### Bookmarks
 
-## Quick Start
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Alt+K` | Toggle bookmark |
+| `Ctrl+Alt+J` | Next bookmark |
+| `Ctrl+Alt+Shift+J` | Previous bookmark |
 
-1. **Add First Comment**: Press `Ctrl+Shift+M` on a code line
-2. **Add First Bookmark**: Press `Ctrl+Alt+K` on a code line
-3. **View Sidebar**: Find "Local Comments" panel in resource explorer
-4. **Try Tag Function**: Use `${tagName}` and `@tagName` in comments
+---
 
-### Using Tags
+## Tags
 
-The tag system supports Chinese tag names. You can use Chinese, English, or mixed Chinese-English tag names.
-
-**Tag Declaration Format**: `${tagName}` - Declare a tag in a comment
-**Tag Reference Format**: `@tagName` - Reference a declared tag in a comment
+Tags support Chinese. Declare: `${tagName}`; reference: `@tagName`.
 
 ```javascript
-let userConfig = {};  // local comment: This is where ${userConfig} is declared
+let userConfig = {};  // local comment: ${userConfig} declared here
 
-function loadConfig() {// local comment: This loads @userConfig configuration
+function loadConfig() { // local comment: load @userConfig here
     userConfig = JSON.parse(localStorage.getItem('config'));
 }
 
 // Chinese tag example
-function handleError() { // local comment: ${错误处理} This is error handling logic
-    // ...
+function handleError() { // local comment: ${错误处理} core logic
 }
 
-function validate() { // local comment: Call @错误处理 for validation here
-    // ...
+function validate() { // local comment: on failure use @错误处理
 }
 ```
 
-**Tag Naming Rules**:
-- Supports Chinese characters, English letters, numbers, and underscores
-- Must start with a Chinese character, English letter, or underscore
-- Can use mixed Chinese-English, such as `${bug修复}`, `${待办事项}`
+**Naming:** letters (any script), digits, underscores; must start with a letter or underscore; mixing scripts is allowed, e.g. `${bug修复}`.
 
-### Common Questions
+---
 
-**Q: Will comment data be committed to version control?**
-A: No. Comment data is stored locally and won't affect source code files.
+## FAQ
 
-**Q: Will comments be lost after switching branches?**
-A: No. Comment data is independent of Git branches, switching branches won't affect comments.
+**Q: Do comments go into Git?**  
+A: By default data lives in local storage and is **not written into source files**. If you use `.vscode/local-comment/` under the project, whether it is committed depends on whether you track that folder in version control.
 
-**Q: How to backup comment data?**
-A: You can export backup through the "Export Comment Data" function in the command palette.
+**Q: Do I lose comments when I switch branches?**  
+A: Comment data is independent of Git branches; it is **not cleared** when you switch (still best to anchor on stable lines).
 
-**Q: Can others see my comments?**
-A: No. Comment data is only stored locally, completely private, and won't be seen by others.
+**Q: How do I back up?**  
+A: Use **Export comment data** from the Command Palette, or back up the `.vscode/local-comment/` directory when you use project-local storage.
 
-## Data Storage
+**Q: Can others see my comments?**  
+A: **Not by default**; data stays local. Sharing follows the product design only if you enable the **multi-user collaboration** features.
 
-### Storage Location
+---
 
-- **Current project storage**:
-  - Since v1.4.0, data is stored under `.vscode/local-comment/` in the current project
-  - For projects with existing legacy data, you can migrate to the project directory `.vscode/local-comment/` in two ways:
-    - 1. Click the migrate button in the project popup
-    - 2. Open the Command Palette (F1), search for "local comment", find and run the migrate command
+## Data storage
 
-- **Base directory**:
-  - **Windows**: `%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`
-  - **macOS**: `~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/`
-  - **Linux**: `~/.config/Code/User/globalStorage/vscode-local-comment/projects/`
+### Locations
 
-### Project-Specific Storage
+- **Inside the project (recommended, v1.4.0+):** `.vscode/local-comment/`  
+  Migrating legacy data: use the migrate action in the project prompt, or open the Command Palette (`F1`), search for `local comment`, and run the migrate command.
 
-Each project has its own storage file, named: `[Project Name]-[Hash Value].json`
+- **Global base directory (legacy / compatibility)**  
+  - **Windows:** `%APPDATA%/Code/User/globalStorage/vscode-local-comment/projects/`  
+  - **macOS:** `~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/`  
+  - **Linux:** `~/.config/Code/User/globalStorage/vscode-local-comment/projects/`
 
-**Using project-local storage (`.vscode/local-comment/`) avoids the need to manually import/export the local comment storage file; you can copy the data under `.vscode/local-comment/` to a new project directly.**
+### Per-project file naming
 
-For example:
-```
-my-project-a1b2c3d4e5f6.json
-another-project-g7h8i9j0k1l2.json
-```
+Each project can have its own file shaped like: `[project-name]-[hash].json`.
 
-### Multi-group comments and bookmarks
+With **`.vscode/local-comment/`**, you usually **do not need frequent import/export**—copy that folder to another machine or project to move data.
 
-Since v1.4.0, you can use multiple independent groups of local comments and bookmarks in the same project.
+### Multiple comment and bookmark groups (v1.4.0+)
 
-- **Comment data files**: Stored under `.vscode/local-comment/comments/`. The default file is `comments.json`. You can add multiple json files (e.g. `work.json`, `study.json`) in this directory to separate groups such as "work notes" and "study notes".
-- **Bookmark data files**: Stored under `.vscode/local-comment/bookmarks/`. The default file is `bookmarks.json`; multiple bookmark config files are supported in the same way.
-- **Switching groups**: Open VSCode Settings, search for "local comment", and under **Local Comment: Storage** change "Current comments config file name" or "Current bookmarks config file name" to switch between groups—no import/export needed.
-- **Quick switching via Command Palette**: Press `F1` to open the Command Palette, then run `switch comments config` to switch local comments groups or create a new local comment config file.
-
-![Switch comments config command](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
+- **Comments:** `.vscode/local-comment/comments/`, default `comments.json`; add more JSON files (e.g. `work.json`, `study.json`).
+- **Bookmarks:** `.vscode/local-comment/bookmarks/`, default `bookmarks.json`; same pattern for multiple files.
+- **Switching:** VS Code Settings → search **local comment** → under **Local Comment: Storage**, change the active comments or bookmarks config file name; or run `switch comments config` from `F1`.
 
 ![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 
-### Data Characteristics
+![Switch comments config command](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
 
-- Comment data is stored locally by project
-- Won't be committed to version control system
-- Supports manual backup and restore
-- Persists across VSCode sessions
-- Each project maintains independent comment database
+### Data characteristics
 
-## Contribution and Feedback
+- Stored per project  
+- Does not automatically pollute application source  
+- Backup and restore supported  
+- Persists across VS Code sessions  
 
-### Issue Feedback
+---
 
-If you encounter problems during use, please provide feedback through:
+## Contributing and feedback
 
-- GitHub Issues: [Project Address](https://github.com/SangLiang/vscode-local-commet/issues)
-- Email Contact: sangliang_sa@qq.com
+- **GitHub Issues:** [https://github.com/SangLiang/vscode-local-comment/issues](https://github.com/SangLiang/vscode-local-comment/issues)  
+- **Email:** sangliang_sa@qq.com  
 
 ## Changelog
 
-- The changelog has been moved to `CHANGELOG.md`. See: [`CHANGELOG.md`](./CHANGELOG.md)
+See [`CHANGELOG.md`](./CHANGELOG.md). Chinese notes: [`CHANGELOG.zh-CN.md`](./CHANGELOG.zh-CN.md).
+
+## Support the author
+
+This may sound silly, but chipping in for a bit of AI usage or buying the author a coffee goes a long way toward keeping the extension maintained.
+
+![Support the author](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/donate.jpg)
 
 ## License
 
