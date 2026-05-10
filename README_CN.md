@@ -4,6 +4,8 @@
 
 > 平时可以当普通笔记用；当代码量上来、分支切来切去时，本地注释会帮你把「思路」留在编辑器里，而不是散落在聊天或外部文档里。
 
+**文档网站：** [https://sangliang.github.io/vscode-local-comment/](https://sangliang.github.io/vscode-local-comment/)
+
 ---
 
 ## 这个插件主要能做什么

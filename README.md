@@ -4,6 +4,8 @@
 
 > Use it as everyday notes; when the codebase grows and branches keep moving, Local Comment keeps your thinking **inside the editor** instead of scattered across chat or external docs.
 
+**Documentation site:** [https://sangliang.github.io/vscode-local-comment/](https://sangliang.github.io/vscode-local-comment/)
+
 ---
 
 ## What it does

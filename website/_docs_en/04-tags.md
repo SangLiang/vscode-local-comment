@@ -57,7 +57,7 @@ function validate() {
 
 In addition to clicking <code>@tagName</code> references in comments to jump, you can also quickly locate any declared tag through the command palette:
 
-- **Command Palette:** Press <kbd>F1</kbd>, search for "Local Comment: Go to Tag"
+- **Command Palette:** Press <kbd>F1</kbd>, search for "Local Comment: Show All Files Tags"
 - It will list all declared tags in the current project; select one to jump to the corresponding location
 - Supports keyword filtering, making it easy to quickly locate target tags among a large number of tags
 

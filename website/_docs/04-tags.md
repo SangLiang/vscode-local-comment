@@ -56,7 +56,7 @@ function validate() {
 
 除了在注释中点击 `@tagName` 引用跳转外，还可以通过命令面板快速定位到任意已声明的标签：
 
-- **命令面板：** 按 <kbd>F1</kbd>，搜索 "Local Comment: Go to Tag"
+- **命令面板：** 按 <kbd>F1</kbd>，搜索 "Local Comment: Show All Files Tags" 
 - 会列出当前项目中所有已声明的标签，选择一个即可跳转到对应位置
 - 支持输入关键词过滤，方便在大量标签中快速定位
 
