@@ -4,16 +4,19 @@ layout: docs
 permalink: /docs/
 ---
 
-# 文档
+{% assign lang = page.lang | default: 'zh' %}
+{% assign t = site.data.i18n.docs_index[lang] %}
 
-欢迎阅读 Local Comment 文档。
+# {{ t.title }}
 
-## 目录
+{{ t.welcome }}
 
-- [快速开始](/docs/quick-start/) - 3 分钟快速上手
-- [本地注释](/docs/comments/) - 添加和管理代码注释
-- [书签功能](/docs/bookmarks/) - 标记和跳转代码位置
-- [标签系统](/docs/tags/) - 使用标签组织注释
-- [Markdown 支持](/docs/markdown/) - Mermaid 图表、LaTeX 公式
-- [数据管理](/docs/data-management/) - 数据存储与同步
-- [快捷键参考](/docs/reference/) - 完整快捷键列表
+## {{ t.toc_title }}
+
+- [{{ t.quick_start }}]({{ "/docs/quick-start/" | relative_url }}) - {{ t.quick_start_desc }}
+- [{{ t.comments }}]({{ "/docs/comments/" | relative_url }}) - {{ t.comments_desc }}
+- [{{ t.bookmarks }}]({{ "/docs/bookmarks/" | relative_url }}) - {{ t.bookmarks_desc }}
+- [{{ t.tags }}]({{ "/docs/tags/" | relative_url }}) - {{ t.tags_desc }}
+- [{{ t.markdown }}]({{ "/docs/markdown/" | relative_url }}) - {{ t.markdown_desc }}
+- [{{ t.data_management }}]({{ "/docs/data/" | relative_url }}) - {{ t.data_management_desc }}
+- [{{ t.reference }}]({{ "/docs/reference/" | relative_url }}) - {{ t.reference_desc }}

@@ -1,6 +1,8 @@
 ---
 layout: default
 ---
+{% assign lang = page.lang | default: 'zh' %}
+{% assign t = site.data.i18n.home[lang] %}
 
 <div class="home">
   <section class="hero">
@@ -8,33 +10,33 @@ layout: default
     <div class="hero-glow hero-glow-1"></div>
     <div class="hero-glow hero-glow-2"></div>
     <div class="wrapper hero-content">
-      <span class="hero-badge">VS Code Extension · 本地代码注释工具</span>
-      <h1 class="hero-title">让代码注释<br><span class="hero-gradient-text">留在编辑器里</span></h1>
-      <p class="hero-subtitle">不修改源代码，用 Markdown 为任意代码行附加持久注释、标签和书签。<br>Mermaid 图表、LaTeX 公式、代码高亮一站支持。</p>
+      <span class="hero-badge">{{ t.badge }}</span>
+      <h1 class="hero-title">{{ t.title }}</h1>
+      <p class="hero-subtitle">{{ t.subtitle }}</p>
       <div class="hero-actions">
-        <a class="btn btn-coffee-primary" href="https://open-vsx.org/extension/sangliang/vscode-local-comment" target="_blank" rel="noopener">安装扩展 →</a>
-        <a class="btn btn-coffee-secondary" href="{{ "/docs/comments" | relative_url }}">查看文档</a>
+        <a class="btn btn-coffee-primary" href="https://open-vsx.org/extension/sangliang/vscode-local-comment" target="_blank" rel="noopener">{{ t.install }}</a>
+        <a class="btn btn-coffee-secondary" href="{{ "/docs/comments" | relative_url }}">{{ t.view_docs }}</a>
       </div>
     </div>
   </section>
 
   <section class="demos">
     <div class="wrapper">
-      <h2 class="section-title section-title--dark">核心功能演示</h2>
+      <h2 class="section-title section-title--dark">{{ t.demos_title }}</h2>
       <div class="demo-cards">
         <div class="demo-card">
           <div class="demo-card-header">
             <span class="demo-dot demo-dot--red"></span>
             <span class="demo-dot demo-dot--yellow"></span>
             <span class="demo-dot demo-dot--green"></span>
-            <span class="demo-card-title">标签跳转</span>
+            <span class="demo-card-title">{{ t.demo_tag }}</span>
           </div>
           <div class="demo-card-media">
-            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif" alt="标签跳转演示" loading="lazy">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif" alt="{{ t.demo_tag }}" loading="lazy">
           </div>
           <div class="demo-card-desc">
-            <h3>标签跳转</h3>
-            <p>使用 <code>${tagName}</code> 声明标签，<code>@tagName</code> 引用跳转，支持中文标签名。</p>
+            <h3>{{ t.demo_tag }}</h3>
+            <p>{{ t.demo_tag_desc }}</p>
           </div>
         </div>
         <div class="demo-card">
@@ -42,14 +44,14 @@ layout: default
             <span class="demo-dot demo-dot--red"></span>
             <span class="demo-dot demo-dot--yellow"></span>
             <span class="demo-dot demo-dot--green"></span>
-            <span class="demo-card-title">Markdown 注释</span>
+            <span class="demo-card-title">{{ t.demo_markdown }}</span>
           </div>
           <div class="demo-card-media">
-            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif" alt="Markdown 注释演示" loading="lazy">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif" alt="{{ t.demo_markdown }}" loading="lazy">
           </div>
           <div class="demo-card-desc">
-            <h3>Markdown 注释</h3>
-            <p>多行富文本编辑，支持 Mermaid 图表、LaTeX 公式和代码高亮。</p>
+            <h3>{{ t.demo_markdown }}</h3>
+            <p>{{ t.demo_markdown_desc }}</p>
           </div>
         </div>
         <div class="demo-card">
@@ -57,14 +59,14 @@ layout: default
             <span class="demo-dot demo-dot--red"></span>
             <span class="demo-dot demo-dot--yellow"></span>
             <span class="demo-dot demo-dot--green"></span>
-            <span class="demo-card-title">书签导航</span>
+            <span class="demo-card-title">{{ t.demo_bookmark }}</span>
           </div>
           <div class="demo-card-media">
-            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png" alt="书签导航演示" loading="lazy">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png" alt="{{ t.demo_bookmark }}" loading="lazy">
           </div>
           <div class="demo-card-desc">
-            <h3>书签导航</h3>
-            <p>跨文件标记阅读路径，通过侧边栏统一管理注释和书签。</p>
+            <h3>{{ t.demo_bookmark }}</h3>
+            <p>{{ t.demo_bookmark_desc }}</p>
           </div>
         </div>
       </div>
@@ -73,22 +75,22 @@ layout: default
 
   <section class="quick-start">
     <div class="wrapper">
-      <h2 class="section-title section-title--dark">30 秒快速开始</h2>
+      <h2 class="section-title section-title--dark">{{ t.quick_start_title }}</h2>
       <div class="steps">
         <div class="step">
           <div class="step-circle">1</div>
-          <h3>安装扩展</h3>
-          <p>在 VS Code 市场搜索 "Local Comment"</p>
+          <h3>{{ t.step1_title }}</h3>
+          <p>{{ t.step1_desc }}</p>
         </div>
         <div class="step">
           <div class="step-circle">2</div>
-          <h3>添加注释</h3>
-          <p>按 <kbd>Ctrl+Shift+M</kbd> 打开 Markdown 注释编辑器</p>
+          <h3>{{ t.step2_title }}</h3>
+          <p>{{ t.step2_desc }}</p>
         </div>
         <div class="step">
           <div class="step-circle">3</div>
-          <h3>查看列表</h3>
-          <p>打开侧边栏「Local Comments」视图</p>
+          <h3>{{ t.step3_title }}</h3>
+          <p>{{ t.step3_desc }}</p>
         </div>
       </div>
     </div>
@@ -96,49 +98,49 @@ layout: default
 
   <section class="features">
     <div class="wrapper">
-      <h2 class="section-title section-title--dark">为什么选择 Local Comment？</h2>
+      <h2 class="section-title section-title--dark">{{ t.why_title }}</h2>
       <div class="features-grid">
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           </div>
-          <h3>本地注释</h3>
-          <p>不污染源码的持久笔记，独立于 Git 分支。</p>
+          <h3>{{ t.feature_local }}</h3>
+          <p>{{ t.feature_local_desc }}</p>
         </div>
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
           </div>
-          <h3>书签导航</h3>
-          <p>跨文件标记阅读路径，快速定位关键代码。</p>
+          <h3>{{ t.feature_bookmark }}</h3>
+          <p>{{ t.feature_bookmark_desc }}</p>
         </div>
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
           </div>
-          <h3>标签跳转</h3>
-          <p><code>${声明}</code> 与 <code>@引用</code> 双向链接，支持中文。</p>
+          <h3>{{ t.feature_tag }}</h3>
+          <p>{{ t.feature_tag_desc }}</p>
         </div>
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="10.5" r="2.5"></circle><circle cx="8.5" cy="7.5" r="2.5"></circle><circle cx="6.5" cy="12.5" r="2.5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.013 17.041 2 12 2z"></path></svg>
           </div>
-          <h3>Markdown 渲染</h3>
-          <p>支持 Mermaid 图表、LaTeX 公式和语法高亮。</p>
+          <h3>{{ t.feature_markdown }}</h3>
+          <p>{{ t.feature_markdown_desc }}</p>
         </div>
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
           </div>
-          <h3>数据隔离</h3>
-          <p>项目级存储，支持多组注释配置自由切换。</p>
+          <h3>{{ t.feature_data }}</h3>
+          <p>{{ t.feature_data_desc }}</p>
         </div>
         <div class="feature-card" data-animate="fade-up">
           <div class="feature-icon-bg">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><path d="M6 8h.001"></path><path d="M10 8h.001"></path><path d="M14 8h.001"></path><path d="M18 8h.001"></path><path d="M8 12h.001"></path><path d="M12 12h.001"></path><path d="M16 12h.001"></path><path d="M7 16h10"></path></svg>
           </div>
-          <h3>快捷键驱动</h3>
-          <p>全键盘操作，不离开编辑器即可管理注释。</p>
+          <h3>{{ t.feature_shortcut }}</h3>
+          <p>{{ t.feature_shortcut_desc }}</p>
         </div>
       </div>
     </div>

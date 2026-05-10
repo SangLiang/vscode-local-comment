@@ -17,14 +17,28 @@ collections:
   docs:
     output: true
     permalink: /docs/:name/
+  docs_en:
+    output: true
+    permalink: /en/docs/:name/
 
 # 默认值
 defaults:
   - scope:
       path: ""
+    values:
+      lang: "zh"
+  - scope:
+      path: ""
       type: "docs"
     values:
       layout: "docs"
+      lang: "zh"
+  - scope:
+      path: ""
+      type: "docs_en"
+    values:
+      layout: "docs"
+      lang: "en"
 
 # Sass 配置
 sass:

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{% if page.lang == 'en' %}en{% else %}zh-CN{% endif %}">
   {%- include head.html -%}
-  <body>
+  <body data-baseurl="{{ site.baseurl }}">
     {%- include nav.html -%}
     <main class="page-content" aria-label="Content">
       {{ content }}
     </main>
     {%- include footer.html -%}
     {%- include scripts.html -%}
+    <script src="{{ "/assets/js/lang.js" | relative_url }}"></script>
   </body>
 </html>
