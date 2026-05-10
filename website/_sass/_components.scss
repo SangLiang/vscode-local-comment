@@ -1,0 +1,215 @@
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background-color: $brand-primary;
+  color: #fff;
+  &:hover {
+    background-color: darken($brand-primary, 8%);
+    text-decoration: none;
+  }
+}
+
+.btn-secondary {
+  background-color: $bg-white;
+  color: $text-primary;
+  border-color: $border-dark;
+  &:hover {
+    background-color: $bg-light;
+    text-decoration: none;
+  }
+}
+
+// Section titles
+.section-title {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-bottom: 40px;
+  color: $text-primary;
+}
+
+// Feature cards
+.feature-card {
+  background: $bg-white;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+  }
+  p {
+    font-size: 0.9rem;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// Steps
+.step {
+  text-align: center;
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: $brand-primary;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+  }
+  p {
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// Level tabs
+.level-tabs {
+  background: $bg-light;
+  border-bottom: 1px solid $border-color;
+  .wrapper {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    padding-bottom: 0;
+  }
+}
+
+.level-tab {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: $text-secondary;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &.active,
+  &:hover {
+    color: $brand-primary;
+  }
+  &.active {
+    border-bottom-color: $brand-primary;
+    background: $bg-white;
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+// Sidebar
+.sidebar-nav {
+  padding: 16px;
+}
+
+.sidebar-section {
+  margin-bottom: 8px;
+}
+
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $text-primary;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  &:hover {
+    background: $bg-light;
+  }
+  &::after {
+    content: "▾";
+    margin-left: auto;
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+  }
+  &[aria-expanded="false"]::after {
+    transform: rotate(-90deg);
+  }
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0 0 0 12px;
+  margin: 4px 0 0;
+  li {
+    margin: 2px 0;
+  }
+  a {
+    display: block;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    color: $text-secondary;
+    border-radius: 4px;
+    &:hover {
+      background: $bg-light;
+      color: $brand-primary;
+      text-decoration: none;
+    }
+    &.active {
+      background: #e6f2ff;
+      color: $brand-primary;
+      font-weight: 500;
+    }
+  }
+}
+
+// Callout boxes
+.callout {
+  padding: 16px;
+  border-radius: 6px;
+  margin: 16px 0;
+  border-left: 4px solid;
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.callout-tip {
+  background: #e6f7ff;
+  border-color: $brand-primary;
+}
+
+.callout-warning {
+  background: #fffbe6;
+  border-color: $brand-warning;
+}
+
+.callout-danger {
+  background: #fff1f0;
+  border-color: $brand-danger;
+}

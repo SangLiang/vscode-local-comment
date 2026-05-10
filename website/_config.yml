@@ -1,0 +1,38 @@
+title: Local Comment
+description: >-
+  在不修改源代码的情况下，为代码附加持久的 Markdown 注释与书签。
+  支持标签跳转、Mermaid 图表、LaTeX 公式，让阅读代码的思考留在编辑器内。
+
+url: "https://sangliang.github.io"
+baseurl: "/vscode-local-commet"
+
+# 构建配置
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# 默认值
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "docs"
+
+# Sass 配置
+sass:
+  style: compressed
+
+# 排除文件
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

@@ -152,4 +152,12 @@ public
 
 # Temporary folders
 tmp/
-temp/ 
+temp/
+
+# Website / Jekyll build output
+website/_site/
+
+# Brainstorm visual companion sessions
+.superpowers/ 
+
+.vscode/

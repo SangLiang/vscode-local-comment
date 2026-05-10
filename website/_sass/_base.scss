@@ -1,0 +1,79 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: $font-family-base;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: $text-primary;
+  background-color: $bg-white;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+a {
+  color: $brand-primary;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+code {
+  font-family: $font-family-mono;
+  font-size: 0.875em;
+  background-color: $bg-light;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+pre {
+  background-color: $bg-light;
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  code {
+    background: none;
+    padding: 0;
+  }
+}
+
+kbd {
+  font-family: $font-family-mono;
+  font-size: 0.8em;
+  background-color: #fafbfc;
+  border: 1px solid #c6cbd1;
+  border-bottom-color: #959da5;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #959da5;
+  padding: 0.1em 0.4em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.wrapper {
+  max-width: $content-max-width;
+  margin: 0 auto;
+  padding: 0 $spacing-unit * 3;
+}

@@ -1,0 +1,34 @@
+// Colors
+$brand-primary: #007ACC;
+$brand-success: #28A745;
+$brand-warning: #FFC107;
+$brand-danger: #DC3545;
+
+$text-primary: #24292E;
+$text-secondary: #586069;
+$text-muted: #6A737D;
+
+$bg-white: #FFFFFF;
+$bg-light: #F6F8FA;
+$bg-sidebar: #FAFBFC;
+
+$border-color: #E1E4E8;
+$border-dark: #D1D5DA;
+
+// Fonts
+$font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+// Spacing
+$spacing-unit: 8px;
+$content-max-width: 1200px;
+$sidebar-width: 260px;
+
+// Breakpoints
+$bp-desktop: 1024px;
+$bp-tablet: 768px;
+$bp-mobile: 480px;
+
+// Shadows
+$shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+$shadow-md: 0 4px 6px rgba(0,0,0,0.07);

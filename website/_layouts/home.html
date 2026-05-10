@@ -1,0 +1,130 @@
+---
+layout: default
+---
+
+<div class="home">
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="wrapper">
+      <div class="hero-content">
+        <h1 class="hero-title">Local Comment for VS Code:</h1>
+        <p class="hero-subtitle">
+          在不修改源代码的情况下，为代码附加持久的 Markdown 注释与书签。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://marketplace.visualstudio.com/items?itemName=SangLiang.local-comment" target="_blank" rel="noopener">
+            安装扩展
+          </a>
+          <a class="btn btn-secondary" href="{{ "/docs/" | relative_url }}">
+            查看文档
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Demos Section -->
+  <section class="demos">
+    <div class="wrapper">
+      <h2 class="section-title">核心功能演示</h2>
+      <div class="demos-grid">
+        <div class="demo-item">
+          <div class="demo-media">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif" alt="标签跳转演示" loading="lazy">
+          </div>
+          <div class="demo-text">
+            <h3>标签跳转</h3>
+            <p>使用 <code>${tagName}</code> 声明标签，<code>@tagName</code> 引用跳转，支持中文标签名。</p>
+            <a href="{{ "/docs/tags/" | relative_url }}">了解更多 →</a>
+          </div>
+        </div>
+        <div class="demo-item">
+          <div class="demo-media">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif" alt="Markdown 注释演示" loading="lazy">
+          </div>
+          <div class="demo-text">
+            <h3>Markdown 注释</h3>
+            <p>多行富文本编辑，支持 Mermaid 图表、LaTeX 公式和代码高亮。</p>
+            <a href="{{ "/docs/markdown/" | relative_url }}">了解更多 →</a>
+          </div>
+        </div>
+        <div class="demo-item">
+          <div class="demo-media">
+            <img src="https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png" alt="书签与侧边栏演示" loading="lazy">
+          </div>
+          <div class="demo-text">
+            <h3>书签导航</h3>
+            <p>跨文件标记阅读路径，通过侧边栏统一管理注释和书签。</p>
+            <a href="{{ "/docs/bookmarks/" | relative_url }}">了解更多 →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="wrapper">
+      <h2 class="section-title">为什么选择 Local Comment？</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <h3>本地注释</h3>
+          <p>不污染源码的持久笔记，独立于 Git 分支。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔖</div>
+          <h3>书签导航</h3>
+          <p>跨文件的阅读路径，快速定位关键代码。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏷️</div>
+          <h3>标签跳转</h3>
+          <p><code>${声明}</code> 与 <code>@引用</code> 双向链接，支持中文。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Markdown 渲染</h3>
+          <p>支持 Mermaid 图表、LaTeX 公式和语法高亮。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <h3>数据隔离</h3>
+          <p>项目级存储，支持多组注释配置自由切换。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⌨️</div>
+          <h3>快捷键驱动</h3>
+          <p>全键盘操作，不离开编辑器即可管理注释。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start Section -->
+  <section class="quick-start">
+    <div class="wrapper">
+      <h2 class="section-title">30 秒快速开始</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>安装扩展</h3>
+          <p>在 VS Code: 扩展市场搜索 "Local Comment" 并安装。</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>添加注释</h3>
+          <p>将光标放在代码行上，按 <kbd>Ctrl+Shift+M</kbd> 打开 Markdown 注释编辑器。</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>查看列表</h3>
+          <p>打开侧边栏「Local Comments」视图，查看和管理所有注释。</p>
+        </div>
+      </div>
+      <div class="quick-start-cta">
+        <a class="btn btn-primary" href="{{ "/docs/" | relative_url }}">阅读完整指南 →</a>
+      </div>
+    </div>
+  </section>
+</div>
