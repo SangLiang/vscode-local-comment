@@ -4,7 +4,7 @@ description: >-
   支持标签跳转、Mermaid 图表、LaTeX 公式，让阅读代码的思考留在编辑器内。
 
 url: "https://sangliang.github.io"
-baseurl: "/vscode-local-commet"
+baseurl: "/vscode-local-comment"
 
 # 构建配置
 theme: minima
