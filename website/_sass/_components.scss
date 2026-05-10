@@ -38,60 +38,15 @@
   font-size: 1.75rem;
   margin-bottom: 40px;
   color: $text-primary;
-}
-
-// Feature cards
-.feature-card {
-  background: $bg-white;
-  border: 1px solid $border-color;
-  border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-  &:hover {
-    box-shadow: $shadow-md;
-    transform: translateY(-2px);
+  &.section-title--dark {
+    color: $coffee-900;
   }
-  .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 12px;
-  }
-  h3 {
-    font-size: 1.1rem;
-    margin: 0 0 8px;
-  }
-  p {
-    font-size: 0.9rem;
-    color: $text-secondary;
-    margin: 0;
+  &.section-title--light {
+    color: $coffee-100;
   }
 }
 
-// Steps
-.step {
-  text-align: center;
-  .step-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: $brand-primary;
-    color: #fff;
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-  }
-  h3 {
-    font-size: 1.1rem;
-    margin: 0 0 8px;
-  }
-  p {
-    color: $text-secondary;
-    margin: 0;
-  }
-}
+
 
 // Level tabs
 .level-tabs {

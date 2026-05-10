@@ -79,34 +79,23 @@
   }
 }
 
-// Site Footer
+// Site Footer — coffee dark theme
 .site-footer {
-  border-top: 1px solid $border-color;
-  padding: 32px 0;
-  background: $bg-light;
-  .footer-heading {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-  }
-  .contact-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    li {
-      margin-bottom: 4px;
+  padding: 24px 0;
+  background: linear-gradient(160deg, $hero-dark-1 0%, $hero-dark-2 50%, $hero-dark-3 100%);
+  color: $coffee-300;
+  text-align: center;
+  a {
+    color: $coffee-200;
+    &:hover {
+      color: $coffee-100;
     }
   }
 }
 
-.footer-col-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.footer-col {
-  flex: 1;
-  min-width: 200px;
+.footer-copy {
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 // Page content

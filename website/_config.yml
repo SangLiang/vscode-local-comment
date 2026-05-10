@@ -16,7 +16,7 @@ plugins:
 collections:
   docs:
     output: true
-    permalink: /:collection/:name/
+    permalink: /docs/:name/
 
 # 默认值
 defaults:

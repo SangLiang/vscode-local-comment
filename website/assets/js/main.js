@@ -99,11 +99,41 @@
     });
   }
 
+  // ========== Scroll Animations ==========
+  function initScrollAnimations() {
+    var elements = document.querySelectorAll('[data-animate="fade-up"]');
+    if (!elements.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      elements.forEach(function(el) {
+        el.classList.add('animate-visible');
+      });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      rootMargin: '0px 0px -40px 0px',
+      threshold: 0
+    });
+
+    elements.forEach(function(el) {
+      observer.observe(el);
+    });
+  }
+
   // ========== Initialize ==========
   document.addEventListener('DOMContentLoaded', function() {
     initLevelTabs();
     initSidebarToggle();
     initMobileSidebar();
     initScrollSpy();
+    initScrollAnimations();
   });
 })();
