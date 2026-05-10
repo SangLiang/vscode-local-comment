@@ -30,9 +30,10 @@ p {
 }
 
 a {
-  color: $brand-primary;
+  color: $coffee-600;
   text-decoration: none;
   &:hover {
+    color: $coffee-800;
     text-decoration: underline;
   }
 }

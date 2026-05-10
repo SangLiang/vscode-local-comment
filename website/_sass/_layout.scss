@@ -19,10 +19,13 @@
 .site-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: $text-primary;
+  color: $coffee-900;
   display: flex;
   align-items: center;
   gap: 8px;
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .site-logo {
@@ -47,6 +50,10 @@
     font-size: 0.95rem;
     display: inline-flex;
     align-items: center;
+    &:hover {
+      color: $coffee-600;
+      text-decoration: none;
+    }
   }
 }
 

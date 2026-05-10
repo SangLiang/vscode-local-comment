@@ -39,7 +39,7 @@ graph TD
 ```
 ```
 
-<div class="callout callout-tip" data-user-level="advanced">
+<div class="callout callout-tip">
 <strong>高级技巧：</strong>在预览区域，可以使用 <kbd>Ctrl</kbd> + 鼠标滚轮缩放 Mermaid 图表。支持手绘风格（可在设置中切换）。
 </div>
 
@@ -81,6 +81,6 @@ function hello() {
 - **代码高亮主题**：多种主题可选
 - **Mermaid 主题**：默认、暗黑、森林、手绘等风格
 
-<div class="callout callout-tip" data-user-level="daily">
+<div class="callout callout-tip">
 <strong>日常配置：</strong>如果你经常使用 Mermaid，建议尝试「手绘风格」（hand drawn），让流程图看起来更轻松。
 </div>

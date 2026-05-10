@@ -26,7 +26,7 @@ permalink: /docs/quick-start/
 4. 在弹出的 Markdown 编辑器中输入你的注释内容
 5. 按 <kbd>Ctrl+Enter</kbd> 保存并关闭
 
-<div class="callout callout-tip" data-user-level="beginner">
+<div class="callout callout-tip">
 <strong>新手提示：</strong>建议把注释添加在「有意义的代码行」上，例如函数声明行，这样即使代码发生变更，注释也更容易跟随定位。
 </div>
 

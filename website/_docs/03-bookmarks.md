@@ -13,7 +13,7 @@ permalink: /docs/bookmarks/
 - 在当前代码行添加或移除书签
 - 书签会在编辑器的行号旁显示一个图标
 
-<div class="callout callout-tip" data-user-level="beginner">
+<div class="callout callout-tip">
 <strong>新手提示：</strong>书签和本地注释可以共存于同一行，它们互不干扰。
 </div>
 
@@ -26,7 +26,7 @@ permalink: /docs/bookmarks/
 
 书签导航是跨文件的。当当前文件没有更多书签时，会自动打开下一个包含书签的文件。
 
-<div class="callout callout-tip" data-user-level="daily">
+<div class="callout callout-tip">
 <strong>日常使用：</strong>在阅读不熟悉的代码库时，可以为每个关键逻辑点添加书签，然后使用快捷键在它们之间快速跳转，形成一条「阅读路径」。
 </div>
 
@@ -43,6 +43,6 @@ permalink: /docs/bookmarks/
 <strong>警告：</strong>清除操作不可撤销，请确保你不再需要这些书签。
 </div>
 
-<div class="callout callout-tip" data-user-level="advanced">
+<div class="callout callout-tip">
 <strong>高级技巧：</strong>书签和注释配合使用效果更佳：用「注释」记录为什么这段代码重要，用「书签」标记位置以便快速返回。
 </div>

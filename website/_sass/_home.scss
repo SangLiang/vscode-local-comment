@@ -161,10 +161,10 @@
 }
 
 .demo-card {
-  background: $terminal-bg;
+  background: linear-gradient(160deg, $coffee-700, $coffee-600);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba($coffee-900, 0.15);
 }
 
 .demo-card-header {

@@ -9,7 +9,7 @@
   max-width: $content-max-width;
   margin: 0 auto;
   width: 100%;
-  min-height: calc(100vh - 56px - 50px - 150px);
+  min-height: calc(100vh - 56px - 150px);
 }
 
 // Sidebar
@@ -17,7 +17,7 @@
   width: $sidebar-width;
   flex-shrink: 0;
   border-right: 1px solid $border-color;
-  background: $bg-sidebar;
+  background: $coffee-50;
   position: sticky;
   top: 56px;
   height: calc(100vh - 56px);
@@ -32,16 +32,25 @@
   h1 {
     margin-top: 0;
     font-size: 2rem;
+    color: $coffee-900;
   }
   h2 {
     font-size: 1.5rem;
     margin-top: 40px;
     padding-bottom: 8px;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid rgba($coffee-500, 0.2);
+    color: $coffee-800;
   }
   h3 {
     font-size: 1.2rem;
     margin-top: 28px;
+    color: $coffee-700;
+  }
+  a {
+    color: $coffee-600;
+    &:hover {
+      color: $coffee-800;
+    }
   }
   table {
     width: 100%;
@@ -53,24 +62,11 @@
       text-align: left;
     }
     th {
-      background: $bg-light;
+      background: $coffee-50;
       font-weight: 600;
+      color: $coffee-900;
     }
   }
-}
-
-// User level content filtering
-[data-user-level] {
-  display: none;
-}
-
-body[data-level="beginner"] [data-user-level="beginner"],
-body[data-level="daily"] [data-user-level="beginner"],
-body[data-level="daily"] [data-user-level="daily"],
-body[data-level="advanced"] [data-user-level="beginner"],
-body[data-level="advanced"] [data-user-level="daily"],
-body[data-level="advanced"] [data-user-level="advanced"] {
-  display: block;
 }
 
 // Mobile: sidebar collapses
@@ -98,7 +94,7 @@ body[data-level="advanced"] [data-user-level="advanced"] {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: $brand-primary;
+    background: linear-gradient(135deg, $coffee-700, $coffee-500);
     color: #fff;
     border: none;
     box-shadow: $shadow-md;

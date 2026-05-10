@@ -1,33 +1,6 @@
 (function() {
   'use strict';
 
-  // ========== User Level Tabs ==========
-  function initLevelTabs() {
-    var tabs = document.querySelectorAll('.level-tab');
-    if (!tabs.length) return;
-
-    // Default level
-    var currentLevel = 'beginner';
-    document.body.setAttribute('data-level', currentLevel);
-
-    tabs.forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        var level = this.getAttribute('data-level');
-        if (!level) return;
-
-        currentLevel = level;
-        document.body.setAttribute('data-level', currentLevel);
-
-        tabs.forEach(function(t) {
-          t.classList.remove('active');
-          t.setAttribute('aria-pressed', 'false');
-        });
-        this.classList.add('active');
-        this.setAttribute('aria-pressed', 'true');
-      });
-    });
-  }
-
   // ========== Sidebar Toggle (Accordion) ==========
   function initSidebarToggle() {
     var toggles = document.querySelectorAll('.sidebar-toggle');
@@ -130,7 +103,6 @@
 
   // ========== Initialize ==========
   document.addEventListener('DOMContentLoaded', function() {
-    initLevelTabs();
     initSidebarToggle();
     initMobileSidebar();
     initScrollSpy();

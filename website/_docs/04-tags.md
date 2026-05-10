@@ -48,7 +48,7 @@ function validate() {
 }
 ```
 
-<div class="callout callout-tip" data-user-level="advanced">
+<div class="callout callout-tip">
 <strong>高级场景：</strong>中文标签在纯中文代码库或团队中尤其有用，可以降低标签命名的心智负担。
 </div>
 
@@ -56,6 +56,6 @@ function validate() {
 
 在 Markdown 编辑器中输入 `@` 时，会弹出已声明标签的下拉列表，支持模糊搜索。
 
-<div class="callout callout-tip" data-user-level="daily">
+<div class="callout callout-tip">
 <strong>使用技巧：</strong>在 Markdown 编辑器的大文档中，按 <kbd>@</kbd> 后输入几个字符即可快速过滤到目标标签。
 </div>

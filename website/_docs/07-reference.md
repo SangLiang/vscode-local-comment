@@ -25,7 +25,7 @@ permalink: /docs/reference/
 | <kbd>Ctrl+Alt+J</kbd> | <kbd>Cmd+Alt+J</kbd> | 下一个书签 |
 | <kbd>Ctrl+Alt+Shift+J</kbd> | <kbd>Cmd+Alt+Shift+J</kbd> | 上一个书签 |
 
-<div class="callout callout-tip" data-user-level="daily">
+<div class="callout callout-tip">
 <strong>记忆技巧：</strong>M 代表 Markdown，C 代表 Comment，E 代表 Edit，D 代表 Delete，T 代表 Turn（转换）。书签的 J/K 对应 VS Code: 默认的「上一个/下一个」语义。
 </div>
 
@@ -43,7 +43,7 @@ permalink: /docs/reference/
 | `localComment.showGutterIcon` | 是否显示注释 gutter 图标 | `true` |
 | `localComment.showCodeLens` | 是否显示 CodeLens 操作按钮 | `true` |
 
-<div class="callout callout-tip" data-user-level="advanced">
+<div class="callout callout-tip">
 <strong>高级配置：</strong>你可以通过 <code>.vscode/settings.json</code> 为每个项目单独配置这些选项，实现「项目级」的注释行为定制。
 </div>
 

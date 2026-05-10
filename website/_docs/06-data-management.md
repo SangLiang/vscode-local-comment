@@ -29,7 +29,7 @@ Local Comment 的数据存储在项目本地或全局目录中，你可以完全
 | macOS | `~/Library/Application Support/Code/User/globalStorage/vscode-local-comment/projects/` |
 | Linux | `~/.config/Code/User/globalStorage/vscode-local-comment/projects/` |
 
-<div class="callout callout-tip" data-user-level="beginner">
+<div class="callout callout-tip">
 <strong>新手建议：</strong>新项目直接使用项目本地存储即可，无需额外配置。旧版数据可以通过迁移命令转移到新项目路径。
 </div>
 
@@ -55,7 +55,7 @@ Local Comment 的数据存储在项目本地或全局目录中，你可以完全
 3. 修改「Local Comment: Storage」下的活跃注释配置文件名
 4. 或使用命令面板（<kbd>F1</kbd>）运行 "Local Comment: Switch Comments Config"
 
-<div class="callout callout-tip" data-user-level="daily">
+<div class="callout callout-tip">
 <strong>使用场景：</strong>例如，你可以为「功能开发」和「代码审查」分别建立注释组，互不干扰。
 </div>
 
@@ -73,7 +73,7 @@ Local Comment 的数据存储在项目本地或全局目录中，你可以完全
 2. 搜索 "Local Comment: Import Comment Data"
 3. 选择之前导出的文件
 
-<div class="callout callout-tip" data-user-level="advanced">
+<div class="callout callout-tip">
 <strong>高级技巧：</strong>使用项目本地存储时，直接复制 <code>.vscode/local-comment/</code> 文件夹到另一台机器或另一个项目，即可完成迁移，无需使用导入导出命令。
 </div>
 
