@@ -54,6 +54,9 @@
       color: $coffee-600;
       text-decoration: none;
     }
+    &.active {
+      color: $coffee-600;
+    }
   }
 }
 

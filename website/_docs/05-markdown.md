@@ -79,7 +79,7 @@ function hello() {
 
 - **Markdown 预览字体大小**：默认跟随编辑器字体大小
 - **代码高亮主题**：多种主题可选
-- **Mermaid 主题**：默认、暗黑、森林、手绘等风格
+- **Mermaid 主题**：默认、手绘等风格
 
 <div class="callout callout-tip">
 <strong>日常配置：</strong>如果你经常使用 Mermaid，建议尝试「手绘风格」（hand drawn），让流程图看起来更轻松。

@@ -15,35 +15,6 @@
     </ul>
   </div>
   <div class="sidebar-section">
-    <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-bookmarks">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-      </svg>
-      书签
-    </button>
-    <ul id="sidebar-bookmarks" class="sidebar-list">
-      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#toggle">添加与删除</a></li>
-      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#navigate">导航跳转</a></li>
-      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#cross-file">跨文件</a></li>
-      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#clear">清除所有</a></li>
-    </ul>
-  </div>
-  <div class="sidebar-section">
-    <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-tags">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-        <line x1="7" y1="7" x2="7.01" y2="7"></line>
-      </svg>
-      标签系统
-    </button>
-    <ul id="sidebar-tags" class="sidebar-list">
-      <li><a href="{{ "/docs/tags/" | relative_url }}#declare">声明标签</a></li>
-      <li><a href="{{ "/docs/tags/" | relative_url }}#reference">引用标签</a></li>
-      <li><a href="{{ "/docs/tags/" | relative_url }}#chinese">中文标签</a></li>
-      <li><a href="{{ "/docs/tags/" | relative_url }}#autocomplete">自动补全</a></li>
-    </ul>
-  </div>
-  <div class="sidebar-section">
     <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-markdown">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="13.5" cy="6.5" r="2.5"></circle>
@@ -60,6 +31,36 @@
       <li><a href="{{ "/docs/markdown/" | relative_url }}#latex">LaTeX 公式</a></li>
       <li><a href="{{ "/docs/markdown/" | relative_url }}#highlight">代码高亮</a></li>
       <li><a href="{{ "/docs/markdown/" | relative_url }}#theme">主题配置</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-section">
+    <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-tags">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+      </svg>
+      标签系统
+    </button>
+    <ul id="sidebar-tags" class="sidebar-list">
+      <li><a href="{{ "/docs/tags/" | relative_url }}#declare">声明标签</a></li>
+      <li><a href="{{ "/docs/tags/" | relative_url }}#reference">引用标签</a></li>
+      <li><a href="{{ "/docs/tags/" | relative_url }}#chinese">中文标签</a></li>
+      <li><a href="{{ "/docs/tags/" | relative_url }}#navigate">标签跳转</a></li>
+      <li><a href="{{ "/docs/tags/" | relative_url }}#autocomplete">自动补全</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-section">
+    <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-bookmarks">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
+      书签
+    </button>
+    <ul id="sidebar-bookmarks" class="sidebar-list">
+      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#toggle">添加与删除</a></li>
+      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#navigate">导航跳转</a></li>
+      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#cross-file">跨文件</a></li>
+      <li><a href="{{ "/docs/bookmarks/" | relative_url }}#clear">清除所有</a></li>
     </ul>
   </div>
   <div class="sidebar-section">

@@ -44,5 +44,5 @@ permalink: /docs/bookmarks/
 </div>
 
 <div class="callout callout-tip">
-<strong>高级技巧：</strong>书签和注释配合使用效果更佳：用「注释」记录为什么这段代码重要，用「书签」标记位置以便快速返回。
+<strong>高级技巧：</strong>书签、注释和标签三者配合使用效果更佳：用「注释」记录核心逻辑，用「书签」标记阅读路径的位置，用「标签」建立双向链接。通过命令面板可以列出所有标签并快速跳转。
 </div>
