@@ -20,7 +20,7 @@ export interface LoginCredentials {
 
 export interface AuthSession {
     token: string;
-    user: UserInfo;
+    user?: UserInfo;
     expiresAt: number;
 }
 
@@ -162,7 +162,6 @@ export class AuthManager {
             // 先设置session，这样API服务就能获取到token
             const session: AuthSession = {
                 token: access_token,
-                user: null as any, // 临时设置为null
                 expiresAt: Date.now() + SESSION_EXPIRY_7D_MS,
             };
             

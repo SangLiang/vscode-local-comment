@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosHeaders } from 'axios';
 import { logger } from '../utils/logger';
+
+interface CustomAxiosRequestConfig extends AxiosRequestConfig {
+    skipAuth?: boolean;
+}
 
 const VERSION = 'v1';
 const BASE_URL = `/api/${VERSION}`;
@@ -72,17 +76,14 @@ export class ApiService {
         // 请求拦截器 - 自动添加认证token
         this.axiosInstance.interceptors.request.use(
             (config) => {
-                // 如果配置中指定跳过认证，则不添加token
-                if ((config as any).skipAuth) {
+                if ((config as CustomAxiosRequestConfig).skipAuth) {
                     return config;
                 }
 
-                // 从AuthManager获取token
                 if (this.authManager && this.authManager.getAuthToken()) {
                     const token = this.authManager.getAuthToken();
-                    // 确保headers对象存在
                     if (!config.headers) {
-                        (config as any).headers = {};
+                        config.headers = new AxiosHeaders();
                     }
                     config.headers.Authorization = `Bearer ${token}`;
                 }

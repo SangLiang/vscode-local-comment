@@ -4,7 +4,7 @@ import { CommentManager } from '../managers/commentManager';
 import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
 import { normalizeFilePath, getErrorMessage } from '../utils/utils';
-import { WebviewUtils } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
@@ -508,7 +508,7 @@ function getMarkdownWebviewContent(
     isUserLoggedIn: boolean = false,
     isCommentShared: boolean = false,
     webview?: vscode.Webview, // 添加webview参数
-    resourceUris?: any // 添加resourceUris参数以获取publicJsUri
+    resourceUris?: ResourceUris
 ): string {
     // 生成nonce用于CSP
     const nonce = WebviewUtils.getNonce();
@@ -639,7 +639,7 @@ function getMarkdownWebviewContent(
     contextHtml += '</div>'; // 结束context-info
 
     // 计算 publicJsScript 的值
-    const publicJsUri = (resourceUris as any)?.publicJsUri || '';
+    const publicJsUri = resourceUris?.publicJsUri || '';
     const publicJsScript = publicJsUri 
         ? `<script src="${publicJsUri}" onerror="console.error('public.js 加载失败')"></script>`
         : '';

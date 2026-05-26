@@ -1,5 +1,7 @@
 # Local Comment
 
+[中文文档](./README_CN.md)
+
 **Without changing your source files**, attach durable notes and bookmarks to code in VS Code: **Markdown**, **Mermaid**, **LaTeX**, and **tag declarations with jump-to navigation**—built for reading large codebases, research, and capturing your own understanding.
 
 > Use it as everyday notes; when the codebase grows and branches keep moving, Local Comment keeps your thinking **inside the editor** instead of scattered across chat or external docs.

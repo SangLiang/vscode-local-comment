@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import { TagManager } from '../managers/tagManager';
 
+interface TagCompletionItem extends vscode.QuickPickItem {
+    originalTag: string;
+}
+
 export async function showQuickInputWithTagCompletion(
     prompt: string, 
     placeholder: string, 
@@ -34,7 +38,7 @@ export async function showQuickInputWithTagCompletion(
                         );
                         
                         if (filteredTags.length > 0) {
-                            const items = filteredTags.map((tag: string) => ({
+                            const items: TagCompletionItem[] = filteredTags.map((tag: string) => ({
                                 label: `@${tag}`,
                                 description: '标签补全',
                                 detail: `插入标签引用 @${tag}`,
@@ -80,10 +84,9 @@ export async function showQuickInputWithTagCompletion(
                 const currentValue = quickPick.value;
                 const lastAtIndex = currentValue.lastIndexOf('@');
                 
-                if (lastAtIndex !== -1 && (selectedItem as any).originalTag) {
-                    // 只替换@后面的部分
-                    const beforeAt = currentValue.substring(0, lastAtIndex + 1); // 包含@
-                    const newValue = beforeAt + (selectedItem as any).originalTag + ' '; // @标签名 + 空格
+                if (lastAtIndex !== -1 && (selectedItem as TagCompletionItem).originalTag) {
+                    const beforeAt = currentValue.substring(0, lastAtIndex + 1);
+                    const newValue = beforeAt + (selectedItem as TagCompletionItem).originalTag + ' ';
                     quickPick.value = newValue;
                     quickPick.items = [];
                     isShowingCompletions = false;

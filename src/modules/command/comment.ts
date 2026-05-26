@@ -550,7 +550,7 @@ export function registerCommentCommands(
             const document = await vscode.workspace.openTextDocument(uri);
             
             // 使用CommentMatcher进行模糊匹配
-            const commentMatcher = (commentManager as any).commentMatcher;
+            const commentMatcher = commentManager.commentMatcher;
             const candidates = commentMatcher.fuzzyMatchComment(document, item.comment, 8);
             
             if (candidates.length === 0) {
@@ -634,7 +634,7 @@ export function registerCommentCommands(
                     commentToUpdate.isMatched = true;
                     
                     // 保存更改
-                    await (commentManager as any).saveComments();
+                    await commentManager.saveComments();
                     
                     // 刷新界面
                     refreshAllCommentViews();
@@ -783,7 +783,7 @@ export function registerCommentCommands(
                     commentToUpdate.timestamp = Date.now(); // 更新时间戳
                     
                     // 保存更改
-                    await (commentManager as any).saveComments();
+                    await commentManager.saveComments();
                     
                     // 更新标签系统
                     tagManager.updateTags(commentManager.getAllComments());

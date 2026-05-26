@@ -4,6 +4,10 @@ import { CommentManager } from '../../managers/commentManager';
 import { COMMANDS } from '../../constants';
 import { getFileNameFromPath } from '../../utils/pathUtils';
 
+interface TagQuickPickItem extends vscode.QuickPickItem {
+    userData: TagDeclaration;
+}
+
 export function registerTagCommands(
     tagManager: TagManager,
     commentManager: CommentManager
@@ -65,7 +69,7 @@ export function registerTagCommands(
                     detail,
                     // 将标签对象存储在用户数据中，以便后续使用
                     userData: tag
-                } as vscode.QuickPickItem & { userData: TagDeclaration };
+                } as TagQuickPickItem;
             });
 
             // 显示快速选择器
@@ -75,8 +79,8 @@ export function registerTagCommands(
                 matchOnDetail: true
             });
 
-            if (selectedItem && (selectedItem as any).userData) {
-                const tag = (selectedItem as any).userData as TagDeclaration;
+            if (selectedItem && (selectedItem as TagQuickPickItem).userData) {
+                const tag = (selectedItem as TagQuickPickItem).userData;
                 // 跳转到标签位置
                 const uri = vscode.Uri.file(tag.filePath);
                 const document = await vscode.workspace.openTextDocument(uri);
@@ -149,7 +153,7 @@ export function registerTagCommands(
                     detail,
                     // 将标签对象存储在用户数据中，以便后续使用
                     userData: tag
-                } as vscode.QuickPickItem & { userData: TagDeclaration };
+                } as TagQuickPickItem;
             });
 
             // 显示快速选择器
@@ -159,8 +163,8 @@ export function registerTagCommands(
                 matchOnDetail: true
             });
 
-            if (selectedItem && (selectedItem as any).userData) {
-                const tag = (selectedItem as any).userData as TagDeclaration;
+            if (selectedItem && (selectedItem as TagQuickPickItem).userData) {
+                const tag = (selectedItem as TagQuickPickItem).userData;
                 // 跳转到标签位置
                 const uri = vscode.Uri.file(tag.filePath);
                 const document = await vscode.workspace.openTextDocument(uri);

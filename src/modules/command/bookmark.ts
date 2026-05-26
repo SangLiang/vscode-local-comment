@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
-import { BookmarkManager } from '../../managers/bookmarkManager';
+import { BookmarkManager, Bookmark } from '../../managers/bookmarkManager';
 import { COMMANDS } from '../../constants';
+
+interface BookmarkQuickPickItem extends vscode.QuickPickItem {
+    userData: Bookmark;
+}
 
 export function registerBookmarkCommands(
     bookmarkManager?: BookmarkManager
@@ -159,7 +163,7 @@ export function registerBookmarkCommands(
                 detail,
                 // 将书签对象存储在用户数据中，以便后续使用
                 userData: bookmark
-            } as vscode.QuickPickItem & { userData: any };
+            } as BookmarkQuickPickItem;
         });
 
         // 显示快速选择器
@@ -169,8 +173,8 @@ export function registerBookmarkCommands(
             matchOnDetail: false
         });
 
-        if (selectedItem && (selectedItem as any).userData) {
-            const bookmark = (selectedItem as any).userData;
+        if (selectedItem && (selectedItem as BookmarkQuickPickItem).userData) {
+            const bookmark = (selectedItem as BookmarkQuickPickItem).userData;
             await manager.goToBookmark(bookmark.filePath, bookmark.line);
         }
     });

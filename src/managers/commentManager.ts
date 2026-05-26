@@ -53,7 +53,7 @@ export class CommentManager implements vscode.Disposable {
     private context: vscode.ExtensionContext;
     private authManager?: AuthManager; // 认证管理器
     private _hasKeyboardActivity = false; // 记录键盘活动状态，用于区分用户编辑和Git分支切换
-    private commentMatcher: CommentMatcher; // 注释匹配器
+    public readonly commentMatcher: CommentMatcher;
     private readonly _timerManager = new TimerManager();
     
     // 事件发射器，用于通知注释变化
@@ -335,7 +335,7 @@ export class CommentManager implements vscode.Disposable {
         await this.migrateToNewPath(paths, workspacePath);
     }
 
-    private async saveComments(): Promise<void> {
+    public async saveComments(): Promise<void> {
         try {
             const dataToSave = {
                 comments: this.comments,
