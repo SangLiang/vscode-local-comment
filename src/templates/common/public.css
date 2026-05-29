@@ -33,6 +33,17 @@ code, pre {
     font-size: var(--vscode-editor-font-size);
 }
 
+code {
+    padding: 2px 4px;
+    background: none;
+}
+
+pre {
+    padding: 12px;
+    overflow-x: auto;
+    background: none;
+}
+
 /* 引用块基础样式 */
 blockquote {
     border-left: 4px solid var(--vscode-textBlockQuote-border);

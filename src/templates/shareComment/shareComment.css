@@ -239,17 +239,6 @@ button:hover {
     margin: 8px 0;
 }
 
-#previewArea code {
-    padding: 2px 4px;
-    background: none;
-}
-
-#previewArea pre {
-    padding: 12px;
-    overflow-x: auto;
-    background: none;
-}
-
 #previewArea blockquote {
     margin: 8px 0;
     padding-left: 12px;
