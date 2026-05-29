@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'unsafe-inline'; img-src ${cspSource} https: http: data: svg: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; media-src 'none'; frame-src 'none';">
+    <title>Markdown 预览</title>
+    <link rel="stylesheet" href="${cssUri}">
+    <link rel="stylesheet" href="${katexCssUri}">
+    <link rel="stylesheet" href="${highlightCssUri}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">${fileName}</div>
+            <div class="help-text">
+                支持Markdown语法、Mermaid图表和LaTeX公式，支持缩放功能
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div id="previewArea" class="preview-area"></div>
+        </div>
+    </div>
+
+    <script src="${markedJsUri}" onerror="console.error('marked.js 加载失败')"></script>
+    <script src="${highlightJsUri}" onerror="console.error('highlight.js 加载失败')"></script>
+    <script src="${mermaidJsUri}" onerror="console.error('mermaid.js 加载失败')"></script>
+    <script src="${katexJsUri}" onerror="console.error('katex.js 加载失败')"></script>
+    ${publicJsScript}
+
+    <div id="markdownContent" style="display: none;">${escapedContent}</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const contentElement = document.getElementById('markdownContent');
+            if (contentElement) {
+                window.markdownContent = contentElement.textContent;
+            } else {
+                console.error('找不到markdownContent元素');
+                window.markdownContent = '';
+            }
+        });
+    </script>
+    <script src="${jsUri}"></script>
+</body>
+</html>

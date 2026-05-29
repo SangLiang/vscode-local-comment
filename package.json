@@ -275,6 +275,11 @@
         "command": "localComment.showAllFilesTags",
         "title": "%showAllFilesTags%",
         "category": "Local Comment"
+      },
+      {
+        "command": "localComment.previewMarkdown",
+        "title": "%previewMarkdown%",
+        "category": "Local Comment"
       }
     ],
     "views": {
@@ -367,6 +372,11 @@
           "command": "localComment.showCurrentFileTags",
           "group": "localComment",
           "when": "editorTextFocus"
+        },
+        {
+          "command": "localComment.previewMarkdown",
+          "group": "localComment",
+          "when": "editorTextFocus && resourceExtname == .md"
         }
       ],
       "view/title": [

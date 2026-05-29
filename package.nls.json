@@ -59,5 +59,6 @@
 	"previewSharedComment": "Preview Comment Content",
 	"mermaidThemeDescription": "Select the theme for rendering Mermaid diagrams.",
 	"mermaidThemeDefault": "Default style",
-	"mermaidThemeHandDrawn": "Hand-drawn style"
+	"mermaidThemeHandDrawn": "Hand-drawn style",
+	"previewMarkdown": "Preview Markdown"
 } 

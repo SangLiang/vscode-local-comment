@@ -371,10 +371,12 @@ button {
 }
 .preview-area code {
     padding: 2px 4px;
+    background: none;
 }
 .preview-area pre {
     padding: 12px;
     overflow-x: auto;
+    background: none;
 }
 .preview-area blockquote {
     margin: 8px 0;

@@ -167,8 +167,13 @@
                 // 如果 highlight.js 已加载，使用它进行高亮
                 if (typeof hljs !== 'undefined') {
                     try {
-                        const highlighted = hljs.highlight(code, { language: language }).value;
-                        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+                        if (hljs.getLanguage(language)) {
+                            const highlighted = hljs.highlight(code, { language: language }).value;
+                            return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+                        } else {
+                            const result = hljs.highlightAuto(code);
+                            return `<pre><code class="hljs language-${result.language}">${result.value}</code></pre>`;
+                        }
                     } catch (error) {
                         // 如果高亮失败，使用原始渲染
                         console.warn('代码高亮失败:', error);

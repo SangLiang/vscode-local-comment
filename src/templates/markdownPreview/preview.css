@@ -7,110 +7,6 @@
     box-sizing: border-box;
 }
 
-.context-info {
-    background-color: var(--vscode-editor-inactiveSelectionBackground);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
-    padding: 12px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.context-title {
-    font-weight: bold;
-    color: var(--vscode-textPreformat-foreground);
-    margin-bottom: 8px;
-}
-
-.context-item {
-    margin: 4px 0;
-    display: flex;
-    align-items: flex-start;
-    width: 100%;
-    min-width: 0;
-}
-
-.context-label {
-    color: var(--vscode-descriptionForeground);
-    min-width: 60px;
-    margin-right: 8px;
-}
-
-.context-value {
-    color: var(--vscode-foreground);
-    font-family: var(--vscode-editor-font-family);
-    flex: 1;
-    word-break: break-all;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.code-preview {
-    background-color: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-textBlockQuote-border);
-    border-radius: 3px;
-    padding: 8px;
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
-    white-space: pre-wrap;
-    color: var(--vscode-textPreformat-foreground);
-}
-
-.code-context-preview {
-    background-color: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-textBlockQuote-border);
-    border-radius: 3px;
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
-    max-height: 300px;
-    overflow: auto;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.code-line {
-    display: flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-bottom: 1px solid transparent;
-    min-width: max-content;
-    white-space: nowrap;
-}
-
-.code-line:hover {
-    background-color: var(--vscode-list-hoverBackground);
-}
-
-.code-line.target-line {
-    background-color: var(--vscode-editor-selectionBackground);
-    border-bottom: 1px solid var(--vscode-editor-selectionBackground);
-}
-
-.line-number {
-    color: var(--vscode-descriptionForeground);
-    min-width: 40px;
-    margin-right: 8px;
-    font-size: 11px;
-    text-align: right;
-}
-
-.target-line .line-number {
-    color: var(--vscode-textPreformat-foreground);
-    font-weight: bold;
-}
-
-.line-content {
-    color: var(--vscode-textPreformat-foreground);
-    flex: 1;
-}
-
-.target-line .line-content {
-    font-weight: bold;
-}
-
 .header {
     margin-bottom: 20px;
 }
@@ -133,98 +29,20 @@
     position: relative;
 }
 
-.preview-controls {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-    gap: 8px;
-}
-
-.control-btn {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-secondaryBorder);
-    border-radius: 3px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-    text-decoration: underline;
-}
-
-.control-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-    border-color: var(--vscode-button-secondaryHoverBorder);
-}
-
-.button-group {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-button {
-    background-color: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 3px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s ease;
-}
-
-button:hover {
-    background-color: var(--vscode-button-hoverBackground);
-    border-color: var(--vscode-button-hoverBorder);
-}
-
-.export-btn {
-    background-color: var(--vscode-button-prominentBackground);
-    color: var(--vscode-button-prominentForeground);
-    border-color: var(--vscode-button-prominentBorder);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.export-btn:hover {
-    background-color: var(--vscode-button-prominentHoverBackground);
-    border-color: var(--vscode-button-prominentHoverBorder);
-}
-
-.close-btn {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border-color: var(--vscode-button-secondaryBorder);
-}
-
-.close-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-    border-color: var(--vscode-button-secondaryHoverBorder);
-}
-
-/* 预览区域样式 */
 #previewArea {
     background-color: var(--vscode-editor-background);
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     padding: 20px;
     min-height: 200px;
-    max-height: 800px; /* 增加最大高度，从600px改为800px */
     overflow-y: auto;
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
-    line-height: 1.6;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    line-height: 1.4;
     transition: all 0.3s ease;
-    word-wrap: break-word; /* 确保长单词能够换行 */
-    white-space: pre-wrap; /* 保留换行符和空格 */
+    word-wrap: break-word;
 }
 
-/* Markdown渲染样式 */
 #previewArea h1,
 #previewArea h2,
 #previewArea h3,
@@ -258,6 +76,15 @@ button:hover {
 #previewArea ul,
 #previewArea ol {
     padding-left: 24px;
+    margin: 4px 0;
+}
+
+#previewArea li {
+    margin: 2px 0;
+}
+
+#previewArea li p {
+    margin: 0;
 }
 
 #previewArea a:hover {
@@ -278,13 +105,6 @@ button:hover {
     padding: 6px 12px;
 }
 
-/* 最大化状态 */
-.container.maximized #previewArea {
-    max-height: none;
-    height: calc(100vh - 150px); /* 减少边距，从200px改为150px，给内容更多空间 */
-}
-
-/* Mermaid图表样式 */
 #previewArea .mermaid-chart {
     margin: 8px 0;
     padding: 8px;
@@ -309,9 +129,8 @@ button:hover {
     border-radius: 4px !important;
     transition: transform 0.1s ease !important;
     transform-origin: center !important;
-} 
+}
 
-/* Mermaid图表交互样式 - 从内联样式移植 */
 .mermaid-chart {
     display: block !important;
     width: 100% !important;
@@ -351,7 +170,6 @@ button:hover {
     transform-origin: center !important;
 }
 
-/* 图表控制按钮 */
 .mermaid-controls {
     position: absolute !important;
     top: 8px !important;
@@ -367,7 +185,6 @@ button:hover {
     opacity: 1 !important;
 }
 
-/* 图表控制按钮 */
 .mermaid-control-btn {
     width: 28px !important;
     height: 28px !important;
@@ -397,7 +214,6 @@ button:hover {
     transform: scale(0.95) !important;
 }
 
-/* 缩放指示器 */
 .mermaid-zoom-info {
     position: absolute !important;
     bottom: 8px !important;
@@ -419,13 +235,11 @@ button:hover {
     opacity: 1 !important;
 }
 
-/* 图表容器状态 */
 .mermaid-chart.zoomed {
     overflow: auto !important;
     cursor: grab !important;
 }
 
-/* 错误状态 */
 .mermaid-error {
     background-color: var(--vscode-errorForeground);
     color: var(--vscode-editor-background);

@@ -22,6 +22,7 @@ import { apiService } from '../../apiService';
 import { COMMANDS } from '../../constants';
 import { DialogUtils } from '../../utils/dialogUtils';
 import { StoragePathUtils } from '../../utils/storagePathUtils';
+import { MarkdownPreviewWebview } from '../markdownPreviewWebview';
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -1167,6 +1168,10 @@ export function registerCommands(
         }
     });
 
+    const previewMarkdownCommand = vscode.commands.registerCommand(COMMANDS.PREVIEW_MARKDOWN, () => {
+        MarkdownPreviewWebview.previewFile(context);
+    });
+
     // 注册comment.ts中的命令
     const commentCommands = registerCommentCommands(
         commentManager,
@@ -1199,6 +1204,7 @@ export function registerCommands(
         logoutCommand,
         refreshSharedCommentsCommand,
         showShareCommentCommand,
+        previewMarkdownCommand,
         ...commentCommands,
         ...bookmarkCommands,
         ...tagCommands,

@@ -73,6 +73,7 @@ export const COMMANDS = {
     GO_TO_FILE: 'localComment.goToFile',
     UPDATE_COMMENT_LINE: 'localComment.updateCommentLine',
     PREVIEW_SHARED_COMMENT: 'localComment.previewSharedComment',
+    PREVIEW_MARKDOWN: 'localComment.previewMarkdown',
     
     // 书签相关命令
     ADD_BOOKMARK: 'localComment.addBookmark',
@@ -114,6 +115,7 @@ export const VIEW_TYPES = {
     AUTH: 'localComment.auth',
     USER_INFO: 'localComment.userInfo',
     SHARE_COMMENT_PREVIEW: 'shareCommentPreview',
+    MARKDOWN_PREVIEW: 'markdownPreview',
 } as const;
 
 /**
@@ -152,6 +154,9 @@ export const IPC_MESSAGES = {
     EDITOR_SAVE_SKIPPED: 'editorSaveSkipped',
     /** Webview →扩展：当前是否与已提交基线不一致，用于更新面板 Tab 标题等 */
     EDITOR_DIRTY_STATE: 'editorDirtyState',
+    
+    /** 更新 Webview 中的 Markdown 内容（用于文件保存后刷新预览） */
+    UPDATE_CONTENT: 'updateContent',
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',
