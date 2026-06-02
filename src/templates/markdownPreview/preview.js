@@ -53,6 +53,9 @@
                     };
 
                     renderer.code = function(code, language) {
+                        if (language === 'mermaid') {
+                            return '<pre><code class="language-mermaid">' + code + '</code></pre>';
+                        }
                         if (typeof hljs !== 'undefined') {
                             try {
                                 if (language && hljs.getLanguage(language)) {
@@ -229,12 +232,8 @@
 
             const renderedSvgs = await Promise.all(svgPromises);
 
-            // 2. 替换Mermaid代码块为SVG
+            // 2. 保留原始 markdown 内容，先做 LaTeX 处理（marked 不能解析 SVG 内的 <style>，故不在此处替换 Mermaid）
             let finalContent = content;
-            let svgIndex = 0;
-            finalContent = finalContent.replace(mermaidRegex, () => {
-                return renderedSvgs[svgIndex++];
-            });
 
             // 3. 处理 LaTeX 公式
             if (typeof katex !== 'undefined') {
@@ -266,7 +265,15 @@
             // 4. 使用marked解析最终内容
             const finalHtml = marked.parse(finalContent);
 
-            previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
+            // 5. marked 解析后再将 Mermaid 代码块占位符替换为已渲染的 SVG
+            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
+            let svgIndex = 0;
+            const mermaidCodeBlockRegex = /<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/g;
+            const finalHtmlWithSvg = finalHtml.replace(mermaidCodeBlockRegex, () => {
+                return renderedSvgs[svgIndex++] || '';
+            });
+
+            previewArea.innerHTML = finalHtmlWithSvg || '<p>预览生成失败</p>';
             console.log("预览区域已更新");
 
             if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
