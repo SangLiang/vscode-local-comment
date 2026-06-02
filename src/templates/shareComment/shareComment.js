@@ -174,7 +174,12 @@
         };
 
         if (handDrawnEnabled) {
-            config.theme = 'hand-drawn';
+            config.look = 'handDrawn';
+            config.handDrawn = {
+                jitter: 5,
+                roughness: 5,
+                seed: 20
+            };
         }
 
         return config;
@@ -581,9 +586,11 @@
             case 'setMermaidTheme':
                 if (mermaidInitialized && typeof mermaid === 'object' && typeof mermaid.initialize === 'function') {
                     try {
+                        const isHandDrawn = message.theme === 'hand-drawn';
+                        const config = isHandDrawn ? buildMermaidConfig(true) : { theme: message.theme };
                         mermaid.initialize({
                             ...mermaid.defaultConfig,
-                            theme: message.theme
+                            ...config
                         });
                         // 重新渲染预览以应用新主题
                         if (window.markdownContent) {
