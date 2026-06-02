@@ -190,10 +190,72 @@ filesToCopy.forEach(({ packageName, possiblePaths, target }) => {
 });
 
 if (failedCount === 0) {
-    console.log(`\n  成功复制 ${copiedCount} 个文件到 out/lib 目录`);
+    console.log(`\n 成功复制 ${copiedCount} 个文件到 out/lib 目录`);
 } else {
     console.error(`\n 复制完成，但有 ${failedCount} 个文件失败`);
     console.error('请确保已运行 npm install 安装依赖');
     process.exit(1);
+}
+
+/**
+ * 复制整个目录到目标位置
+ */
+function copyDirectory(sourceDir, targetDir) {
+    if (!fs.existsSync(sourceDir)) {
+        console.error(`  错误: 找不到目录 ${path.relative(projectRoot, sourceDir)}`);
+        return 0;
+    }
+
+    if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    let count = 0;
+    for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+        const src = path.join(sourceDir, entry.name);
+        const dest = path.join(targetDir, entry.name);
+        if (entry.isDirectory()) {
+            count += copyDirectory(src, dest);
+        } else {
+            fs.copyFileSync(src, dest);
+            count++;
+        }
+    }
+    return count;
+}
+
+const directoriesToCopy = [
+    {
+        packageName: 'katex-fonts',
+        source: path.join(nodeModulesPath, 'katex', 'dist', 'fonts'),
+        target: path.join(outLibPath, 'fonts')
+    }
+];
+
+console.log('\n开始复制字体目录到 out/lib/fonts...');
+
+let dirCopiedCount = 0;
+let dirFailedCount = 0;
+
+directoriesToCopy.forEach(({ packageName, source, target }) => {
+    try {
+        const count = copyDirectory(source, target);
+        if (count > 0) {
+            console.log(`  已复制 ${packageName}: ${path.relative(projectRoot, target)} (${count} 个文件)`);
+            dirCopiedCount++;
+        } else {
+            dirFailedCount++;
+        }
+    } catch (error) {
+        console.error(` 复制 ${packageName} 失败:`, error.message);
+        dirFailedCount++;
+    }
+});
+
+if (dirFailedCount === 0) {
+    console.log(`\n 成功复制 ${dirCopiedCount} 个目录到 out/lib 目录`);
+} else {
+    console.error(`\n 目录复制完成，但有 ${dirFailedCount} 个目录失败`);
+    console.error('请确保已运行 npm install 安装依赖');
 }
 

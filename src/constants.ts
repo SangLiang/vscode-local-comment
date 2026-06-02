@@ -160,7 +160,10 @@ export const IPC_MESSAGES = {
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',
-    
+
+    // Markdown 预览导出 HTML 相关消息
+    EXPORT_HTML: 'exportHtml',
+
     // 结果消息
     LOGIN_RESULT: 'loginResult',
     USER_INFO_RESULT: 'userInfoResult',

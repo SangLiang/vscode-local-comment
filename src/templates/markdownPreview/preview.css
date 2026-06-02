@@ -11,11 +11,66 @@
     margin-bottom: 20px;
 }
 
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
 .title {
     font-size: 18px;
     font-weight: bold;
     color: var(--vscode-textPreformat-foreground);
-    margin-bottom: 8px;
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+}
+
+.export-btn {
+    flex-shrink: 0;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.4;
+    transition: background-color 0.1s ease;
+}
+
+.export-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.export-option input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.export-btn:active {
+    transform: translateY(1px);
 }
 
 .help-text {
@@ -36,9 +91,9 @@
     padding: 20px;
     min-height: 200px;
     overflow-y: auto;
-    font-family: var(--vscode-font-family);
-    font-size: var(--vscode-font-size);
-    line-height: 1.4;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    line-height: 1.5;
     transition: all 0.3s ease;
     word-wrap: break-word;
 }

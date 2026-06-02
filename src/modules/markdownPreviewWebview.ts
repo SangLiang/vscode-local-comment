@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, IPC_MESSAGES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
+import { getErrorMessage } from '../utils/utils';
 
 export class MarkdownPreviewWebview {
     private static currentPanel: MarkdownPreviewWebview | undefined;
@@ -102,6 +104,8 @@ export class MarkdownPreviewWebview {
 
         this.panel.webview.html = this.getWebviewContent(content, fileName, resourceUris);
 
+        this.registerMessageHandler();
+
         let configPostTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
             configPostTimer = undefined;
             try {
@@ -143,6 +147,129 @@ export class MarkdownPreviewWebview {
             command: IPC_MESSAGES.UPDATE_CONTENT,
             content: content
         });
+    }
+
+    private registerMessageHandler(): void {
+        this.panel.webview.onDidReceiveMessage(async (message) => {
+            if (message.command !== IPC_MESSAGES.EXPORT_HTML || !message.html) return;
+
+            try {
+                let html = message.html;
+                let css = message.css || '';
+
+                if (message.localImagePaths?.length) {
+                    html = this.inlineLocalImages(html, message.localImagePaths);
+                }
+
+                if (message.remoteImageUrls?.length) {
+                    html = await this.inlineRemoteImages(html, message.remoteImageUrls);
+                }
+
+                if (message.hasKatex) {
+                    css = this.inlineKatexFonts(css);
+                }
+
+                const fullHtml = this.buildExportHtml(html, css, message.fileName, message.keepPrintBg);
+                await this.saveExportHtml(fullHtml, message.fileName);
+            } catch (error) {
+                vscode.window.showErrorMessage(`导出失败: ${getErrorMessage(error)}`);
+            }
+        });
+    }
+
+    private inlineLocalImages(html: string, paths: string[]): string {
+        for (const imgPath of paths) {
+            try {
+                const buf = fs.readFileSync(imgPath);
+                const ext = path.extname(imgPath).slice(1);
+                const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+                const dataUri = `data:${mime};base64,${buf.toString('base64')}`;
+                html = html.split(imgPath).join(dataUri);
+            } catch {
+            }
+        }
+        return html;
+    }
+
+    private async inlineRemoteImages(html: string, urls: string[]): Promise<string> {
+        const axios = (await import('axios')).default;
+        for (const url of urls) {
+            try {
+                const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
+                const contentType = response.headers['content-type'] || 'image/png';
+                const base64 = Buffer.from(response.data).toString('base64');
+                const dataUri = `data:${contentType};base64,${base64}`;
+                html = html.split(url).join(dataUri);
+            } catch {
+            }
+        }
+        return html;
+    }
+
+    private inlineKatexFonts(cssText: string): string {
+        const fontsDir = this.getKatexFontsDir();
+        if (!fs.existsSync(fontsDir)) return cssText;
+
+        return cssText.replace(/url\((?:'")?fonts\/([^)'"]+)(?:'")?\)/g, (match, fontFile) => {
+            const fontPath = path.join(fontsDir, fontFile);
+            try {
+                const buf = fs.readFileSync(fontPath);
+                const ext = fontFile.split('.').pop();
+                const mime = ext === 'woff2' ? 'font/woff2' : ext === 'woff' ? 'font/woff' : 'font/ttf';
+                return `url("data:${mime};base64,${buf.toString('base64')}")`;
+            } catch {
+                return match;
+            }
+        });
+    }
+
+    private getKatexFontsDir(): string {
+        const outFonts = path.join(this.context.extensionUri.fsPath, 'out', 'lib', 'fonts');
+        if (fs.existsSync(outFonts)) return outFonts;
+        return path.join(this.context.extensionUri.fsPath, 'node_modules', 'katex', 'dist', 'fonts');
+    }
+
+    private buildExportHtml(previewHtml: string, css: string, fileName: string, keepPrintBg: boolean = true): string {
+        const safeName = fileName ? fileName.replace(/\.md$/i, '') : 'export';
+        const printStyles = keepPrintBg
+            ? `@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}`
+            : '';
+        return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${safeName}</title>
+    <style>
+${css}
+${printStyles}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content-area">
+${previewHtml}
+        </div>
+    </div>
+</body>
+</html>`;
+    }
+
+    private async saveExportHtml(html: string, fileName: string): Promise<void> {
+        const defaultName = (fileName || 'export').replace(/\.md$/i, '.html');
+        const uri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(defaultName),
+            filters: { 'HTML': ['html'] }
+        });
+        if (uri) {
+            fs.writeFileSync(uri.fsPath, html, 'utf8');
+            vscode.window.showInformationMessage(`已导出到 ${uri.fsPath}`);
+        }
     }
 
     private getWebviewContent(content: string, fileName: string, resourceUris: any): string {

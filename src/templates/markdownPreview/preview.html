@@ -12,7 +12,18 @@
 <body>
     <div class="container">
         <div class="header">
+        <div class="title-row">
             <div class="title">${fileName}</div>
+            <div class="export-actions">
+                <label class="export-option" title="关闭可节约墨水">
+                    <input type="checkbox" id="keepPrintBg">
+                    <span>保留打印背景</span>
+                </label>
+                <button class="export-btn" id="exportHtmlBtn" title="导出为 HTML">
+                    导出 HTML
+                </button>
+            </div>
+        </div>
             <div class="help-text">
                 支持Markdown语法、Mermaid图表和LaTeX公式，支持缩放功能
             </div>

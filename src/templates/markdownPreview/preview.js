@@ -53,18 +53,15 @@
                     };
 
                     renderer.code = function(code, language) {
-                        if (!language) {
-                            return originalCode.call(this, code, language);
-                        }
-
                         if (typeof hljs !== 'undefined') {
                             try {
-                                if (hljs.getLanguage(language)) {
+                                if (language && hljs.getLanguage(language)) {
                                     const highlighted = hljs.highlight(code, { language: language }).value;
                                     return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
                                 } else {
                                     const result = hljs.highlightAuto(code);
-                                    return '<pre><code class="hljs language-' + result.language + '">' + result.value + '</code></pre>';
+                                    const langClass = result.language ? ' language-' + result.language : '';
+                                    return '<pre><code class="hljs' + langClass + '">' + result.value + '</code></pre>';
                                 }
                             } catch (error) {
                                 console.warn('代码高亮失败:', error);
@@ -489,12 +486,108 @@
         }
     });
 
+    function cleanMermaidControls(clone) {
+        clone.querySelectorAll('.mermaid-controls, .mermaid-zoom-info').forEach(el => el.remove());
+        clone.querySelectorAll('.mermaid-chart').forEach(chart => {
+            chart.removeAttribute('data-scale');
+            chart.removeAttribute('data-translate-x');
+            chart.removeAttribute('data-translate-y');
+            chart.style.cursor = '';
+            const svg = chart.querySelector('svg');
+            if (svg) {
+                svg.style.transform = '';
+                svg.style.transformOrigin = '';
+            }
+        });
+    }
+
+    function resolveCssVariables(cssText) {
+        return cssText.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g, (match, varName, fallback) => {
+            const value = getComputedStyle(document.body).getPropertyValue(varName).trim() ||
+                          getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+            return value || fallback || match;
+        });
+    }
+
+    function resolveDomStyleVariables(clone) {
+        clone.querySelectorAll('[style]').forEach(el => {
+            el.setAttribute('style', resolveCssVariables(el.getAttribute('style')));
+        });
+        clone.querySelectorAll('style').forEach(tag => {
+            tag.textContent = resolveCssVariables(tag.textContent);
+        });
+    }
+
+    function collectStylesFromDocument(clone) {
+        const parts = [];
+
+        for (const sheet of document.styleSheets) {
+            try {
+                const raw = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+
+                if (raw.includes('.katex') && !clone.querySelector('.katex')) continue;
+                if (raw.includes('.hljs') && !clone.querySelector('.hljs')) continue;
+
+                parts.push(resolveCssVariables(raw));
+            } catch {
+            }
+        }
+
+        return parts.join('\n');
+    }
+
+    function collectImagePaths(clone) {
+        const localPaths = [];
+        const remoteUrls = [];
+
+        clone.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src');
+            if (!src || src.startsWith('data:')) return;
+            if (src.startsWith('http://') || src.startsWith('https://')) {
+                remoteUrls.push(src);
+            } else {
+                localPaths.push(src);
+            }
+        });
+
+        return { localPaths, remoteUrls };
+    }
+
+    function prepareExportHtml() {
+        const clone = previewArea.cloneNode(true);
+
+        cleanMermaidControls(clone);
+        resolveDomStyleVariables(clone);
+
+        const css = collectStylesFromDocument(clone);
+        const { localPaths, remoteUrls } = collectImagePaths(clone);
+        const keepPrintBg = document.getElementById('keepPrintBg')?.checked ?? true;
+
+        vscode.postMessage({
+            command: 'exportHtml',
+            html: clone.outerHTML,
+            css: css,
+            localImagePaths: localPaths,
+            remoteImageUrls: remoteUrls,
+            hasKatex: !!clone.querySelector('.katex'),
+            fileName: document.querySelector('.title')?.textContent || 'export',
+            keepPrintBg: keepPrintBg
+        });
+    }
+
     function initializePreview() {
         if (window.markdownContent) {
             updatePreview(window.markdownContent);
         } else {
             console.log('window.markdownContent 不存在或为空');
         }
+    }
+
+    const exportBtn = document.getElementById('exportHtmlBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            prepareExportHtml();
+        });
     }
 
     if (document.readyState === 'loading') {

@@ -57,7 +57,7 @@
   "sharedCommentsTreeViewTitle": "共享注释",
   	"refreshSharedComments": "刷新共享注释",
 	"previewSharedComment": "预览注释内容",
-	"mermaidThemeDescription": "选择Mermaid图表的渲染主题。",
+  	"mermaidThemeDescription": "选择Mermaid图表的渲染主题。",
 	"mermaidThemeDefault": "默认风格",
 	"mermaidThemeHandDrawn": "手绘风格",
 	"previewMarkdown": "预览 Markdown"
