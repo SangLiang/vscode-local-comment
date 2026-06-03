@@ -159,6 +159,10 @@
             const originalCode = renderer.code;
             
             renderer.code = function(code, language) {
+                // mermaid 不交给 highlight.js，否则 language-mermaid 会被覆盖为自动识别的语言
+                if (language === 'mermaid') {
+                    return `<pre><code class="language-mermaid">${code}</code></pre>`;
+                }
                 // 如果没有指定语言，使用原始渲染
                 if (!language) {
                     return originalCode.call(this, code, language);
@@ -342,12 +346,9 @@
 
             const renderedSvgs = await Promise.all(svgPromises);
 
-            // 4. 将渲染好的SVG替换回Markdown内容中
+            // 4. 保留 processedContent（Mermaid 代码块仍是文本），先做 LaTeX 和标签占位符处理
+            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
             let finalContent = processedContent;
-            let svgIndex = 0;
-            finalContent = finalContent.replace(mermaidRegex, () => {
-                return renderedSvgs[svgIndex++];
-            });
 
             // 5. 处理 LaTeX 公式（在 marked.parse 之前，此时 ${标签名} 已被占位符替换）
             if (typeof katex !== 'undefined') {
@@ -385,11 +386,19 @@
 
             // 7. 使用marked将整个内容（包括已插入的SVG和LaTeX公式）转换为HTML
             const finalHtml = marked.parse(finalContent);
-            
+
+            // 7.1 marked 解析后再将 Mermaid 代码块占位符替换为已渲染的 SVG
+            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
+            let svgIndex = 0;
+            const mermaidCodeBlockRegex = /<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/g;
+            const finalHtmlWithSvg = finalHtml.replace(mermaidCodeBlockRegex, () => {
+                return renderedSvgs[svgIndex++] || '';
+            });
+
             // 8. 一次性更新DOM（更新前保存输入框滚动比例，更新后恢复预览滚动，避免输入时预览总回到顶部）
             const inputMax = textarea.scrollHeight - textarea.clientHeight;
             const inputRatio = inputMax > 0 ? textarea.scrollTop / inputMax : 0; // 0~1，表示当前看到的是全文的多少比例
-            previewArea.innerHTML = finalHtml || '<p>预览生成失败</p>';
+            previewArea.innerHTML = finalHtmlWithSvg || '<p>预览生成失败</p>';
             console.log("预览区域已使用包含SVG的完整HTML更新。");
             // 下一帧再设置 scrollTop：等新 DOM 布局完成后再按比例恢复预览滚动位置
             requestAnimationFrame(function() {
