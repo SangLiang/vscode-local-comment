@@ -231,6 +231,7 @@ export class MarkdownPreviewWebview {
 
     private buildExportHtml(previewHtml: string, css: string, fileName: string, keepPrintBg: boolean = true): string {
         const safeName = fileName ? fileName.replace(/\.md$/i, '') : 'export';
+        // 仅影响「打印」时是否保留背景色，与屏幕浏览时的表格边框无关
         const printStyles = keepPrintBg
             ? `@media print {
     * {

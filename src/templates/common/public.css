@@ -60,12 +60,12 @@ table {
 }
 
 th, td {
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--vscode-panel-border, #c8c8c8);
     padding: 6px 12px;
 }
 
 th {
-    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    background-color: var(--vscode-editor-inactiveSelectionBackground, #f0f0f0);
 }
 
 input{

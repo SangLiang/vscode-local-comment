@@ -86,6 +86,7 @@
 
 #previewArea {
     background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     padding: 20px;

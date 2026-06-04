@@ -602,13 +602,259 @@
         });
     }
 
+    /**
+     * 导出配色优先级（亮/暗均适用）：
+     * 1. 预览 DOM 的 getComputedStyle（th/td/body，与肉眼所见一致）
+     * 2. VS Code 注入的 --vscode-* 变量
+     * 3. 按当前预览推断亮/暗后，选用下方 LIGHT / DARK 回退表
+     */
+
+    /** 亮色主题下 CSS 变量读不到时的回退（仅最后兜底，正常走 VS Code 注入值） */
+    const VSCODE_CSS_VAR_FALLBACKS_LIGHT = {
+        '--vscode-panel-border': '#c8c8c8',
+        '--vscode-editorWidget-border': '#c8c8c8',
+        '--vscode-textBlockQuote-border': '#c8c8c8',
+        '--vscode-editor-inactiveSelectionBackground': '#f0f0f0',
+        '--vscode-foreground': '#333333',
+        '--vscode-editor-foreground': '#333333',
+        '--vscode-editor-background': '#ffffff',
+        '--vscode-descriptionForeground': '#717171',
+        '--vscode-textLink-foreground': '#006ab1',
+        '--vscode-textBlockQuote-foreground': '#717171',
+        '--vscode-editor-font-family': 'Consolas, "Courier New", monospace',
+        '--vscode-editor-font-size': '14px'
+    };
+
+    /** 暗色主题下 CSS 变量读不到时的回退 */
+    const VSCODE_CSS_VAR_FALLBACKS_DARK = {
+        '--vscode-panel-border': '#454545',
+        '--vscode-editorWidget-border': '#454545',
+        '--vscode-textBlockQuote-border': '#454545',
+        '--vscode-editor-inactiveSelectionBackground': '#3a3d41',
+        '--vscode-foreground': '#cccccc',
+        '--vscode-editor-foreground': '#cccccc',
+        '--vscode-editor-background': '#1e1e1e',
+        '--vscode-descriptionForeground': '#999999',
+        '--vscode-textLink-foreground': '#3794ff',
+        '--vscode-textBlockQuote-foreground': '#999999',
+        '--vscode-editor-font-family': 'Consolas, "Courier New", monospace',
+        '--vscode-editor-font-size': '14px'
+    };
+
+    const EXPORT_TABLE_FALLBACKS_LIGHT = {
+        thBackground: '#f0f0f0',
+        borderColor: '#c8c8c8'
+    };
+
+    const EXPORT_TABLE_FALLBACKS_DARK = {
+        thBackground: '#3a3d41',
+        borderColor: '#454545'
+    };
+
+    function parseCssColorToRgb(color) {
+        if (!color) return null;
+        const trimmed = color.trim();
+        const hexMatch = trimmed.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (hexMatch) {
+            let hex = hexMatch[1];
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            return {
+                r: parseInt(hex.slice(0, 2), 16),
+                g: parseInt(hex.slice(2, 4), 16),
+                b: parseInt(hex.slice(4, 6), 16)
+            };
+        }
+        const rgbMatch = trimmed.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (rgbMatch) {
+            return {
+                r: Number(rgbMatch[1]),
+                g: Number(rgbMatch[2]),
+                b: Number(rgbMatch[3])
+            };
+        }
+        return null;
+    }
+
+    function isColorDark(color) {
+        const rgb = parseCssColorToRgb(color);
+        if (!rgb) return false;
+        const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+        return luminance < 0.5;
+    }
+
+    /**
+     * 判断当前预览是否为暗色主题：优先 color-scheme，再根据编辑器背景亮度推断
+     */
+    function isPreviewDarkTheme() {
+        const colorScheme = getComputedStyle(document.body).colorScheme ||
+            getComputedStyle(document.documentElement).colorScheme;
+        if (colorScheme === 'dark') return true;
+        if (colorScheme === 'light') return false;
+
+        const editorBgVar = getComputedStyle(document.body).getPropertyValue('--vscode-editor-background').trim() ||
+            getComputedStyle(document.documentElement).getPropertyValue('--vscode-editor-background').trim();
+        const editorBgComputed = getComputedStyle(document.body).backgroundColor;
+        const probe = editorBgVar || editorBgComputed;
+        return isColorDark(probe);
+    }
+
+    function getVscodeCssVarFallbacks() {
+        return isPreviewDarkTheme() ? VSCODE_CSS_VAR_FALLBACKS_DARK : VSCODE_CSS_VAR_FALLBACKS_LIGHT;
+    }
+
+    function getExportTableFallbacks() {
+        return isPreviewDarkTheme() ? EXPORT_TABLE_FALLBACKS_DARK : EXPORT_TABLE_FALLBACKS_LIGHT;
+    }
+
+    /** 读取当前预览 Webview 中的 VS Code 主题色（与预览一致），读不到再按亮/暗主题回退 */
+    function resolveThemeColor(varName, hardFallback) {
+        let value = getComputedStyle(document.body).getPropertyValue(varName).trim() ||
+            getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        const themeFallbacks = getVscodeCssVarFallbacks();
+        if (!value && themeFallbacks[varName]) {
+            value = themeFallbacks[varName];
+        }
+        return value || hardFallback;
+    }
+
     /** 将 var(--vscode-*) 替换为 getComputedStyle 的实际值，便于脱离 VS Code 打开 */
     function resolveCssVariables(cssText) {
-        return cssText.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g, (match, varName, fallback) => {
-            const value = getComputedStyle(document.body).getPropertyValue(varName).trim() ||
-                          getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-            return value || fallback || match;
+        const themeFallbacks = getVscodeCssVarFallbacks();
+        return cssText.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g, (match, varName, fallbackInVar) => {
+            let value = getComputedStyle(document.body).getPropertyValue(varName).trim() ||
+                getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+            if (!value && fallbackInVar) {
+                value = fallbackInVar.trim();
+            }
+            if (!value && themeFallbacks[varName]) {
+                value = themeFallbacks[varName];
+            }
+            return value || match;
         });
+    }
+
+    /**
+     * 导出兜底：用预览时的主题色写死边框/表头背景，避免独立浏览器中 var() 失效。
+     * 优先读预览 DOM 上 th/td 的 getComputedStyle，与肉眼所见一致。
+     */
+    function getExportTableStyles(clone) {
+        if (!clone.querySelector('table')) {
+            return '';
+        }
+
+        const sampleTh = previewArea.querySelector('th') || clone.querySelector('th');
+        const sampleTd = previewArea.querySelector('td') || clone.querySelector('td');
+
+        let thBackground = resolveThemeColor('--vscode-editor-inactiveSelectionBackground', '');
+        if (sampleTh) {
+            const computedBg = getComputedStyle(sampleTh).backgroundColor;
+            if (computedBg && computedBg !== 'rgba(0, 0, 0, 0)' && computedBg !== 'transparent') {
+                thBackground = computedBg;
+            }
+        }
+        const tableFallbacks = getExportTableFallbacks();
+        if (!thBackground) {
+            thBackground = tableFallbacks.thBackground;
+        }
+
+        let borderColor = resolveThemeColor('--vscode-panel-border', '');
+        if (sampleTd) {
+            const computedBorder = getComputedStyle(sampleTd).borderTopColor;
+            if (computedBorder) {
+                borderColor = computedBorder;
+            }
+        }
+        if (!borderColor) {
+            borderColor = tableFallbacks.borderColor;
+        }
+
+        return `
+#previewArea table, table {
+    border-collapse: collapse;
+    width: 100%;
+}
+#previewArea th, #previewArea td, th, td {
+    border: 1px solid ${borderColor};
+    padding: 6px 12px;
+}
+#previewArea th, th {
+    background-color: ${thBackground};
+}
+`;
+    }
+
+    /**
+     * 导出兜底：从 #previewArea 读取当前计算后的字体/颜色（与预览、编辑器主题一致），
+     * 写入独立 HTML，避免 var(--vscode-*) 在外部浏览器失效。
+     */
+    function getExportTypographyStyles() {
+        if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
+            window.applyPreviewFontSize(previewArea, currentPreviewFontSize);
+        }
+
+        const areaStyle = getComputedStyle(previewArea);
+        const sampleHeading = previewArea.querySelector('h1,h2,h3,h4,h5,h6');
+        const sampleLink = previewArea.querySelector('a');
+        const sampleBlockquote = previewArea.querySelector('blockquote');
+        const sampleCode = previewArea.querySelector('pre code, pre, code.hljs');
+
+        const fontFamily = areaStyle.fontFamily;
+        const fontSize = areaStyle.fontSize;
+        const color = areaStyle.color;
+        const backgroundColor = areaStyle.backgroundColor;
+        const lineHeight = areaStyle.lineHeight;
+        const borderColor = resolveThemeColor('--vscode-panel-border', getExportTableFallbacks().borderColor);
+
+        const headingColor = sampleHeading
+            ? getComputedStyle(sampleHeading).color
+            : resolveThemeColor('--vscode-editor-foreground', color);
+        const linkColor = sampleLink
+            ? getComputedStyle(sampleLink).color
+            : resolveThemeColor('--vscode-textLink-foreground', isPreviewDarkTheme() ? '#3794ff' : '#006ab1');
+        const blockquoteColor = sampleBlockquote
+            ? getComputedStyle(sampleBlockquote).color
+            : resolveThemeColor('--vscode-textBlockQuote-foreground', color);
+        const codeFontFamily = sampleCode ? getComputedStyle(sampleCode).fontFamily : fontFamily;
+
+        return `
+body {
+    font-family: ${fontFamily};
+    font-size: ${fontSize};
+    color: ${color};
+    background-color: ${backgroundColor};
+    line-height: ${lineHeight};
+    margin: 0;
+    padding: 0;
+}
+.container, .content-area {
+    background-color: ${backgroundColor};
+}
+#previewArea, .preview-area {
+    font-family: ${fontFamily};
+    font-size: ${fontSize};
+    color: ${color};
+    background-color: ${backgroundColor};
+    line-height: ${lineHeight};
+    padding: 20px;
+    border: 1px solid ${borderColor};
+    border-radius: 4px;
+    word-wrap: break-word;
+}
+#previewArea h1, #previewArea h2, #previewArea h3, #previewArea h4, #previewArea h5, #previewArea h6 {
+    color: ${headingColor};
+}
+#previewArea a {
+    color: ${linkColor};
+}
+#previewArea blockquote {
+    color: ${blockquoteColor};
+}
+#previewArea code, #previewArea pre, #previewArea pre code {
+    font-family: ${codeFontFamily};
+}
+`;
     }
 
     /** 处理克隆节点上的内联 style 及嵌入的 <style> 标签中的 CSS 变量 */
@@ -624,22 +870,48 @@
     /**
      * 收集当前页已加载的样式表文本；按 DOM 内容按需跳过 KaTeX / hljs / mermaid 相关表以减小体积
      */
+    function shouldIncludeStylesheet(raw, clone) {
+        if (raw.includes('.katex') && !clone.querySelector('.katex')) return false;
+        if (raw.includes('.hljs') && !clone.querySelector('.hljs')) return false;
+        if (raw.includes('.mermaid-chart') && !clone.querySelector('.mermaid-chart')) return false;
+        return true;
+    }
+
+    function appendStylesheetRules(sheet, clone, parts, visited) {
+        if (!sheet || visited.has(sheet)) return;
+        visited.add(sheet);
+
+        try {
+            const rules = sheet.cssRules;
+            for (let i = 0; i < rules.length; i++) {
+                const imported = rules[i].styleSheet;
+                if (imported) {
+                    appendStylesheetRules(imported, clone, parts, visited);
+                }
+            }
+
+            const raw = Array.from(rules).map(r => r.cssText).join('\n');
+            if (raw && shouldIncludeStylesheet(raw, clone)) {
+                parts.push(resolveCssVariables(raw));
+            }
+        } catch {
+            // 跨域 <link> 无法读取 cssRules，忽略
+        }
+    }
+
     function collectStylesFromDocument(clone) {
         const parts = [];
+        const visited = new Set();
 
         for (const sheet of document.styleSheets) {
-            try {
-                const raw = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+            appendStylesheetRules(sheet, clone, parts, visited);
+        }
 
-                // 样式表「提及」某类选择器但克隆 DOM 中不存在时，跳过整表
-                if (raw.includes('.katex') && !clone.querySelector('.katex')) continue;
-                if (raw.includes('.hljs') && !clone.querySelector('.hljs')) continue;
-                if (raw.includes('.mermaid-chart') && !clone.querySelector('.mermaid-chart')) continue;
+        parts.push(getExportTypographyStyles());
 
-                parts.push(resolveCssVariables(raw));
-            } catch {
-                // 跨域 <link> 无法读取 cssRules，忽略
-            }
+        const tableStyles = getExportTableStyles(clone);
+        if (tableStyles) {
+            parts.push(tableStyles);
         }
 
         return parts.join('\n');
