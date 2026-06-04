@@ -22,6 +22,8 @@
 | **Bookmarks** | Mark lines across files and navigate in order—pairs well with comments as a reading path. |
 | **Sidebar tree** | Browse comments and bookmarks for the project and jump back to code. |
 | **Projects / groups** | Multiple independent comment groups per project: switch between several configs under `.vscode/local-comment/` (e.g. notes for one branch vs another). |
+| **Markdown preview** | Preview `.md` files directly with Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; supports zoom/pan for diagrams. |
+| **Export to HTML** | Export Markdown files (including rendered diagrams and formulas) to a self-contained HTML file for sharing and offline viewing. |
 
 **In short:** keep “how you read the code” in VS Code, **local and private by default**.
 
@@ -112,6 +114,12 @@ Typical cases: **researching a codebase**, **design notes that should not land i
 - **Visuals**: Gutter icons, scrollbar markers, hover details.  
 - **Navigate**: `Ctrl+Alt+J` next, `Ctrl+Alt+Shift+J` previous, cross-file, wraps end-to-start.
 
+### 3. Markdown file preview and export
+
+- **Preview**: Select "Preview Markdown" from the right-click menu in the Markdown file editor, or run `Local Comment: Preview Markdown` from the Command Palette. Supports live preview of Mermaid diagrams, LaTeX formulas, and syntax-highlighted code.
+- **Diagram interactions**: Zoom buttons (+/-), Ctrl+scroll to zoom, mouse drag to pan Mermaid diagrams.
+- **Export HTML**: Click the "Export HTML" button in the preview panel to generate a self-contained HTML file (with inlined CSS/JS/fonts) that can be viewed without network access—perfect for sharing and archiving.
+
 ---
 
 ## Best practices (very important)
@@ -139,6 +147,7 @@ That makes it easier to stay aligned after **branch switches** or **large refact
 | `Ctrl+Shift+E` | Edit comment | Quick edit for current line |
 | `Ctrl+Shift+D` | Delete comment | Remove comment on current line |
 | `Ctrl+Shift+T` | Selection to comment | Convert selection |
+| - | Preview Markdown | Right-click menu or Command Palette (`.md` files only) |
 
 ### Bookmarks
 

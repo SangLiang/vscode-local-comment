@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [1.6.0] - 2026-06-04
+
+### Added
+
+Now you can preview Markdown files directly, with LaTeX formula support, Mermaid flowcharts, and even export to HTML!
+
+- **Markdown file preview**: Preview `.md` files directly in VS Code without installing additional extensions. Supports Mermaid diagrams, LaTeX formulas, and syntax-highlighted code.
+- **Diagram interactions**: Mermaid diagrams support zoom buttons (+/-), Ctrl+scroll to zoom, and mouse drag to pan.
+- **Export to HTML**: The preview panel provides an "Export HTML" button that exports Markdown files (including rendered diagrams and formulas) to a self-contained HTML file with all CSS/JS/font resources inlined—viewable offline and easy to share or archive.
+- Right-click menu integration: In the Markdown file editor, right-click and select "Preview Markdown" to open the preview panel.
+
+## [1.5.2] - 2026-05-10
+
+### Added
+
+- Added documentation site with detailed usage instructions: https://sangliang.github.io/vscode-local-comment/
+
+- Improved Markdown editing: unsaved changes now show a more prominent indicator
+
 ## [1.5.1] - 2026-04-14
 
 ### Changed
