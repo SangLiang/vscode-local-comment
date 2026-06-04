@@ -912,25 +912,33 @@
     function insertTag(tag) {
         const cursorPos = textarea.selectionStart;
         const text = textarea.value;
-        
+
         // 找到@的位置
         const beforeCursor = text.substring(0, cursorPos);
         const atIndex = beforeCursor.lastIndexOf('@');
-        
+
         if (atIndex !== -1) {
             // 替换@后的内容
             const beforeAt = text.substring(0, atIndex);
             const afterCursor = text.substring(cursorPos);
             const newText = beforeAt + '@' + tag + ' ' + afterCursor;
-            
+
             textarea.value = newText;
             const newCursorPos = atIndex + tag.length + 2; // @tag + 空格
             textarea.setSelectionRange(newCursorPos, newCursorPos);
             textarea.focus();
         }
-        
+
         hideAutocomplete();
         scheduleDirtyPostToHost();
+
+        // 如果当前在预览tab，立即更新预览（因为直接修改value不会触发input事件）
+        if (currentTab === 'preview-tab') {
+            debouncedUpdatePreview(textarea.value);
+        }
+
+        // 保存状态
+        saveState();
     }
     
     const debouncedUpdatePreview = typeof window.debounce === 'function' ? window.debounce(updatePreview, 500) : updatePreview;
