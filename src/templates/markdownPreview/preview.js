@@ -1,10 +1,23 @@
+/**
+ * Markdown 文件预览 Webview 脚本
+ *
+ * 职责：将 Markdown 渲染为 HTML（Mermaid / KaTeX / 代码高亮），支持图表缩放拖拽，以及导出自包含 HTML。
+ * 渲染顺序：先异步渲染 Mermaid → KaTeX（跳过代码块）→ marked → 再把 Mermaid 占位块替换为 SVG。
+ */
 (function() {
     const vscode = acquireVsCodeApi();
     const previewArea = document.getElementById('previewArea');
     let markedInitialized = false;
     let mermaidInitialized = false;
     let currentPreviewFontSize = null;
+    /** 最近一次预览渲染的 Promise，导出前需 await，避免 Mermaid 尚未写入 DOM */
+    let previewRenderPromise = Promise.resolve();
 
+    /** 从源码中提取 ```mermaid 围栏（支持 CRLF） */
+    const MERMAID_FENCE_REGEX = /```mermaid\s*\r?\n([\s\S]*?)```/gi;
+    /** marked 输出的 Mermaid 占位 <pre>，用于替换为已渲染的 SVG */
+    const MERMAID_CODE_BLOCK_HTML_REGEX = /<pre><code class="[^"]*\blanguage-mermaid\b[^"]*">[\s\S]*?<\/code><\/pre>/gi;
+    // 等待 marked / mermaid / highlight.js 就绪后再渲染
     const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
         .then(() => {
             console.log('所有库初始化成功');
@@ -15,6 +28,7 @@
             throw error;
         });
 
+    /** 配置 marked：mermaid 块不走高亮，其余代码块走 highlight.js */
     function initializeMarked() {
         let markedObj = marked;
         if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
@@ -53,6 +67,7 @@
                     };
 
                     renderer.code = function(code, language) {
+                        // 保留占位结构，后续用 MERMAID_CODE_BLOCK_HTML_REGEX 整体替换为 SVG
                         if (language === 'mermaid') {
                             return '<pre><code class="language-mermaid">' + code + '</code></pre>';
                         }
@@ -122,6 +137,7 @@
         });
     }
 
+    /** 构建 mermaid.initialize 配置，handDrawn 对应设置项 hand-drawn */
     function buildMermaidConfig(handDrawnEnabled) {
         const config = {
             startOnLoad: false,
@@ -196,7 +212,15 @@
         });
     }
 
+    /** 对外入口：包装渲染任务，供导出流程等待完成 */
     async function updatePreview(content) {
+        const renderTask = updatePreviewContent(content);
+        previewRenderPromise = renderTask;
+        return renderTask;
+    }
+
+    /** 核心预览管线 */
+    async function updatePreviewContent(content) {
         if (!content || content.trim() === '') {
             previewArea.innerHTML = '<p style="color: var(--vscode-descriptionForeground); text-align: center; margin-top: 40px;">暂无内容</p>';
             return;
@@ -206,8 +230,8 @@
             await initializationPromise;
 
             // 1. 查找并渲染所有Mermaid代码块
-            const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
-            const mermaidBlocks = [...content.matchAll(mermaidRegex)];
+            MERMAID_FENCE_REGEX.lastIndex = 0;
+            const mermaidBlocks = [...content.matchAll(MERMAID_FENCE_REGEX)];
             console.log('找到 ' + mermaidBlocks.length + ' 个Mermaid代码块');
 
             const svgPromises = mermaidBlocks.map(async (match, index) => {
@@ -235,10 +259,25 @@
             // 2. 保留原始 markdown 内容，先做 LaTeX 处理（marked 不能解析 SVG 内的 <style>，故不在此处替换 Mermaid）
             let finalContent = content;
 
-            // 3. 处理 LaTeX 公式
+            // 3. 处理 LaTeX 公式（跳过围栏/行内代码块，避免 Makefile 中 $(VAR) 被误渲染）
             if (typeof katex !== 'undefined') {
                 try {
-                    finalContent = finalContent.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+                    const maskFn = typeof window.maskMarkdownForKatex === 'function'
+                        ? window.maskMarkdownForKatex
+                        : null;
+                    const unmaskFn = typeof window.unmaskMarkdownAfterKatex === 'function'
+                        ? window.unmaskMarkdownAfterKatex
+                        : null;
+                    let katexInput = finalContent;
+                    let codeBlocks = [];
+
+                    if (maskFn && unmaskFn) {
+                        const masked = maskFn(finalContent);
+                        katexInput = masked.masked;
+                        codeBlocks = masked.blocks;
+                    }
+
+                    katexInput = katexInput.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
                         try {
                             return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
                         } catch (error) {
@@ -247,7 +286,7 @@
                         }
                     });
 
-                    finalContent = finalContent.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, formula) => {
+                    katexInput = katexInput.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, formula) => {
                         try {
                             return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
                         } catch (error) {
@@ -255,6 +294,8 @@
                             return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
                         }
                     });
+
+                    finalContent = unmaskFn ? unmaskFn(katexInput, codeBlocks) : katexInput;
                 } catch (error) {
                     console.error('LaTeX 公式处理失败:', error);
                 }
@@ -268,8 +309,8 @@
             // 5. marked 解析后再将 Mermaid 代码块占位符替换为已渲染的 SVG
             // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
             let svgIndex = 0;
-            const mermaidCodeBlockRegex = /<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/g;
-            const finalHtmlWithSvg = finalHtml.replace(mermaidCodeBlockRegex, () => {
+            MERMAID_CODE_BLOCK_HTML_REGEX.lastIndex = 0;
+            const finalHtmlWithSvg = finalHtml.replace(MERMAID_CODE_BLOCK_HTML_REGEX, () => {
                 return renderedSvgs[svgIndex++] || '';
             });
 
@@ -280,7 +321,7 @@
                 window.applyPreviewFontSize(previewArea, currentPreviewFontSize);
             }
 
-            // 5. 初始化图表交互
+            // 6. 绑定 Mermaid 缩放、拖拽
             initChartInteractions();
 
         } catch (error) {
@@ -292,6 +333,8 @@
                 '</div>';
         }
     }
+
+    // --- Mermaid 图表交互（Ctrl+滚轮缩放、拖拽平移，按钮见 window.zoomChart / resetChart）---
 
     function initChartInteractions() {
         const charts = document.querySelectorAll('.mermaid-chart');
@@ -341,7 +384,7 @@
         if (!chart) return;
 
         chart.addEventListener('wheel', (e) => {
-            if (!e.ctrlKey) return;
+            if (!e.ctrlKey) return; // 与编辑器缩放区分，仅 Ctrl+滚轮缩放图表
 
             const currentScale = parseFloat(chart.dataset.scale) || 1;
             const svg = chart.querySelector('svg');
@@ -431,6 +474,7 @@
         });
     }
 
+    /** 供 Mermaid 控件按钮 onclick 调用 */
     window.resetChart = function(chartId) {
         const chart = document.querySelector('[data-chart-id="' + chartId + '"]');
         if (chart) {
@@ -462,7 +506,8 @@
         }
     };
 
-    // 监听来自扩展的消息
+    // --- 与扩展主进程通信（updateContent / 字体 / Mermaid 主题）---
+
     window.addEventListener('message', event => {
         const message = event.data;
         switch (message.command) {
@@ -500,6 +545,48 @@
         }
     });
 
+    // --- 导出 HTML：克隆 DOM → 补渲染 → 内联样式变量 → postMessage 给扩展写盘 ---
+
+    /**
+     * 导出兜底：克隆节点上若仍有未替换的 language-mermaid 代码块，在此补渲染为 SVG
+     */
+    async function renderMermaidInElement(root) {
+        if (typeof mermaid === 'undefined' || typeof mermaid.render !== 'function') {
+            return;
+        }
+
+        const codeBlocks = root.querySelectorAll('pre > code.language-mermaid');
+        for (const codeEl of codeBlocks) {
+            const pre = codeEl.closest('pre');
+            if (!pre) continue;
+
+            const chartDefinition = codeEl.textContent.trim();
+            if (!chartDefinition) continue;
+
+            const chartId = 'mermaid-export-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            try {
+                const { svg } = await mermaid.render(chartId, chartDefinition);
+                const wrapper = document.createElement('div');
+                wrapper.className = 'mermaid-chart';
+                wrapper.setAttribute('data-chart-id', chartId);
+                wrapper.innerHTML = svg;
+                pre.replaceWith(wrapper);
+            } catch (error) {
+                console.error('导出时渲染 Mermaid 失败:', chartId, error);
+            }
+        }
+    }
+
+    /** 独立 HTML 文件中 SVG 需显式 xmlns，否则部分浏览器无法绘制 */
+    function serializeMermaidSvgForExport(clone) {
+        clone.querySelectorAll('.mermaid-chart svg').forEach(svg => {
+            if (!svg.getAttribute('xmlns')) {
+                svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            }
+        });
+    }
+
+    /** 去掉缩放按钮与交互状态，导出文件只保留静态图 */
     function cleanMermaidControls(clone) {
         clone.querySelectorAll('.mermaid-controls, .mermaid-zoom-info').forEach(el => el.remove());
         clone.querySelectorAll('.mermaid-chart').forEach(chart => {
@@ -515,6 +602,7 @@
         });
     }
 
+    /** 将 var(--vscode-*) 替换为 getComputedStyle 的实际值，便于脱离 VS Code 打开 */
     function resolveCssVariables(cssText) {
         return cssText.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g, (match, varName, fallback) => {
             const value = getComputedStyle(document.body).getPropertyValue(varName).trim() ||
@@ -523,6 +611,7 @@
         });
     }
 
+    /** 处理克隆节点上的内联 style 及嵌入的 <style> 标签中的 CSS 变量 */
     function resolveDomStyleVariables(clone) {
         clone.querySelectorAll('[style]').forEach(el => {
             el.setAttribute('style', resolveCssVariables(el.getAttribute('style')));
@@ -532,6 +621,9 @@
         });
     }
 
+    /**
+     * 收集当前页已加载的样式表文本；按 DOM 内容按需跳过 KaTeX / hljs / mermaid 相关表以减小体积
+     */
     function collectStylesFromDocument(clone) {
         const parts = [];
 
@@ -539,17 +631,21 @@
             try {
                 const raw = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
 
+                // 样式表「提及」某类选择器但克隆 DOM 中不存在时，跳过整表
                 if (raw.includes('.katex') && !clone.querySelector('.katex')) continue;
                 if (raw.includes('.hljs') && !clone.querySelector('.hljs')) continue;
+                if (raw.includes('.mermaid-chart') && !clone.querySelector('.mermaid-chart')) continue;
 
                 parts.push(resolveCssVariables(raw));
             } catch {
+                // 跨域 <link> 无法读取 cssRules，忽略
             }
         }
 
         return parts.join('\n');
     }
 
+    /** 收集需由扩展侧 fs / axios 内联为 data URI 的图片路径 */
     function collectImagePaths(clone) {
         const localPaths = [];
         const remoteUrls = [];
@@ -567,28 +663,48 @@
         return { localPaths, remoteUrls };
     }
 
-    function prepareExportHtml() {
-        const clone = previewArea.cloneNode(true);
+    /**
+     * 准备导出：等待预览就绪 → 克隆 #previewArea → 清理/补全 Mermaid → 收集 CSS 与图片列表
+     * 扩展侧收到 exportHtml 消息后负责内联资源并写文件（见 markdownPreviewWebview.ts）
+     */
+    async function prepareExportHtml() {
+        try {
+            await previewRenderPromise;
+            if (window.markdownContent) {
+                const hasUnrenderedMermaid = previewArea.querySelector('pre code.language-mermaid');
+                if (hasUnrenderedMermaid) {
+                    await updatePreview(window.markdownContent);
+                    await previewRenderPromise;
+                }
+            }
 
-        cleanMermaidControls(clone);
-        resolveDomStyleVariables(clone);
+            const clone = previewArea.cloneNode(true);
+            await renderMermaidInElement(clone);
+            cleanMermaidControls(clone);
+            serializeMermaidSvgForExport(clone);
+            resolveDomStyleVariables(clone);
 
-        const css = collectStylesFromDocument(clone);
-        const { localPaths, remoteUrls } = collectImagePaths(clone);
-        const keepPrintBg = document.getElementById('keepPrintBg')?.checked ?? true;
+            const css = collectStylesFromDocument(clone);
+            const { localPaths, remoteUrls } = collectImagePaths(clone);
+            const keepPrintBg = document.getElementById('keepPrintBg')?.checked ?? true;
 
-        vscode.postMessage({
-            command: 'exportHtml',
-            html: clone.outerHTML,
-            css: css,
-            localImagePaths: localPaths,
-            remoteImageUrls: remoteUrls,
-            hasKatex: !!clone.querySelector('.katex'),
-            fileName: document.querySelector('.title')?.textContent || 'export',
-            keepPrintBg: keepPrintBg
-        });
+            vscode.postMessage({
+                command: 'exportHtml',
+                html: clone.outerHTML,
+                css: css,
+                localImagePaths: localPaths,
+                remoteImageUrls: remoteUrls,
+                hasKatex: !!clone.querySelector('.katex'),
+                hasMermaid: !!clone.querySelector('.mermaid-chart'),
+                fileName: document.querySelector('.title')?.textContent || 'export',
+                keepPrintBg: keepPrintBg
+            });
+        } catch (error) {
+            console.error('准备导出 HTML 失败:', error);
+        }
     }
 
+    /** 页面加载后首次渲染（内容来自 preview.html 内嵌的 #markdownContent） */
     function initializePreview() {
         if (window.markdownContent) {
             updatePreview(window.markdownContent);
@@ -600,7 +716,7 @@
     const exportBtn = document.getElementById('exportHtmlBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
-            prepareExportHtml();
+            void prepareExportHtml();
         });
     }
 
