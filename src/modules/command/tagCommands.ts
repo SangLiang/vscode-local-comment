@@ -8,6 +8,38 @@ interface TagQuickPickItem extends vscode.QuickPickItem {
     userData: TagDeclaration;
 }
 
+interface TagInsertQuickPickItem extends vscode.QuickPickItem {
+    tagName: string;
+}
+
+async function insertTagReferenceAtCursor(editor: vscode.TextEditor, tagName: string): Promise<void> {
+    const position = editor.selection.active;
+    const lineText = editor.document.lineAt(position.line).text;
+    const beforeCursor = lineText.substring(0, position.character);
+    const atMatch = beforeCursor.match(/@([\u4e00-\u9fa5a-zA-Z0-9_]*)$/);
+    const insertText = `@${tagName} `;
+
+    const success = await editor.edit((editBuilder) => {
+        if (atMatch) {
+            const rangeStart = position.character - atMatch[0].length;
+            const range = new vscode.Range(position.line, rangeStart, position.line, position.character);
+            editBuilder.replace(range, insertText);
+        } else {
+            editBuilder.insert(position, insertText);
+        }
+    });
+
+    if (!success) {
+        return;
+    }
+
+    const newCharacter = atMatch
+        ? position.character - atMatch[0].length + insertText.length
+        : position.character + insertText.length;
+    const newPosition = new vscode.Position(position.line, newCharacter);
+    editor.selection = new vscode.Selection(newPosition, newPosition);
+}
+
 export function registerTagCommands(
     tagManager: TagManager,
     commentManager: CommentManager
@@ -180,9 +212,71 @@ export function registerTagCommands(
         }
     );
 
+    const insertTagReferenceCommand = vscode.commands.registerCommand(
+        COMMANDS.INSERT_TAG_REFERENCE,
+        async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage('请先打开一个文件');
+                return;
+            }
+
+            if (!editor.document.fileName.toLowerCase().endsWith('.md')) {
+                vscode.window.showWarningMessage('仅支持在 Markdown（.md）文件中插入标签引用');
+                return;
+            }
+
+            tagManager.updateTags(commentManager.getAllComments());
+            const tagNames = tagManager.getAvailableTagNames();
+
+            if (tagNames.length === 0) {
+                vscode.window.showInformationMessage('当前项目没有已声明的标签，请先在代码注释中使用 ${标签名} 声明标签');
+                return;
+            }
+
+            const allTagDeclarations = tagManager.getTagDeclarations();
+            const quickPickItems: TagInsertQuickPickItem[] = tagNames.map(tagName => {
+                const declaration = allTagDeclarations.get(tagName);
+                const fileName = declaration ? getFileNameFromPath(declaration.filePath) : '';
+                const description = declaration ? `${fileName}:${declaration.line + 1}` : '';
+                let detail = declaration?.filePath ?? '';
+                if (declaration) {
+                    try {
+                        const doc = vscode.workspace.textDocuments.find(
+                            d => d.uri.fsPath === declaration.filePath
+                        );
+                        if (doc) {
+                            const lineText = doc.lineAt(declaration.line).text;
+                            detail = lineText.length > 50 ? lineText.substring(0, 50) + '...' : lineText;
+                        }
+                    } catch {
+                        detail = declaration.content.substring(0, 50);
+                    }
+                }
+                return {
+                    label: `@${tagName}`,
+                    description,
+                    detail,
+                    tagName
+                };
+            });
+
+            const selected = await vscode.window.showQuickPick(quickPickItems, {
+                placeHolder: `选择要插入的标签引用（共 ${tagNames.length} 个）`,
+                matchOnDescription: true,
+                matchOnDetail: true
+            });
+
+            if (selected) {
+                await insertTagReferenceAtCursor(editor, selected.tagName);
+            }
+        }
+    );
+
     return [
         showCurrentFileTagsCommand,
-        showAllFilesTagsCommand
+        showAllFilesTagsCommand,
+        insertTagReferenceCommand
     ];
 }
 

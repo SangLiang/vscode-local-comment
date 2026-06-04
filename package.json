@@ -280,6 +280,12 @@
         "command": "localComment.previewMarkdown",
         "title": "%previewMarkdown%",
         "category": "Local Comment"
+      },
+      {
+        "command": "localComment.insertTagReference",
+        "title": "%insertTagReference%",
+        "category": "Local Comment",
+        "enablement": "editorLangId == markdown"
       }
     ],
     "views": {
@@ -369,9 +375,9 @@
           "when": "editorTextFocus"
         },
         {
-          "command": "localComment.showCurrentFileTags",
+          "command": "localComment.insertTagReference",
           "group": "localComment",
-          "when": "editorTextFocus"
+          "when": "editorTextFocus && resourceExtname == .md"
         },
         {
           "command": "localComment.previewMarkdown",

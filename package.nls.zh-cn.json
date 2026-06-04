@@ -60,5 +60,6 @@
   	"mermaidThemeDescription": "选择Mermaid图表的渲染主题。",
 	"mermaidThemeDefault": "默认风格",
 	"mermaidThemeHandDrawn": "手绘风格",
-	"previewMarkdown": "预览 Markdown"
+	"previewMarkdown": "预览 Markdown",
+	"insertTagReference": "插入标签引用"
 } 

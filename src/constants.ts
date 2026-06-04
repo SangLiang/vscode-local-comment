@@ -63,6 +63,7 @@ export const COMMANDS = {
     GO_TO_TAG_DECLARATION: 'localComment.goToTagDeclaration',
     SHOW_CURRENT_FILE_TAGS: 'localComment.showCurrentFileTags',
     SHOW_ALL_FILES_TAGS: 'localComment.showAllFilesTags',
+    INSERT_TAG_REFERENCE: 'localComment.insertTagReference',
     REFRESH_COMMENTS: 'localComment.refreshComments',
     REFRESH_TREE: 'localComment.refreshTree',
     DELETE_COMMENT_FROM_TREE: 'localComment.deleteCommentFromTree',
