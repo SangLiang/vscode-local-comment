@@ -169,7 +169,13 @@ export class MarkdownPreviewWebview {
                     css = this.inlineKatexFonts(css);
                 }
 
-                const fullHtml = this.buildExportHtml(html, css, message.fileName, message.keepPrintBg);
+                const fullHtml = this.buildExportHtml(
+                    html,
+                    css,
+                    message.fileName,
+                    message.keepPrintBg,
+                    !!message.hasMermaid
+                );
                 await this.saveExportHtml(fullHtml, message.fileName);
             } catch (error) {
                 vscode.window.showErrorMessage(`导出失败: ${getErrorMessage(error)}`);
@@ -229,7 +235,27 @@ export class MarkdownPreviewWebview {
         return path.join(this.context.extensionUri.fsPath, 'node_modules', 'katex', 'dist', 'fonts');
     }
 
-    private buildExportHtml(previewHtml: string, css: string, fileName: string, keepPrintBg: boolean = true): string {
+    private getMermaidExportScript(): string {
+        const scriptPath = path.join(
+            this.context.extensionUri.fsPath,
+            'src',
+            'templates',
+            'markdownPreview',
+            'mermaidExport.js'
+        );
+        if (fs.existsSync(scriptPath)) {
+            return fs.readFileSync(scriptPath, 'utf8');
+        }
+        return '';
+    }
+
+    private buildExportHtml(
+        previewHtml: string,
+        css: string,
+        fileName: string,
+        keepPrintBg: boolean = true,
+        hasMermaid: boolean = false
+    ): string {
         const safeName = fileName ? fileName.replace(/\.md$/i, '') : 'export';
         // 仅影响「打印」时是否保留背景色，与屏幕浏览时的表格边框无关
         const printStyles = keepPrintBg
@@ -239,6 +265,9 @@ export class MarkdownPreviewWebview {
         print-color-adjust: exact !important;
     }
 }`
+            : '';
+        const mermaidScript = hasMermaid
+            ? `<script>\n${this.getMermaidExportScript()}\n</script>`
             : '';
         return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -257,6 +286,7 @@ ${printStyles}
 ${previewHtml}
         </div>
     </div>
+${mermaidScript}
 </body>
 </html>`;
     }

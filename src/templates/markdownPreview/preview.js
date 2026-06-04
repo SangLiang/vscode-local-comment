@@ -239,15 +239,7 @@
                 const chartId = 'mermaid-chart-' + Date.now() + '-' + index;
                 try {
                     const { svg } = await mermaid.render(chartId, chartDefinition);
-                    return '<div class="mermaid-chart" data-chart-id="' + chartId + '">' +
-                        '<div class="mermaid-controls">' +
-                        '<button class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
-                        '<button class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
-                        '<button class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>' +
-                        '</div>' +
-                        '<div class="mermaid-zoom-info" id="zoom-info-' + chartId + '">100%</div>' +
-                        svg +
-                        '</div>';
+                    return buildMermaidChartHtml(chartId, svg);
                 } catch (error) {
                     console.error('渲染Mermaid图表失败: ' + chartId, error);
                     return '<div class="mermaid-error">图表渲染失败: ' + error.message + '<pre>' + chartDefinition + '</pre></div>';
@@ -332,6 +324,42 @@
                 '<pre>' + error.message + '</pre>' +
                 '</div>';
         }
+    }
+
+    /** 生成带缩放控件的 Mermaid 图表 HTML（预览与导出共用结构） */
+    function buildMermaidChartHtml(chartId, svg) {
+        return '<div class="mermaid-chart" data-chart-id="' + chartId + '">' +
+            '<div class="mermaid-controls">' +
+            '<button type="button" class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
+            '<button type="button" class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
+            '<button type="button" class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>' +
+            '</div>' +
+            '<div class="mermaid-zoom-info" id="zoom-info-' + chartId + '">100%</div>' +
+            svg +
+            '</div>';
+    }
+
+    function appendMermaidControlsToChart(chart) {
+        if (chart.querySelector('.mermaid-controls')) {
+            return;
+        }
+        const chartId = chart.dataset.chartId || ('mermaid-export-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+        chart.dataset.chartId = chartId;
+
+        const controls = document.createElement('div');
+        controls.className = 'mermaid-controls';
+        controls.innerHTML =
+            '<button type="button" class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
+            '<button type="button" class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
+            '<button type="button" class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>';
+
+        const zoomInfo = document.createElement('div');
+        zoomInfo.className = 'mermaid-zoom-info';
+        zoomInfo.id = 'zoom-info-' + chartId;
+        zoomInfo.textContent = '100%';
+
+        chart.insertBefore(controls, chart.firstChild);
+        chart.insertBefore(zoomInfo, controls.nextSibling);
     }
 
     // --- Mermaid 图表交互（Ctrl+滚轮缩放、拖拽平移，按钮见 window.zoomChart / resetChart）---
@@ -567,10 +595,9 @@
             try {
                 const { svg } = await mermaid.render(chartId, chartDefinition);
                 const wrapper = document.createElement('div');
-                wrapper.className = 'mermaid-chart';
-                wrapper.setAttribute('data-chart-id', chartId);
-                wrapper.innerHTML = svg;
-                pre.replaceWith(wrapper);
+                wrapper.innerHTML = buildMermaidChartHtml(chartId, svg);
+                const chart = wrapper.firstElementChild;
+                pre.replaceWith(chart);
             } catch (error) {
                 console.error('导出时渲染 Mermaid 失败:', chartId, error);
             }
@@ -586,18 +613,24 @@
         });
     }
 
-    /** 去掉缩放按钮与交互状态，导出文件只保留静态图 */
-    function cleanMermaidControls(clone) {
-        clone.querySelectorAll('.mermaid-controls, .mermaid-zoom-info').forEach(el => el.remove());
+    /**
+     * 导出前重置图表变换，保留缩放按钮；导出 HTML 通过 mermaidExport.js 恢复交互
+     */
+    function prepareMermaidChartsForExport(clone) {
         clone.querySelectorAll('.mermaid-chart').forEach(chart => {
-            chart.removeAttribute('data-scale');
-            chart.removeAttribute('data-translate-x');
-            chart.removeAttribute('data-translate-y');
-            chart.style.cursor = '';
+            appendMermaidControlsToChart(chart);
+            chart.dataset.scale = '1';
+            chart.dataset.translateX = '0';
+            chart.dataset.translateY = '0';
+            chart.style.cursor = 'grab';
             const svg = chart.querySelector('svg');
             if (svg) {
                 svg.style.transform = '';
                 svg.style.transformOrigin = '';
+            }
+            const zoomInfo = chart.querySelector('.mermaid-zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = '100%';
             }
         });
     }
@@ -952,7 +985,7 @@ body {
 
             const clone = previewArea.cloneNode(true);
             await renderMermaidInElement(clone);
-            cleanMermaidControls(clone);
+            prepareMermaidChartsForExport(clone);
             serializeMermaidSvgForExport(clone);
             resolveDomStyleVariables(clone);
 
