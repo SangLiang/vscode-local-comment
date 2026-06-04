@@ -229,9 +229,18 @@
         try {
             await initializationPromise;
 
+            const tagPlaceholders = new Map();
+            let processedContent = content.replace(/\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g, (match, tagName) => {
+                const placeholder = '__TAG_DECL_PLACEHOLDER_' + tagPlaceholders.size + '__';
+                tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
+                return placeholder;
+            });
+            processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g,
+                '<span class="tag-link" data-tag="$1">@$1</span>');
+
             // 1. 查找并渲染所有Mermaid代码块
             MERMAID_FENCE_REGEX.lastIndex = 0;
-            const mermaidBlocks = [...content.matchAll(MERMAID_FENCE_REGEX)];
+            const mermaidBlocks = [...processedContent.matchAll(MERMAID_FENCE_REGEX)];
             console.log('找到 ' + mermaidBlocks.length + ' 个Mermaid代码块');
 
             const svgPromises = mermaidBlocks.map(async (match, index) => {
@@ -248,8 +257,8 @@
 
             const renderedSvgs = await Promise.all(svgPromises);
 
-            // 2. 保留原始 markdown 内容，先做 LaTeX 处理（marked 不能解析 SVG 内的 <style>，故不在此处替换 Mermaid）
-            let finalContent = content;
+            // 2. 保留预处理后的 markdown，先做 LaTeX 处理（marked 不能解析 SVG 内的 <style>，故不在此处替换 Mermaid）
+            let finalContent = processedContent;
 
             // 3. 处理 LaTeX 公式（跳过围栏/行内代码块，避免 Makefile 中 $(VAR) 被误渲染）
             if (typeof katex !== 'undefined') {
@@ -295,6 +304,11 @@
                 console.warn('KaTeX 未加载，无法渲染 LaTeX 公式');
             }
 
+            tagPlaceholders.forEach((tagInfo, placeholder) => {
+                finalContent = finalContent.replace(placeholder,
+                    '<span class="tag-declaration">' + tagInfo.original + '</span>');
+            });
+
             // 4. 使用marked解析最终内容
             const finalHtml = marked.parse(finalContent);
 
@@ -315,6 +329,20 @@
 
             // 6. 绑定 Mermaid 缩放、拖拽
             initChartInteractions();
+
+            const tagLinks = previewArea.querySelectorAll('.tag-link');
+            tagLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tagName = this.getAttribute('data-tag');
+                    if (tagName) {
+                        vscode.postMessage({
+                            command: 'goToTagDeclaration',
+                            tagName: tagName
+                        });
+                    }
+                });
+            });
 
         } catch (error) {
             console.error('预览更新失败:', error);

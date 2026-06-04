@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
-import { VIEW_TYPES, IPC_MESSAGES } from '../constants';
+import { VIEW_TYPES, IPC_MESSAGES, COMMANDS } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
 import { getErrorMessage } from '../utils/utils';
 
@@ -151,6 +151,19 @@ export class MarkdownPreviewWebview {
 
     private registerMessageHandler(): void {
         this.panel.webview.onDidReceiveMessage(async (message) => {
+            if (message.command === IPC_MESSAGES.GO_TO_TAG_DECLARATION && message.tagName) {
+                try {
+                    await vscode.commands.executeCommand(
+                        COMMANDS.GO_TO_TAG_DECLARATION,
+                        { tagName: message.tagName }
+                    );
+                } catch (error) {
+                    logger.error('跳转到标签声明失败:', error);
+                    vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
+                }
+                return;
+            }
+
             if (message.command !== IPC_MESSAGES.EXPORT_HTML || !message.html) return;
 
             try {
