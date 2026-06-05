@@ -6,7 +6,42 @@ lang: en
 
 # Markdown & Rendering
 
-Local Comment's Markdown editor supports standard Markdown syntax as well as extended features.
+Local Comment provides complete Markdown support, including in-editor comments, Markdown file preview, and export.
+
+## Markdown File Preview & Export {#file-preview}
+
+**New in v2.0**: Directly preview and export `.md` files, deeply integrating documents with code:
+
+### Preview Markdown Files
+
+- In any `.md` file editor, **right-click and select "Preview Markdown"**
+- Or run `Local Comment: Preview Markdown` from the Command Palette
+- Supports live rendering: Mermaid diagrams, LaTeX formulas, syntax-highlighted code
+- Diagram interactions: Zoom buttons (+/-), <kbd>Ctrl</kbd> + scroll to zoom, mouse drag to pan
+
+### Export to HTML
+
+- Click the "Export HTML" button in the preview panel
+- Generates a **self-contained HTML file** (with inlined CSS/JS/font resources)
+- Viewable offline, perfect for sharing and archiving
+
+### Reference Code Tags in Documents
+
+You can reference tags from code in Markdown files, linking documents to code:
+
+```markdown
+## System Architecture
+
+Configuration loading module: @configLoader
+Error handling module: @errorHandling
+```
+
+- Right-click → "Insert tag reference" to quickly insert `@tagName`
+- Click `@tagName` in preview to **jump directly to the code definition**
+
+<div class="callout callout-tip">
+<strong>Knowledge management workflow:</strong> Write design docs in Markdown → Reference code tags with <code>@</code> → Preview in one click → Export HTML to share with the team. All tag links remain clickable after export.
+</div>
 
 ## Syntax Reference {#syntax}
 

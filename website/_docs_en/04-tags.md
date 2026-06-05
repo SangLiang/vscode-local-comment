@@ -61,6 +61,44 @@ In addition to clicking <code>@tagName</code> references in comments to jump, yo
 - It will list all declared tags in the current project; select one to jump to the corresponding location
 - Supports keyword filtering, making it easy to quickly locate target tags among a large number of tags
 
+## Using Tags in Markdown Files {#markdown-tags}
+
+**New in v2.0**: You can now use tag references in any `.md` file to link documents to code:
+
+**Insert tag reference**:
+1. Right-click in a Markdown file and select "Insert tag reference"
+2. Select a tag from the list (shows all declared tags in the project)
+
+> Note: **Typing `@` does not trigger auto-completion in `.md` files** — this feature is only available in the Local Comment Markdown editor.
+
+**Click to jump**:
+- When previewing Markdown (right-click "Preview Markdown"), all `@tagName` are displayed with special styling
+- **Click to jump directly to the tag definition in code** — documents and code seamlessly connected
+
+```markdown
+## Configuration Loading Flow
+
+On startup, the system loads @userConfig, see source code for implementation.
+
+Related features: @errorHandling @permissionCheck
+```
+
+<div class="callout callout-tip">
+<strong>Knowledge management scenario:</strong> Write architecture docs referencing key code implementations with <code>@</code>; take notes while reading source, then jump back to code with one click.
+</div>
+
+## Tag Relation Graph {#graph}
+
+**New in v2.0**: Visualize all tag reference relationships in your project:
+
+- **Open**: Run `Local Comment: Show Tag Relation Graph` from the Command Palette
+- **Interactive**: Supports zoom, drag to pan, click nodes to view tag details
+- **Knowledge network**: Organize project knowledge like Obsidian, but **with the ability to jump directly into code implementations**
+
+<div class="callout callout-tip">
+<strong>Use cases:</strong> When onboarding to a large codebase, use the relation graph to quickly understand core module dependencies; when writing technical specs, verify all related features are covered.
+</div>
+
 ## Autocomplete {#autocomplete}
 
 When typing <code>@</code> in the Markdown editor, a dropdown list of declared tags will appear, supporting fuzzy search.

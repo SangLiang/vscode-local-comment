@@ -5,7 +5,42 @@ permalink: /docs/markdown/
 
 # Markdown 与渲染
 
-Local Comment 的 Markdown 编辑器支持标准 Markdown 语法以及扩展功能。
+Local Comment 提供完整的 Markdown 支持，包括编辑器内的注释、Markdown 文件的预览与导出。
+
+## Markdown 文件预览与导出 {#file-preview}
+
+**2.0 新增**：直接预览和导出 `.md` 文件，将文档与代码深度整合：
+
+### 预览 Markdown 文件
+
+- 在任意 `.md` 文件编辑器中，**右键选择「预览 Markdown」**
+- 或使用命令面板执行 `Local Comment: Preview Markdown`
+- 支持实时渲染：Mermaid 图表、LaTeX 公式、代码语法高亮
+- 图表交互：支持缩放按钮（+/-）、<kbd>Ctrl</kbd> + 滚轮缩放、鼠标拖拽平移
+
+### 导出为 HTML
+
+- 在预览面板点击「导出 HTML」按钮
+- 生成**自包含的 HTML 文件**（内嵌所有 CSS/JS/字体资源）
+- 无需网络即可查看，便于分享和存档
+
+### 在文档中引用代码标签
+
+在 Markdown 文件中可以引用代码中的标签，实现文档与代码的关联：
+
+```markdown
+## 系统架构
+
+配置加载模块：@configLoader
+错误处理模块：@errorHandling
+```
+
+- 右键 → 「插入标签引用」快速插入 `@tagName`
+- 预览时点击 `@tagName` **直接跳转到代码定义位置**
+
+<div class="callout callout-tip">
+<strong>知识管理工作流：</strong>用 Markdown 写设计文档 → 用 <code>@</code> 引用代码标签 → 一键预览 → 导出 HTML 分享给团队。所有标签链接在导出后依然可点击跳转。
+</div>
 
 ## 语法参考 {#syntax}
 
