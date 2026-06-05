@@ -15,6 +15,32 @@
     /** 可用的标签名列表，用于精确识别真实标签（而非所有 @xxx 格式） */
     let availableTagNames = [];
 
+    /**
+     * 检查指定偏移位置是否在代码块（围栏代码块或行内代码）内
+     * 用于避免在示例代码中错误渲染标签链接
+     */
+    function isInsideCodeBlock(content, offset) {
+        // 检查是否在围栏代码块 ```...``` 内
+        const fenceRegex = /```[\s\S]*?```/g;
+        let match;
+        while ((match = fenceRegex.exec(content)) !== null) {
+            if (offset >= match.index && offset < match.index + match[0].length) {
+                return true;
+            }
+        }
+
+        // 检查是否在行内代码 `...` 内
+        // 使用非贪婪匹配，但要处理转义的反引号
+        const inlineCodeRegex = /(?<!\\)`[^`\n]*?(?<!\\)`/g;
+        while ((match = inlineCodeRegex.exec(content)) !== null) {
+            if (offset >= match.index && offset < match.index + match[0].length) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** 从源码中提取 ```mermaid 围栏（支持 CRLF） */
     const MERMAID_FENCE_REGEX = /```mermaid\s*\r?\n([\s\S]*?)```/gi;
     /** marked 输出的 Mermaid 占位 <pre>，用于替换为已渲染的 SVG */
@@ -240,16 +266,27 @@
 
             // 只将真实存在的标签渲染为可点击链接（availableTagNames 来自扩展的标签管理器）
             // 如果 availableTagNames 为空（旧版本兼容），则回退到原正则匹配行为
+            // 注意：跳过代码块和行内代码中的 @xxx，避免破坏示例展示
             if (availableTagNames && availableTagNames.length > 0) {
                 // 构建只匹配真实标签的正则：@标签名1|标签名2|...
                 const tagPattern = availableTagNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
                 const tagRegex = new RegExp('@(' + tagPattern + ')', 'g');
-                processedContent = processedContent.replace(tagRegex,
-                    '<span class="tag-link" data-tag="$1">@$1</span>');
+                // 使用替换函数，检查匹配位置是否在代码块内
+                processedContent = processedContent.replace(tagRegex, (match, tagName, offset) => {
+                    if (isInsideCodeBlock(processedContent, offset)) {
+                        return match; // 在代码块内，保持原样
+                    }
+                    return '<span class="tag-link" data-tag="' + tagName + '">@' + tagName + '</span>';
+                });
             } else {
                 // 兼容模式：如果没有标签列表，匹配所有 @xxx 格式（可能误伤如 @qq.com 中的 @qq）
-                processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g,
-                    '<span class="tag-link" data-tag="$1">@$1</span>');
+                // 同样跳过代码块内的匹配
+                processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, (match, tagName, offset) => {
+                    if (isInsideCodeBlock(processedContent, offset)) {
+                        return match; // 在代码块内，保持原样
+                    }
+                    return '<span class="tag-link" data-tag="' + tagName + '">@' + tagName + '</span>';
+                });
             }
 
             // 1. 查找并渲染所有Mermaid代码块
