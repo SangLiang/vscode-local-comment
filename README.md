@@ -2,9 +2,9 @@
 
 [中文文档](./README_CN.md)
 
-**Without changing your source files**, attach durable notes and bookmarks to code in VS Code: **Markdown**, **Mermaid**, **LaTeX**, and **tag declarations with jump-to navigation**—built for reading large codebases, research, and capturing your own understanding.
+**Without changing your source files**, attach durable notes and bookmarks to code in VS Code: **Markdown**, **Mermaid**, **LaTeX**, **tag declarations**, **jump-to navigation**, and **tag relation graphs**.
 
-> Use it as everyday notes; when the codebase grows and branches keep moving, Local Comment keeps your thinking **inside the editor** instead of scattered across chat or external docs.
+> Not just a code annotation tool — starting from v2.0, Local Comment is also your **Markdown knowledge management assistant**. Link docs to code with `@tags`, generate tag relation graphs with one click, organize knowledge like Obsidian, but jump directly into code implementations.
 
 **Documentation site:** [https://sangliang.github.io/vscode-local-comment/](https://sangliang.github.io/vscode-local-comment/)
 
@@ -15,15 +15,15 @@
 | Capability | Description |
 |------------|-------------|
 | **Local comments** | Stored in separate data; **not written into source files**; does not clutter Git commits with notes. |
-| **Markdown notes** | Multi-line rich editing for analysis, flows, and todos—not only single-line `//` comments. |
-| **Tag jumps** | Declare with `${tagName}`, reference with `@tagName`, jump between notes; **Chinese tag names** supported. |
+| **Markdown knowledge management** | Write in `.md` files, link to code with `@tags`, click to jump — documents and code seamlessly connected. |
+| **Tag relation graph** | **New in v2.0**: Generate a visual graph of tag references with one click; organize knowledge like Obsidian with zoom, pan, and click-to-view details. |
+| **Tag jumps** | Declare with `${tagName}`, reference with `@tagName`, jump between comments, Markdown docs, and code; **Chinese tag names** supported. |
 | **Smart anchoring** | Tries to follow lines as code moves; anchor on **meaningful code lines** (see best practices below). |
 | **Mermaid / LaTeX** | Diagrams and formulas render in preview for technical explanations. |
 | **Bookmarks** | Mark lines across files and navigate in order—pairs well with comments as a reading path. |
 | **Sidebar tree** | Browse comments and bookmarks for the project and jump back to code. |
 | **Projects / groups** | Multiple independent comment groups per project: switch between several configs under `.vscode/local-comment/` (e.g. notes for one branch vs another). |
-| **Markdown preview** | Preview `.md` files directly with Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; supports zoom/pan for diagrams. |
-| **Export to HTML** | Export Markdown files (including rendered diagrams and formulas) to a self-contained HTML file for sharing and offline viewing. |
+| **Markdown preview & export** | Preview `.md` files (diagrams, formulas, highlighting); one-click export to self-contained HTML for sharing and offline viewing. |
 
 **In short:** keep “how you read the code” in VS Code, **local and private by default**.
 
@@ -100,25 +100,39 @@ Typical cases: **researching a codebase**, **design notes that should not land i
 
 ## Core features
 
-### 1. Local comments
+### 1. Markdown knowledge management (v2.0 core)
 
-- **Quick add**: `Ctrl+Shift+C` adds a simple comment on the current line (overlaps somewhat with the Markdown entry; may change in a future release).
+**Seamlessly connect Markdown documents to code:**
+
+- **Reference code tags in Markdown**: In any `.md` file, right-click and select "Insert tag reference" to insert `@tagName`. When previewing, click these references to **jump directly to the tag definition in code**.
+- **Tags as links**: Declare with `${tagName}` in code, reference with `@tagName` in Markdown — documents and code form a two-way connection.
+- **Preview and export**: Right-click and select "Preview Markdown" for Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; click "Export HTML" to generate a self-contained file for offline viewing.
+
+> 💡 **Use cases**: Write architecture docs referencing key code implementations with `@`; take notes while reading source, then jump back to code with one click.
+
+### 2. Tag relation graph (New in v2.0)
+
+**Generate a knowledge graph of your project with one click:**
+
+- **Visual connections**: Run `Local Comment: Show Tag Relation Graph` from the Command Palette to generate a force-directed graph showing all tag declarations and references.
+- **Interactive exploration**: Supports zoom, drag to pan, click nodes to view tag details — quickly understand how modules reference each other.
+- **Knowledge network**: Organize your project knowledge like Obsidian, but **with the ability to jump directly into code implementations**.
+
+> 💡 **Use cases**: When onboarding to a large codebase, use the relation graph to quickly understand core module dependencies; when writing technical specs, verify all related features are covered.
+
+### 3. Local comments
+
+- **Quick add**: `Ctrl+Shift+C` adds a simple comment on the current line.
 - **Markdown**: `Ctrl+Shift+M` opens the multi-line editor (**recommended main entry**).
 - **Edit**: `Ctrl+Shift+E` edits the comment bound to the current line.
 - **Delete**: `Ctrl+Shift+D` removes the comment on the current line.
 - **Selection to comment**: `Ctrl+Shift+T` turns the selection into a comment.
 
-### 2. Bookmarks
+### 4. Bookmarks
 
 - **Toggle**: `Ctrl+Alt+K` adds or removes a bookmark on the current line.  
 - **Visuals**: Gutter icons, scrollbar markers, hover details.  
 - **Navigate**: `Ctrl+Alt+J` next, `Ctrl+Alt+Shift+J` previous, cross-file, wraps end-to-start.
-
-### 3. Markdown file preview and export
-
-- **Preview**: Select "Preview Markdown" from the right-click menu in the Markdown file editor, or run `Local Comment: Preview Markdown` from the Command Palette. Supports live preview of Mermaid diagrams, LaTeX formulas, and syntax-highlighted code.
-- **Diagram interactions**: Zoom buttons (+/-), Ctrl+scroll to zoom, mouse drag to pan Mermaid diagrams.
-- **Export HTML**: Click the "Export HTML" button in the preview panel to generate a self-contained HTML file (with inlined CSS/JS/fonts) that can be viewed without network access—perfect for sharing and archiving.
 
 ---
 
@@ -161,24 +175,45 @@ That makes it easier to stay aligned after **branch switches** or **large refact
 
 ## Tags
 
-Tags support Chinese. Declare: `${tagName}`; reference: `@tagName`.
+Tags are the core concept of Local Comment, connecting code and documents.
+
+**Two marking patterns**:
+- **Declaration**: `${tagName}` — mark a code location, indicating "something worth noting here"
+- **Reference**: `@tagName` — reference a declared tag in Markdown documents or comments
 
 ```javascript
-let userConfig = {};  // local comment: ${userConfig} declared here
+// Declare tag in code
+let userConfig = {};  // local comment: ${userConfig} user config definition
 
-function loadConfig() { // local comment: load @userConfig here
-    userConfig = JSON.parse(localStorage.getItem('config'));
-}
-
-// Chinese tag example
-function handleError() { // local comment: ${错误处理} core logic
-}
-
-function validate() { // local comment: on failure use @错误处理
+function loadConfig() { 
+    // implementation...
 }
 ```
 
-**Naming:** letters (any script), digits, underscores; must start with a letter or underscore; mixing scripts is allowed, e.g. `${bug修复}`.
+```markdown
+<!-- Reference tags in Markdown documents -->
+## Configuration Loading Flow
+
+On startup, the system loads @userConfig, see source code for implementation.
+
+Related features: @errorHandling @permissionCheck
+```
+
+**Naming rules**: letters (any script), digits, underscores; must start with a letter or underscore; mixing scripts is allowed, e.g. `${bug修复}`.
+
+### Using tags in Markdown
+
+**Insert tag reference**:
+1. Right-click in Markdown file → "Insert tag reference"
+2. Select a tag from the list (shows all declared tags in the project)
+3. Or type `@` to trigger auto-completion
+
+**Click to jump**:
+- When previewing Markdown, all `@tagName` are displayed with special styling
+- **Click to jump directly to the code definition** — documents and code seamlessly connected
+
+**Tag relation graph**:
+Run `Local Comment: Show Tag Relation Graph` from the Command Palette to visualize the reference network of all tags, helping you discover hidden connections between knowledge.
 
 ---
 

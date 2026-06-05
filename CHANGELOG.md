@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [2.0.0] - 2026-06-05
+
+This release brings better support for `.md` files. I believe that with Local Comment, you can make Markdown documentation work great without relying on any external editors!
+
+So I've bumped the version to 2.0.0 — this is a new exploration. The goal is no longer just writing local comments, but making Markdown content and knowledge management better.
+
+### Added
+
+- **Jump from Markdown files directly into source code**: Previously, all operations were within local comment annotations. Now I've extended native `.md` files as well. In the previous version, we could already preview native `.md` files nicely. In this version, while previewing Markdown content, you can also click `@tag` markers to jump! This means we can better integrate documentation content with code implementations.
+
+  To use it: in a `.md` file, right-click and you'll see the `Insert tag reference` option. Click it to list all tag markers in the project, then select the one to insert. Preview the document via right-click "Preview Markdown". You'll see your `tag reference` displayed with different styling — click it to jump to the corresponding declaration.
+
+- **Tag relation graph**: Visualize tag reference relationships within the project with a force-directed interactive graph (zoom, pan, click for details). Run `Local Comment: Show Tag Relation Graph` from the Command Palette to open.
+
+  This feature can organize documentation in your project nicely. As long as you take a moment to add `${tag}` markers when writing docs, you can reference that document later and jump to it with a click. Yes, it sounds like Obsidian. But you know what — we can also jump directly into specific code implementations. That's the tool programmers deserve.
+
+- **Export HTML experience optimization**: Show button loading state during export, display success message when complete.
+
+### Improved
+
+- **Markdown preview font**: Adjusted font for Markdown file preview to be more suitable for extended reading.
+
 ## [1.6.0] - 2026-06-04
 
 ### Added
