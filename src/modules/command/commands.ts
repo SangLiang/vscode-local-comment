@@ -14,6 +14,7 @@ import { buildExportData, ProjectInfo, getErrorMessage } from '../../utils/utils
 import { registerCommentCommands } from './comment';
 import { registerBookmarkCommands } from './bookmark';
 import { registerTagCommands } from './tagCommands';
+import { registerTagRelationGraphCommands } from './tagRelationGraph';
 import { AuthManager } from '../../managers/authManager';
 import { logger } from '../../utils/logger';
 import { AuthWebview } from '../authWebview';
@@ -1191,6 +1192,9 @@ export function registerCommands(
     // 注册tagCommands.ts中的命令
     const tagCommands = registerTagCommands(tagManager, commentManager);
 
+    // 注册Tag关系图命令
+    const tagRelationGraphCommands = registerTagRelationGraphCommands(context, commentManager);
+
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
         showStorageLocationCommand,
@@ -1210,5 +1214,6 @@ export function registerCommands(
         ...commentCommands,
         ...bookmarkCommands,
         ...tagCommands,
+        ...tagRelationGraphCommands,
     ];
 } 

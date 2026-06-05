@@ -1,0 +1,132 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.breadcrumb {
+    font-size: 14px;
+    color: var(--vscode-foreground);
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.breadcrumb-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.breadcrumb-separator {
+    margin: 0 4px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.btn {
+    padding: 4px 12px;
+    border: 1px solid var(--vscode-button-secondaryBackground);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.btn.active {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-background);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.status {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.center {
+    background: #4285F4;
+}
+
+.legend-dot.children {
+    background: #FF9800;
+}
+
+.legend-dot.leaf {
+    background: #34A853;
+}
+
+.graph-container {
+    flex: 1;
+    height: calc(100vh - 120px);
+    position: relative;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--vscode-descriptionForeground);
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}

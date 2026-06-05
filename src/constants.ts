@@ -76,6 +76,10 @@ export const COMMANDS = {
     PREVIEW_SHARED_COMMENT: 'localComment.previewSharedComment',
     PREVIEW_MARKDOWN: 'localComment.previewMarkdown',
     
+    // Tag 关系图命令
+    SHOW_TAG_RELATION_GRAPH: 'localComment.showTagRelationGraph',
+    SHOW_TAG_RELATION_GRAPH_FROM_PREVIEW: 'localComment.showTagRelationGraphFromPreview',
+    
     // 书签相关命令
     ADD_BOOKMARK: 'localComment.addBookmark',
     TOGGLE_BOOKMARK: 'localComment.toggleBookmark',
@@ -117,6 +121,7 @@ export const VIEW_TYPES = {
     USER_INFO: 'localComment.userInfo',
     SHARE_COMMENT_PREVIEW: 'shareCommentPreview',
     MARKDOWN_PREVIEW: 'markdownPreview',
+    TAG_RELATION_GRAPH: 'tagRelationGraph',
 } as const;
 
 /**

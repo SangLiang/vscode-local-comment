@@ -286,6 +286,11 @@
         "title": "%insertTagReference%",
         "category": "Local Comment",
         "enablement": "editorLangId == markdown"
+      },
+      {
+        "command": "localComment.showTagRelationGraph",
+        "title": "%showTagRelationGraph%",
+        "category": "Local Comment"
       }
     ],
     "views": {
@@ -388,6 +393,11 @@
           "command": "localComment.showAllFilesTags",
           "group": "localComment",
           "when": "editorTextFocus"
+        },
+        {
+          "command": "localComment.showTagRelationGraph",
+          "when": "editorTextFocus && resourceExtname == .md",
+          "group": "localComment"
         }
       ],
       "view/title": [
@@ -400,6 +410,13 @@
           "command": "localComment.refreshSharedComments",
           "when": "view == sharedComments",
           "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "localComment.showTagRelationGraph",
+          "when": "resourceExtname == .md",
+          "group": "localComment"
         }
       ],
       "view/item/context": [
@@ -601,6 +618,7 @@
   },
   "devDependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
+    "@types/cytoscape": "^3.21.9",
     "@types/node": "^25.6.0",
     "@types/vscode": "^1.74.0",
     "cross-env": "^7.0.3",
@@ -610,6 +628,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "axios": "^1.11.0"
+    "axios": "^1.11.0",
+    "cytoscape": "^3.34.0"
   }
 }

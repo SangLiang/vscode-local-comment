@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'unsafe-inline'; img-src ${cspSource} https: http: data:;">
+    <title>${title}</title>
+    <link rel="stylesheet" href="${cssUri}">
+</head>
+<body>
+    <div class="header">
+        <div class="breadcrumb" id="breadcrumb"></div>
+        <div class="actions">
+            <button id="btn-back" class="btn" disabled>返回</button>
+            <button id="btn-reset" class="btn">重置</button>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        <button id="btn-refresh" class="btn">刷新</button>
+        <span id="status" class="status"></span>
+    </div>
+    
+    <div class="legend">
+        <span class="legend-item"><span class="legend-dot center"></span> 当前节点</span>
+        <span class="legend-item"><span class="legend-dot children"></span> 可展开</span>
+        <span class="legend-item"><span class="legend-dot leaf"></span> 叶子节点</span>
+    </div>
+    
+    <div id="graph-container" class="graph-container"></div>
+    
+    <script src="${cytoscapeUri}"></script>
+    <script src="${jsUri}"></script>
+</body>
+</html>

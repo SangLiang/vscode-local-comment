@@ -31,6 +31,14 @@ function findFile(possiblePaths, packageName) {
 // 需要复制的文件配置
 const filesToCopy = [
     {
+        packageName: 'cytoscape',
+        possiblePaths: [
+            path.join(nodeModulesPath, 'cytoscape', 'dist', 'cytoscape.min.js'),
+            path.join(nodeModulesPath, 'cytoscape', 'cytoscape.min.js')
+        ],
+        target: path.join(outLibPath, 'cytoscape.min.js')
+    },
+    {
         packageName: 'marked',
         possiblePaths: [
             path.join(nodeModulesPath, 'marked', 'marked.min.js'),

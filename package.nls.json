@@ -61,5 +61,6 @@
 	"mermaidThemeDefault": "Default style",
 	"mermaidThemeHandDrawn": "Hand-drawn style",
 	"previewMarkdown": "Preview Markdown",
-	"insertTagReference": "Insert Tag Reference"
+	"insertTagReference": "Insert Tag Reference",
+	"showTagRelationGraph": "View Tag Relation Graph"
 } 

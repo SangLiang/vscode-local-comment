@@ -61,5 +61,6 @@
 	"mermaidThemeDefault": "默认风格",
 	"mermaidThemeHandDrawn": "手绘风格",
 	"previewMarkdown": "预览 Markdown",
-	"insertTagReference": "插入标签引用"
+	"insertTagReference": "插入标签引用",
+	"showTagRelationGraph": "查看 Tag 关系图"
 } 
