@@ -15,24 +15,27 @@ export class MarkdownPreviewWebview {
     private readonly context: vscode.ExtensionContext;
     private readonly activeEditor: vscode.TextEditor | undefined;
     private disposable: vscode.Disposable | undefined;
+    private availableTagNames: string[] = [];
 
     private constructor(
         panel: vscode.WebviewPanel,
         context: vscode.ExtensionContext,
-        activeEditor: vscode.TextEditor | undefined
+        activeEditor: vscode.TextEditor | undefined,
+        availableTagNames?: string[]
     ) {
         this.panel = panel;
         this.context = context;
         this.activeEditor = activeEditor;
+        this.availableTagNames = availableTagNames || [];
 
         this.panel.onDidDispose(() => this.dispose());
     }
 
-    static createOrShow(context: vscode.ExtensionContext, content: string, fileName: string, filePath: string): MarkdownPreviewWebview {
+    static createOrShow(context: vscode.ExtensionContext, content: string, fileName: string, filePath: string, availableTagNames?: string[]): MarkdownPreviewWebview {
         const activeEditor = vscode.window.activeTextEditor;
 
         if (MarkdownPreviewWebview.currentPanel && MarkdownPreviewWebview.currentFilePath === filePath) {
-            MarkdownPreviewWebview.currentPanel.updateContent(content);
+            MarkdownPreviewWebview.currentPanel.updateContent(content, availableTagNames);
             MarkdownPreviewWebview.currentPanel.panel.reveal();
             return MarkdownPreviewWebview.currentPanel;
         }
@@ -60,7 +63,7 @@ export class MarkdownPreviewWebview {
             }
         );
 
-        const webview = new MarkdownPreviewWebview(panel, context, activeEditor);
+        const webview = new MarkdownPreviewWebview(panel, context, activeEditor, availableTagNames);
         MarkdownPreviewWebview.currentPanel = webview;
         MarkdownPreviewWebview.currentFilePath = filePath;
 
@@ -68,7 +71,7 @@ export class MarkdownPreviewWebview {
         return webview;
     }
 
-    static previewFile(context: vscode.ExtensionContext): void {
+    static previewFile(context: vscode.ExtensionContext, availableTagNames?: string[]): void {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
             vscode.window.showWarningMessage('请先打开一个 Markdown 文件');
@@ -80,7 +83,7 @@ export class MarkdownPreviewWebview {
         const fileName = path.basename(filePath);
         const content = document.getText();
 
-        MarkdownPreviewWebview.createOrShow(context, content, fileName, filePath);
+        MarkdownPreviewWebview.createOrShow(context, content, fileName, filePath, availableTagNames);
     }
 
     private initialize(content: string, fileName: string): void {
@@ -129,6 +132,12 @@ export class MarkdownPreviewWebview {
                     command: IPC_MESSAGES.SET_PREVIEW_FONT_SIZE,
                     fontSize: fontSize
                 });
+
+                // 发送可用的标签名列表，用于精确渲染标签链接
+                this.panel.webview.postMessage({
+                    command: IPC_MESSAGES.SET_AVAILABLE_TAGS,
+                    tagNames: this.availableTagNames
+                });
             } catch (error) {
                 logger.error('发送配置失败:', error);
             }
@@ -142,10 +151,15 @@ export class MarkdownPreviewWebview {
         });
     }
 
-    updateContent(content: string): void {
+    updateContent(content: string, availableTagNames?: string[]): void {
+        // 更新标签名列表（如果提供了）
+        if (availableTagNames) {
+            this.availableTagNames = availableTagNames;
+        }
         this.panel.webview.postMessage({
             command: IPC_MESSAGES.UPDATE_CONTENT,
-            content: content
+            content: content,
+            tagNames: this.availableTagNames
         });
     }
 

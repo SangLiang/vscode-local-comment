@@ -165,6 +165,7 @@ export const IPC_MESSAGES = {
     // Markdown 预览导出 HTML 相关消息
     EXPORT_HTML: 'exportHtml',
     EXPORT_HTML_COMPLETE: 'exportHtmlComplete',
+    SET_AVAILABLE_TAGS: 'setAvailableTags',
 
     // 结果消息
     LOGIN_RESULT: 'loginResult',

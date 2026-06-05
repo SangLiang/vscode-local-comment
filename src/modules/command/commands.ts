@@ -1169,7 +1169,9 @@ export function registerCommands(
     });
 
     const previewMarkdownCommand = vscode.commands.registerCommand(COMMANDS.PREVIEW_MARKDOWN, () => {
-        MarkdownPreviewWebview.previewFile(context);
+        // 获取当前所有可用的标签名，传递给 webview 用于精确渲染标签链接
+        const availableTagNames = tagManager.getAvailableTagNames();
+        MarkdownPreviewWebview.previewFile(context, availableTagNames);
     });
 
     // 注册comment.ts中的命令

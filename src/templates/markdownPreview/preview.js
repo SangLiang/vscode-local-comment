@@ -12,6 +12,8 @@
     let currentPreviewFontSize = null;
     /** 最近一次预览渲染的 Promise，导出前需 await，避免 Mermaid 尚未写入 DOM */
     let previewRenderPromise = Promise.resolve();
+    /** 可用的标签名列表，用于精确识别真实标签（而非所有 @xxx 格式） */
+    let availableTagNames = [];
 
     /** 从源码中提取 ```mermaid 围栏（支持 CRLF） */
     const MERMAID_FENCE_REGEX = /```mermaid\s*\r?\n([\s\S]*?)```/gi;
@@ -235,8 +237,20 @@
                 tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
                 return placeholder;
             });
-            processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g,
-                '<span class="tag-link" data-tag="$1">@$1</span>');
+
+            // 只将真实存在的标签渲染为可点击链接（availableTagNames 来自扩展的标签管理器）
+            // 如果 availableTagNames 为空（旧版本兼容），则回退到原正则匹配行为
+            if (availableTagNames && availableTagNames.length > 0) {
+                // 构建只匹配真实标签的正则：@标签名1|标签名2|...
+                const tagPattern = availableTagNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+                const tagRegex = new RegExp('@(' + tagPattern + ')', 'g');
+                processedContent = processedContent.replace(tagRegex,
+                    '<span class="tag-link" data-tag="$1">@$1</span>');
+            } else {
+                // 兼容模式：如果没有标签列表，匹配所有 @xxx 格式（可能误伤如 @qq.com 中的 @qq）
+                processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g,
+                    '<span class="tag-link" data-tag="$1">@$1</span>');
+            }
 
             // 1. 查找并渲染所有Mermaid代码块
             MERMAID_FENCE_REGEX.lastIndex = 0;
@@ -570,6 +584,10 @@
             case 'updateContent':
                 if (message.content !== undefined) {
                     window.markdownContent = message.content;
+                    // 如果消息中包含更新的标签列表，一并更新
+                    if (message.tagNames && Array.isArray(message.tagNames)) {
+                        availableTagNames = message.tagNames;
+                    }
                     updatePreview(message.content);
                 }
                 break;
@@ -595,6 +613,17 @@
                         }
                     } catch (error) {
                         console.error('设置Mermaid主题失败:', error);
+                    }
+                }
+                break;
+            case 'setAvailableTags':
+                // 更新可用标签列表，用于精确识别哪些 @xxx 是真正的标签引用
+                if (message.tagNames && Array.isArray(message.tagNames)) {
+                    availableTagNames = message.tagNames;
+                    console.log('已更新可用标签列表:', availableTagNames.length, '个标签');
+                    // 如果已有内容，重新渲染以应用新标签列表
+                    if (window.markdownContent) {
+                        updatePreview(window.markdownContent);
                     }
                 }
                 break;
@@ -662,6 +691,26 @@
             const zoomInfo = chart.querySelector('.mermaid-zoom-info');
             if (zoomInfo) {
                 zoomInfo.textContent = '100%';
+            }
+        });
+    }
+
+    /**
+     * 导出前清理标签链接
+     * @param clone 克隆的预览区域 DOM
+     * @param hideTags 是否完全隐藏标签（true=完全删除，false=转为纯文本）
+     * 导出的 HTML 在独立浏览器中无法使用 VS Code 的跳转功能，因此需要清理链接样式
+     */
+    function cleanTagLinksForExport(clone, hideTags = false) {
+        // 处理标签引用（如 @标签名）- 通常是蓝色可点击链接
+        clone.querySelectorAll('.tag-link').forEach(link => {
+            if (hideTags) {
+                // 完全删除标签引用
+                link.remove();
+            } else {
+                // 转为纯文本（保留 @标签名 文本，但去掉链接样式）
+                const textNode = document.createTextNode(link.textContent);
+                link.parentNode.replaceChild(textNode, link);
             }
         });
     }
@@ -1054,11 +1103,17 @@ body {
             await renderMermaidInElement(clone);
             prepareMermaidChartsForExport(clone);
             serializeMermaidSvgForExport(clone);
+
+            // 读取导出选项
+            const keepPrintBg = document.getElementById('keepPrintBg')?.checked ?? true;
+
+            // 导出时自动清理标签链接（完全删除，因为独立 HTML 中无法跳转）
+            // 注意：由于现在使用精确标签白名单，不会误伤普通文本中的 @xxx
+            cleanTagLinksForExport(clone, true);
             resolveDomStyleVariables(clone);
 
             const css = collectStylesFromDocument(clone);
             const { localPaths, remoteUrls } = collectImagePaths(clone);
-            const keepPrintBg = document.getElementById('keepPrintBg')?.checked ?? true;
 
             vscode.postMessage({
                 command: 'exportHtml',
