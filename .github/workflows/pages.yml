@@ -21,6 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install dart-sass
+        run: |
+          curl -fsSL https://github.com/sass/dart-sass/releases/latest/download/dart-sass-linux-x64.tar.gz | tar -xz
+          sudo mv dart-sass/* /usr/local/bin/
+          sass --version
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
