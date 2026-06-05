@@ -166,6 +166,9 @@ export class MarkdownPreviewWebview {
 
             if (message.command !== IPC_MESSAGES.EXPORT_HTML || !message.html) return;
 
+            let exportSuccess = false;
+            let exportError = '';
+
             try {
                 let html = message.html;
                 let css = message.css || '';
@@ -189,9 +192,17 @@ export class MarkdownPreviewWebview {
                     message.keepPrintBg,
                     !!message.hasMermaid
                 );
-                await this.saveExportHtml(fullHtml, message.fileName);
+                exportSuccess = await this.saveExportHtml(fullHtml, message.fileName);
             } catch (error) {
-                vscode.window.showErrorMessage(`导出失败: ${getErrorMessage(error)}`);
+                exportError = getErrorMessage(error);
+                vscode.window.showErrorMessage(`导出失败: ${exportError}`);
+            } finally {
+                // 通知 Webview 导出完成（成功、失败或用户取消）
+                this.panel.webview.postMessage({
+                    command: IPC_MESSAGES.EXPORT_HTML_COMPLETE,
+                    success: exportSuccess,
+                    error: exportError
+                });
             }
         });
     }
@@ -304,7 +315,7 @@ ${mermaidScript}
 </html>`;
     }
 
-    private async saveExportHtml(html: string, fileName: string): Promise<void> {
+    private async saveExportHtml(html: string, fileName: string): Promise<boolean> {
         const defaultName = (fileName || 'export').replace(/\.md$/i, '.html');
         const uri = await vscode.window.showSaveDialog({
             defaultUri: vscode.Uri.file(defaultName),
@@ -313,7 +324,9 @@ ${mermaidScript}
         if (uri) {
             fs.writeFileSync(uri.fsPath, html, 'utf8');
             vscode.window.showInformationMessage(`已导出到 ${uri.fsPath}`);
+            return true;
         }
+        return false; // 用户取消保存
     }
 
     private getWebviewContent(content: string, fileName: string, resourceUris: any): string {

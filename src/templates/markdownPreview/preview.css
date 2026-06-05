@@ -47,6 +47,10 @@
 
 .export-btn {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background-color: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: 1px solid transparent;
@@ -88,6 +92,36 @@
 
 .export-btn:active {
     transform: translateY(1px);
+}
+
+.export-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.export-btn.loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--vscode-button-foreground);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .help-text {

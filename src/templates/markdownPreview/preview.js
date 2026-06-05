@@ -598,6 +598,9 @@
                     }
                 }
                 break;
+            case 'exportHtmlComplete':
+                handleExportComplete(message.success, message.error);
+                break;
         }
     });
 
@@ -996,12 +999,48 @@ body {
         return { localPaths, remoteUrls };
     }
 
+    /** 导出按钮元素和原始文本缓存 */
+    let exportBtnElement = null;
+    let exportBtnOriginalText = '导出 HTML';
+    let exportInProgress = false;
+
+    /**
+     * 设置导出按钮加载状态
+     */
+    function setExportBtnLoading(isLoading) {
+        const exportBtn = document.getElementById('exportHtmlBtn');
+        if (!exportBtn) return;
+
+        if (isLoading) {
+            exportBtnElement = exportBtn;
+            exportBtnOriginalText = exportBtn.textContent.trim() || '导出 HTML';
+            exportInProgress = true;
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<span class="loading-spinner"></span> 导出中...';
+            // 强制重绘以确保动画启动
+            exportBtn.offsetHeight;
+        } else {
+            exportInProgress = false;
+            exportBtn.disabled = false;
+            exportBtn.textContent = exportBtnOriginalText;
+        }
+    }
+
     /**
      * 准备导出：等待预览就绪 → 克隆 #previewArea → 清理/补全 Mermaid → 收集 CSS 与图片列表
      * 扩展侧收到 exportHtml 消息后负责内联资源并写文件（见 markdownPreviewWebview.ts）
      */
     async function prepareExportHtml() {
+        // 如果导出已在进行中，阻止重复点击
+        if (exportInProgress) return;
+
+        // 记录开始时间用于计算最小加载时间
+        window.exportStartTime = Date.now();
+
         try {
+            // 设置按钮加载状态
+            setExportBtnLoading(true);
+
             await previewRenderPromise;
             if (window.markdownContent) {
                 const hasUnrenderedMermaid = previewArea.querySelector('pre code.language-mermaid');
@@ -1032,9 +1071,33 @@ body {
                 fileName: document.querySelector('.title')?.textContent || 'export',
                 keepPrintBg: keepPrintBg
             });
+
+            // 注意：按钮状态将在收到 exportHtmlComplete 消息后恢复
         } catch (error) {
             console.error('准备导出 HTML 失败:', error);
+            // 发生错误时恢复按钮状态（确保至少显示500ms）
+            const MIN_LOADING_TIME = 500;
+            const elapsed = Date.now() - (window.exportStartTime || 0);
+            const remainingDelay = Math.max(0, MIN_LOADING_TIME - elapsed);
+            setTimeout(() => setExportBtnLoading(false), remainingDelay);
         }
+    }
+
+    /**
+     * 处理导出完成消息
+     */
+    function handleExportComplete(success, error) {
+        // 确保至少显示最小加载时间，避免闪烁
+        const MIN_LOADING_TIME = 500;
+        const elapsed = Date.now() - (window.exportStartTime || 0);
+        const remainingDelay = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+        setTimeout(() => {
+            setExportBtnLoading(false);
+            if (error) {
+                console.error('导出失败:', error);
+            }
+        }, remainingDelay);
     }
 
     /** 页面加载后首次渲染（内容来自 preview.html 内嵌的 #markdownContent） */
