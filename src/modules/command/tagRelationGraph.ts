@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 import { CommentManager } from '../../managers/commentManager';
 import { TagManager, TagDeclaration } from '../../managers/tagManager';
 import { TagRelationGraphWebview, GraphData, GraphNode, GraphEdge, BreadcrumbItem, TagRelationGraphMessage } from '../tagRelationGraphWebview';
@@ -120,7 +121,7 @@ async function buildGraphData(
 
             const hasChildren = checkHasChildren(declaration.content);
             const nodeId = `tag-${i}`;
-            const fileName = require('path').basename(tagFilePath);
+            const fileName = path.basename(tagFilePath);
             const label = `@${tagName}\n${fileName}:${declaration.line + 1}`;
 
             nodes.push({
@@ -174,7 +175,7 @@ export function registerTagRelationGraphCommands(
                 if (uri) {
                     // 从资源管理器右键触发
                     filePath = uri.fsPath;
-                    fileName = require('path').basename(filePath);
+                    fileName = path.basename(filePath);
                 } else {
                     // 从编辑器右键触发
                     const activeEditor = vscode.window.activeTextEditor;
@@ -183,7 +184,7 @@ export function registerTagRelationGraphCommands(
                         return;
                     }
                     filePath = activeEditor.document.uri.fsPath;
-                    fileName = require('path').basename(filePath);
+                    fileName = path.basename(filePath);
                 }
 
                 // 重置导航栈

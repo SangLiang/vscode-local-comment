@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import { CommentManager, FileComments, LocalComment, SharedComment } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
 import { CommentProvider } from '../../providers/commentProvider';
@@ -1014,11 +1015,11 @@ export function registerCommands(
                     };
 
                     // 创建临时文件路径
-                    const tempDir = require('os').tmpdir();
-                    const tempFile = require('path').join(tempDir, `temp-comments-${Date.now()}.json`);
+                    const tempDir = os.tmpdir();
+                    const tempFile = path.join(tempDir, `temp-comments-${Date.now()}.json`);
 
                     // 写入临时文件
-                    require('fs').writeFileSync(tempFile, JSON.stringify(tempData, null, 2));
+                    fs.writeFileSync(tempFile, JSON.stringify(tempData, null, 2));
 
                     try {
                         // 使用现有的导入逻辑处理数据
@@ -1028,7 +1029,7 @@ export function registerCommands(
                         );
 
                         // 删除临时文件
-                        require('fs').unlinkSync(tempFile);
+                        fs.unlinkSync(tempFile);
 
                         progress.report({ increment: 100, message: '导入完成！' });
 
@@ -1061,8 +1062,8 @@ export function registerCommands(
 
                     } catch (importError) {
                         // 确保删除临时文件
-                        if (require('fs').existsSync(tempFile)) {
-                            require('fs').unlinkSync(tempFile);
+                        if (fs.existsSync(tempFile)) {
+                            fs.unlinkSync(tempFile);
                         }
                         throw importError;
                     }
