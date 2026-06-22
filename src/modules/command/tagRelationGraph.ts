@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { CommentManager } from '../../managers/commentManager';
 import { TagManager, TagDeclaration } from '../../managers/tagManager';
-import { TagRelationGraphWebview, GraphData, GraphNode, GraphEdge, BreadcrumbItem } from '../tagRelationGraphWebview';
+import { TagRelationGraphWebview, GraphData, GraphNode, GraphEdge, BreadcrumbItem, TagRelationGraphMessage } from '../tagRelationGraphWebview';
 import { COMMANDS } from '../../constants';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/utils';
@@ -224,7 +224,7 @@ export function registerTagRelationGraphCommands(
 }
 
 async function handleMessage(
-    message: any,
+    message: TagRelationGraphMessage,
     context: vscode.ExtensionContext,
     webview: TagRelationGraphWebview
 ): Promise<void> {
@@ -242,7 +242,9 @@ async function handleMessage(
             await handleResetToRoot(context, webview);
             break;
         case 'navigateToLevel':
-            await handleNavigateToLevel(message.level, context, webview);
+            if (message.level !== undefined) {
+                await handleNavigateToLevel(message.level, context, webview);
+            }
             break;
         case 'refresh':
             await handleRefresh(context, webview);
@@ -251,13 +253,17 @@ async function handleMessage(
 }
 
 async function handleExpandNode(
-    message: any,
+    message: TagRelationGraphMessage,
     context: vscode.ExtensionContext,
     webview: TagRelationGraphWebview
 ): Promise<void> {
     const nodeId = message.nodeId;
     const filePath = message.filePath;
     const label = message.label;
+
+    if (!nodeId || !filePath || !label) {
+        return;
+    }
 
     // 检测循环引用
     if (navigationStack.visitedNodes.has(nodeId)) {
@@ -280,9 +286,13 @@ async function handleExpandNode(
     }
 }
 
-async function handleGoToDefinition(message: any): Promise<void> {
+async function handleGoToDefinition(message: TagRelationGraphMessage): Promise<void> {
     const filePath = message.filePath;
     const line = message.line;
+
+    if (!filePath || line === undefined) {
+        return;
+    }
 
     const uri = vscode.Uri.file(filePath);
     const position = new vscode.Position(line, 0);

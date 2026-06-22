@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { TagManager } from '../managers/tagManager';
-import { CommentManager } from '../managers/commentManager';
+import { CommentManager, LocalComment } from '../managers/commentManager';
 import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
 import { normalizeFilePath, getErrorMessage } from '../utils/utils';
 import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
-import { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
+import { UpdatedContextInfo, MarkdownContextInfo, MarkdownSaveOutcome } from './command/comment';
 import { EditorUtils } from '../utils/editorUtils';
 
 // 辅助函数：获取代码上下文（前后5行）
@@ -54,16 +54,7 @@ export async function showMarkdownWebviewInput(
     projectManager: ProjectManager,
     placeholder: string = '',
     existingContent: string = '',
-    contextInfo?: {
-        fileName?: string;
-        lineNumber?: number;
-        lineContent?: string; // 当前行的实际内容
-        originalLineContent?: string; // 注释保存的代码快照
-        selectedText?: string;
-        contextLines?: string[]; // 前后5行的代码内容
-        contextStartLine?: number; // 上下文开始的行号
-        filePath?: string; // 文件路径
-    },
+    contextInfo?: MarkdownContextInfo,
     markedJsUri: string = '',
     onSaveAndContinue?: (
         content: string,
@@ -72,7 +63,7 @@ export async function showMarkdownWebviewInput(
     ) => void | Promise<MarkdownSaveOutcome>,
     isUserLoggedIn: boolean = false,
     isCommentShared: boolean = false
-): Promise<{content: string, contextInfo?: any} | undefined> {
+): Promise<{content: string, contextInfo?: MarkdownContextInfo} | undefined> {
     // 保存当前活动编辑器的引用，以便稍后恢复焦点
     const activeEditor = vscode.window.activeTextEditor;
     
@@ -153,7 +144,7 @@ export async function showMarkdownWebviewInput(
             void (async () => {
                 try {
                     // 并行加载标签建议和代码上下文
-                    const promises: Promise<any>[] = [];
+                    const promises: Promise<void | boolean>[] = [];
                     
                     // 加载标签建议
                     promises.push(
@@ -370,20 +361,14 @@ export async function showMarkdownWebviewInput(
                             }
                             
                             // 构造完整的LocalComment对象
-                            const commentData: any = {
-                                content: message.content,
+                            const commentData: LocalComment = {
+                                id: typeof message.comment?.id === 'string' ? message.comment.id : 'temp_' + Date.now(),
+                                content: String(message.content ?? ''),
                                 timestamp: Date.now(),
                                 line: contextInfo?.lineNumber ?? 0,
                                 originalLine: contextInfo?.lineNumber ?? 0,
                                 lineContent: contextInfo?.lineContent ?? ''
                             };
-                            
-                            // 如果有ID信息则添加
-                            if (message.comment?.id) {
-                                commentData.id = message.comment.id;
-                            } else {
-                                commentData.id = 'temp_' + Date.now(); // 生成临时ID
-                            }
                             
                             // 构造要分享的数据
                             const shareData = {
@@ -397,7 +382,7 @@ export async function showMarkdownWebviewInput(
                             // 调用API服务分享注释
                             const apiService = ApiService.getInstance();
                             // 修复API路径拼写错误（sharedCommnets -> sharedComments）
-                            const response = await apiService.post<any>(ApiRoutes.comment.sharedComments, shareData);
+                            const response = await apiService.post<{ id?: number | string; error?: string }>(ApiRoutes.comment.sharedComments, shareData);
                             
                             logger.debug('[shareData]', shareData);
                             logger.debug('[response]', response);

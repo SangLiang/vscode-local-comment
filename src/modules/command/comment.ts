@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentProvider } from '../../providers/commentProvider';
 import { CommentTreeProvider } from '../../providers/commentTreeProvider';
-import { CommentManager } from '../../managers/commentManager';
+import { CommentManager, LocalComment } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
 import { AuthManager } from '../../managers/authManager';
 import { ProjectManager } from '../../managers/projectManager';
@@ -20,6 +20,16 @@ import { DialogUtils } from '../../utils/dialogUtils';
 export interface UpdatedContextInfo {
     lineNumber?: number;
     lineContent?: string;
+}
+
+export interface MarkdownContextInfo extends UpdatedContextInfo {
+    fileName?: string;
+    originalLineContent?: string;
+    selectedText?: string;
+    contextLines?: string[];
+    contextStartLine?: number;
+    filePath?: string;
+    fileNotFound?: boolean;
 }
 
 /** Markdown 编辑面板「保存并继续」回调的返回结果，供 Webview 更新 dirty 基线 */
@@ -257,7 +267,7 @@ export function registerCommentCommands(
             // 获取上下文信息
             const fileName = getFileNameFromUri(uri);
             
-            let contextInfo: any = {
+            let contextInfo: MarkdownContextInfo = {
                 fileName,
                 filePath: uri.fsPath, // 添加完整的文件路径
                 lineNumber: comment.line,

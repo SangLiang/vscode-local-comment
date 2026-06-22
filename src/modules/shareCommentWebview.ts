@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
-import { WebviewUtils } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { getErrorMessage } from '../utils/utils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
@@ -291,7 +291,7 @@ function getShareCommentWebviewContent(
     highlightJsUri: string = '',
     highlightCssUri: string = '',
     webview?: vscode.Webview,
-    resourceUris?: any // 添加resourceUris参数以获取publicJsUri
+    resourceUris?: ResourceUris
 ): string {
     // 生成nonce用于CSP
     const nonce = WebviewUtils.getNonce();

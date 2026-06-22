@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { WebviewUtils } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
@@ -40,18 +40,27 @@ export interface BreadcrumbItem {
     line?: number;
 }
 
+export interface TagRelationGraphMessage {
+    command: string;
+    nodeId?: string;
+    label?: string;
+    filePath?: string;
+    line?: number;
+    level?: number;
+}
+
 export class TagRelationGraphWebview {
     private static currentPanel: TagRelationGraphWebview | undefined;
     private static currentFilePath: string | undefined;
 
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
-    private readonly onMessage: (message: any) => void;
+    private readonly onMessage: (message: TagRelationGraphMessage) => void;
 
     private constructor(
         panel: vscode.WebviewPanel,
         context: vscode.ExtensionContext,
-        onMessage: (message: any) => void
+        onMessage: (message: TagRelationGraphMessage) => void
     ) {
         this.panel = panel;
         this.context = context;
@@ -63,7 +72,7 @@ export class TagRelationGraphWebview {
         context: vscode.ExtensionContext,
         filePath: string,
         fileName: string,
-        onMessage: (message: any) => void
+        onMessage: (message: TagRelationGraphMessage) => void
     ): TagRelationGraphWebview {
         const activeEditor = vscode.window.activeTextEditor;
 
@@ -138,7 +147,7 @@ export class TagRelationGraphWebview {
         });
     }
 
-    private getWebviewContent(resourceUris: any): string {
+    private getWebviewContent(resourceUris: ResourceUris): string {
         const template = WebviewUtils.loadTemplate(
             this.context,
             'tagRelationGraph/graph.html'

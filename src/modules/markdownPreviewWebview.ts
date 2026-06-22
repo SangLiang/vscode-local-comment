@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { WebviewUtils } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, IPC_MESSAGES, COMMANDS } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
@@ -346,7 +346,7 @@ ${mermaidScript}
         return false; // 用户取消保存
     }
 
-    private getWebviewContent(content: string, fileName: string, resourceUris: any): string {
+    private getWebviewContent(content: string, fileName: string, resourceUris: ResourceUris): string {
         const nonce = WebviewUtils.getNonce();
 
         const publicJsUri = resourceUris?.publicJsUri || '';

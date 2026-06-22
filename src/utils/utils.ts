@@ -94,8 +94,8 @@ export function toAbsolutePath(relativePath: string): string {
  * @param fileComments 文件注释对象，键为文件路径
  * @returns 标准化后的文件注释对象
  */
-export function normalizeFileComments(fileComments: { [filePath: string]: any[] }): { [filePath: string]: any[] } {
-    const normalizedComments: { [filePath: string]: any[] } = {};
+export function normalizeFileComments<T>(fileComments: { [filePath: string]: T[] }): { [filePath: string]: T[] } {
+    const normalizedComments: { [filePath: string]: T[] } = {};
     for (const [filePath, comments] of Object.entries(fileComments)) {
         const normalizedPath = normalizeFilePath(filePath);
         normalizedComments[normalizedPath] = comments;
@@ -110,11 +110,11 @@ export function normalizeFileComments(fileComments: { [filePath: string]: any[] 
  * @param workspacePath 当前工作区根路径
  * @returns 键已重映射为当前工作区绝对路径的注释对象
  */
-export function remapFileCommentsToWorkspace(
-    fileComments: { [filePath: string]: any[] },
+export function remapFileCommentsToWorkspace<T>(
+    fileComments: { [filePath: string]: T[] },
     workspacePath: string
-): { [filePath: string]: any[] } {
-    const result: { [filePath: string]: any[] } = {};
+): { [filePath: string]: T[] } {
+    const result: { [filePath: string]: T[] } = {};
     const projectName = path.basename(workspacePath);
     const normalizedWorkspace = path.normalize(workspacePath);
 

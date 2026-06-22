@@ -3,14 +3,16 @@ import { ExtensionContainer } from './ExtensionContainer';
 import { TagCompletionProvider } from '../providers/tagCompletionProvider';
 import { TagDefinitionProvider } from '../providers/tagDefinitionProvider';
 import { UserInfoWebview } from '../modules/userInfoWebview';
+import { CommentTreeItem } from '../providers/commentTreeProvider';
+import { SharedCommentTreeItem } from '../providers/sharedCommentTreeProvider';
 import { logger } from '../utils/logger';
 
 /**
  * 提供器注册表 - 注册所有语言服务提供器、树视图和文件装饰器
  */
 export class ProviderRegistry {
-    private treeView?: vscode.TreeView<any>;
-    private sharedTreeView?: vscode.TreeView<any>;
+    private treeView?: vscode.TreeView<CommentTreeItem>;
+    private sharedTreeView?: vscode.TreeView<SharedCommentTreeItem>;
 
     constructor(
         private container: ExtensionContainer,
@@ -164,7 +166,7 @@ export class ProviderRegistry {
         const context = this.context;
         
         vscode.window.registerWebviewPanelSerializer(UserInfoWebview.viewType, {
-            async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+            async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: unknown) {
                 // 恢复webview时也需要检查认证状态
                 if (!container.authManager) {
                     logger.error('认证管理器未初始化，无法恢复用户信息面板');

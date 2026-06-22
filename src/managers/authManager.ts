@@ -24,6 +24,13 @@ export interface AuthSession {
     expiresAt: number;
 }
 
+export interface UserProject {
+    id: number;
+    name: string;
+    description?: string;
+    [key: string]: unknown;
+}
+
 /** 默认会话过期时间：24 小时（毫秒） */
 const DEFAULT_SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
@@ -253,13 +260,13 @@ export class AuthManager {
     /**
      * 获取用户所属的项目列表
      */
-    public async getUserProjects(): Promise<any[]> {
+    public async getUserProjects(): Promise<UserProject[]> {
         try {
             if (!this.isLoggedIn()) {
                 throw new Error('用户未登录');
             }
 
-            const projects = await apiService.get(ApiRoutes.project.getMyProject);
+            const projects = await apiService.get<UserProject[]>(ApiRoutes.project.getMyProject);
             return projects || [];
         } catch (error) {
             logger.error('获取用户项目失败:', error);

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BookmarkManager } from '../managers/bookmarkManager';
+import { BookmarkManager, Bookmark } from '../managers/bookmarkManager';
 import { TimerManager } from '../utils/timerUtils';
 
 export class BookmarkDecorationProvider implements vscode.Disposable {
@@ -85,7 +85,7 @@ export class BookmarkDecorationProvider implements vscode.Disposable {
         editor.setDecorations(this.decorationType, decorations);
     }
 
-    private createHoverMessage(bookmark: any): vscode.MarkdownString {
+    private createHoverMessage(bookmark: Bookmark): vscode.MarkdownString {
         const markdown = new vscode.MarkdownString();
         markdown.appendMarkdown(`**书签**\n\n`);
         

@@ -27,13 +27,18 @@ export const ApiRoutes = {
     },
 };
 
-// 请求响应接口 - 暂时注释掉，因为服务端返回格式不同
-// export interface ApiResponse<T = any> {
-//     success: boolean;
-//     data?: T;
-//     message?: string;
-//     error?: any;
-// }
+export interface ApiResponse<T = unknown> {
+    success: boolean;
+    data?: T;
+    message?: string;
+    error?: unknown;
+}
+
+type RequestData = object | unknown[] | string | number | boolean | null;
+
+type ApiErrorData = {
+    message?: string;
+};
 
 // 请求配置接口
 export interface RequestConfig extends AxiosRequestConfig {
@@ -143,44 +148,44 @@ export class ApiService {
     /**
      * 通用GET请求
      */
-    public async get<T = any>(url: string, config?: RequestConfig): Promise<T> {
+    public async get<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
         return this.request<T>({ ...config, method: 'GET', url });
     }
 
     /**
      * 通用POST请求
      */
-    public async post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    public async post<T = unknown>(url: string, data?: RequestData, config?: RequestConfig): Promise<T> {
         return this.request<T>({ ...config, method: 'POST', url, data });
     }
 
     /**
      * 通用PUT请求
      */
-    public async put<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    public async put<T = unknown>(url: string, data?: RequestData, config?: RequestConfig): Promise<T> {
         return this.request<T>({ ...config, method: 'PUT', url, data });
     }
 
     /**
      * 通用DELETE请求
      */
-    public async delete<T = any>(url: string, config?: RequestConfig): Promise<T> {
+    public async delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
         return this.request<T>({ ...config, method: 'DELETE', url });
     }
 
     /**
      * 通用PATCH请求
      */
-    public async patch<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    public async patch<T = unknown>(url: string, data?: RequestData, config?: RequestConfig): Promise<T> {
         return this.request<T>({ ...config, method: 'PATCH', url, data });
     }
 
     /**
      * 核心请求方法
      */
-    private async request<T = any>(config: RequestConfig): Promise<T> {
+    private async request<T = unknown>(config: RequestConfig): Promise<T> {
         const { retryCount = 0, retryDelay = 1000, ...axiosConfig } = config;
-        let lastError: any;
+        let lastError: unknown;
 
         for (let attempt = 0; attempt <= retryCount; attempt++) {
             try {
@@ -211,8 +216,8 @@ export class ApiService {
     /**
      * 统一错误处理
      */
-    private handleError(error: any): Error {
-        if (axios.isAxiosError(error)) {
+    private handleError(error: unknown): Error {
+        if (axios.isAxiosError<ApiErrorData>(error)) {
             const status = error.response?.status;
             const message = error.response?.data?.message || error.message;
 
@@ -232,7 +237,9 @@ export class ApiService {
             }
         }
 
-        return new Error(`网络错误: ${error.message}`);
+        return error instanceof Error
+            ? new Error(`网络错误: ${error.message}`)
+            : new Error('网络错误: 未知错误');
     }
 
     /**

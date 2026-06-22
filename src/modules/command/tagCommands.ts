@@ -80,7 +80,7 @@ export function registerTagCommands(
             const sortedTags = currentFileTags.sort((a, b) => a.line - b.line);
 
             // 创建快速选择项
-            const quickPickItems: vscode.QuickPickItem[] = sortedTags.map(tag => {
+            const quickPickItems: TagQuickPickItem[] = sortedTags.map(tag => {
                 const label = `\${${tag.tagName}}`;
                 const description = `第${tag.line + 1}行`;
                 
@@ -101,7 +101,7 @@ export function registerTagCommands(
                     detail,
                     // 将标签对象存储在用户数据中，以便后续使用
                     userData: tag
-                } as TagQuickPickItem;
+                };
             });
 
             // 显示快速选择器
@@ -111,8 +111,8 @@ export function registerTagCommands(
                 matchOnDetail: true
             });
 
-            if (selectedItem && (selectedItem as TagQuickPickItem).userData) {
-                const tag = (selectedItem as TagQuickPickItem).userData;
+            if (selectedItem) {
+                const tag = selectedItem.userData;
                 // 跳转到标签位置
                 const uri = vscode.Uri.file(tag.filePath);
                 const document = await vscode.workspace.openTextDocument(uri);
@@ -158,7 +158,7 @@ export function registerTagCommands(
             });
 
             // 创建快速选择项
-            const quickPickItems: vscode.QuickPickItem[] = sortedTags.map(tag => {
+            const quickPickItems: TagQuickPickItem[] = sortedTags.map(tag => {
                 const label = `\${${tag.tagName}}`;
                 const fileName = getFileNameFromPath(tag.filePath);
                 const description = `${fileName}:${tag.line + 1}`;
@@ -185,7 +185,7 @@ export function registerTagCommands(
                     detail,
                     // 将标签对象存储在用户数据中，以便后续使用
                     userData: tag
-                } as TagQuickPickItem;
+                };
             });
 
             // 显示快速选择器
@@ -195,8 +195,8 @@ export function registerTagCommands(
                 matchOnDetail: true
             });
 
-            if (selectedItem && (selectedItem as TagQuickPickItem).userData) {
-                const tag = (selectedItem as TagQuickPickItem).userData;
+            if (selectedItem) {
+                const tag = selectedItem.userData;
                 // 跳转到标签位置
                 const uri = vscode.Uri.file(tag.filePath);
                 const document = await vscode.workspace.openTextDocument(uri);

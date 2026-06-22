@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionContainer } from '../ExtensionContainer';
+import { UserInfo } from '../../managers/authManager';
 import { StatusBarManager } from '../StatusBarManager';
 import { logger } from '../../utils/logger';
 import { COMMANDS, CONTEXT_KEYS, DELAY_TIMES } from '../../constants';
@@ -35,7 +36,7 @@ export class AuthEventHandler {
         });
 
         // 监听登录状态变化
-        const onUserLogin = vscode.commands.registerCommand(COMMANDS.ON_USER_LOGIN, async (user: any) => {
+        const onUserLogin = vscode.commands.registerCommand(COMMANDS.ON_USER_LOGIN, async (user: UserInfo) => {
             await this.handleUserLogin(user);
         });
         disposables.push(onUserLogin);
@@ -51,7 +52,7 @@ export class AuthEventHandler {
     /**
      * 处理用户登录事件
      */
-    private async handleUserLogin(user: any): Promise<void> {
+    private async handleUserLogin(user: UserInfo): Promise<void> {
         // 更新登录状态上下文变量
         vscode.commands.executeCommand('setContext', CONTEXT_KEYS.IS_LOGGED_IN, true);
         this.statusBarManager.updateStatusAndContext();

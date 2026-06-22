@@ -1546,7 +1546,11 @@ export class CommentManager implements vscode.Disposable {
             }
 
             const importDataStr = fs.readFileSync(importPath, 'utf8');
-            const importData = JSON.parse(importDataStr);
+            const importData = JSON.parse(importDataStr) as {
+                comments?: Record<string, unknown>;
+                projectInfo?: { name?: string };
+                exportTime?: string;
+            };
 
             // 检查基本结构
             if (!importData.comments || typeof importData.comments !== 'object') {
@@ -1558,7 +1562,7 @@ export class CommentManager implements vscode.Disposable {
 
             // 统计信息
             const fileCount = Object.keys(importData.comments).length;
-            const commentCount = Object.values(importData.comments).reduce((sum: number, comments: any) => {
+            const commentCount = Object.values(importData.comments).reduce<number>((sum, comments) => {
                 return sum + (Array.isArray(comments) ? comments.length : 0);
             }, 0);
 

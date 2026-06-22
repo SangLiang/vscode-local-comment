@@ -64,7 +64,7 @@ export function registerBookmarkCommands(
     });
 
     // 清除文件书签命令
-    const clearFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_BOOKMARKS, async (arg: any) => {
+    const clearFileBookmarksCommand = vscode.commands.registerCommand(COMMANDS.CLEAR_FILE_BOOKMARKS, async (arg: unknown) => {
         const manager = requireBookmarkManager();
         if (!manager) return;
 
@@ -137,7 +137,7 @@ export function registerBookmarkCommands(
         const sortedBookmarks = bookmarks.sort((a, b) => a.line - b.line);
 
         // 创建快速选择项
-        const quickPickItems: vscode.QuickPickItem[] = sortedBookmarks.map(bookmark => {
+            const quickPickItems: BookmarkQuickPickItem[] = sortedBookmarks.map(bookmark => {
             let label = `第${bookmark.line + 1}行`;
             let description = '';
             let detail = '';
@@ -163,7 +163,7 @@ export function registerBookmarkCommands(
                 detail,
                 // 将书签对象存储在用户数据中，以便后续使用
                 userData: bookmark
-            } as BookmarkQuickPickItem;
+            };
         });
 
         // 显示快速选择器
@@ -173,8 +173,8 @@ export function registerBookmarkCommands(
             matchOnDetail: false
         });
 
-        if (selectedItem && (selectedItem as BookmarkQuickPickItem).userData) {
-            const bookmark = (selectedItem as BookmarkQuickPickItem).userData;
+        if (selectedItem) {
+            const bookmark = selectedItem.userData;
             await manager.goToBookmark(bookmark.filePath, bookmark.line);
         }
     });

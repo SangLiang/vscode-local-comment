@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { CommentManager } from '../../managers/commentManager';
+import { CommentManager, FileComments, LocalComment, SharedComment } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
 import { CommentProvider } from '../../providers/commentProvider';
 import { CommentTreeProvider } from '../../providers/commentTreeProvider';
@@ -24,6 +24,34 @@ import { COMMANDS } from '../../constants';
 import { DialogUtils } from '../../utils/dialogUtils';
 import { StoragePathUtils } from '../../utils/storagePathUtils';
 import { MarkdownPreviewWebview } from '../markdownPreviewWebview';
+import { showShareCommentWebview } from '../shareCommentWebview';
+
+interface SharedCommentTreeCommandItem {
+    sharedComment?: SharedComment;
+    commentId?: string;
+    filePath?: string;
+}
+
+interface ProjectCommentRecord {
+    project_id: number;
+    content: {
+        version?: string;
+        exportTime?: string;
+        projectInfo?: ProjectInfo;
+        comments?: FileComments;
+        metadata?: {
+            totalFiles?: number;
+            totalComments?: number;
+        };
+    };
+}
+
+function isCommentMap(value: unknown): value is FileComments {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+    return Object.values(value as Record<string, unknown>).every(Array.isArray);
+}
 
 export function registerCommands(
     context: vscode.ExtensionContext,
@@ -317,9 +345,12 @@ export function registerCommands(
             for (const file of files) {
                 const filePath = path.join(projectsDir, file);
                 try {
-                    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    const data = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+                    if (!isCommentMap(data)) {
+                        continue;
+                    }
                     const fileCount = Object.keys(data).length;
-                    const commentCount = Object.values(data).reduce((sum: number, comments: any) => sum + comments.length, 0);
+                    const commentCount = Object.values(data).reduce((sum, comments) => sum + comments.length, 0);
                     
                     totalFiles += fileCount;
                     totalComments += commentCount;
@@ -896,12 +927,12 @@ export function registerCommands(
                     progress.report({ increment: 0, message: '连接服务端...' });
 
                     // 调用API获取注释数据
-                    const response = await apiService.get(ApiRoutes.comment.importComments);
+                    const response = await apiService.get<ProjectCommentRecord[]>(ApiRoutes.comment.importComments);
                     
                     progress.report({ increment: 30, message: '数据下载完成，正在处理...' });
 
                     // 过滤出当前项目关联的注释数据
-                    const projectComments = response.filter((item: any) => 
+                    const projectComments = response.filter(item => 
                         item.project_id === parseInt(associatedProjectId)
                     );
 
@@ -1112,23 +1143,23 @@ export function registerCommands(
     });
 
     // 显示共享注释Webview命令
-    const showShareCommentCommand = vscode.commands.registerCommand(COMMANDS.SHOW_SHARE_COMMENT, async (treeItemOrParams: any) => {
+    const showShareCommentCommand = vscode.commands.registerCommand(COMMANDS.SHOW_SHARE_COMMENT, async (treeItemOrParams: SharedCommentTreeCommandItem) => {
         try {
-            let comment: any;
+            let comment: SharedComment | undefined;
             let filePath: string;
             
             // 检查参数类型：可能是树项或hover参数
-            if (treeItemOrParams && treeItemOrParams.sharedComment) {
+            if (treeItemOrParams?.sharedComment && treeItemOrParams.filePath) {
                 // 从树项中获取共享注释数据
                 comment = treeItemOrParams.sharedComment;
                 filePath = treeItemOrParams.filePath;
-            } else if (treeItemOrParams && treeItemOrParams.commentId) {
+            } else if (treeItemOrParams?.commentId && treeItemOrParams.filePath) {
                 // 从hover参数中获取共享注释数据
                 const allSharedComments = commentManager.getAllSharedComments();
                 const sharedComments = allSharedComments[treeItemOrParams.filePath] || [];
-                comment = sharedComments.find(c => c.id === treeItemOrParams.commentId);
+                comment = sharedComments.find((c: LocalComment | SharedComment) => c.id === treeItemOrParams.commentId);
                 
-                if (!comment) {
+                if (!comment || !('userId' in comment)) {
                     vscode.window.showErrorMessage('无法找到指定的共享注释');
                     return;
                 }
@@ -1139,12 +1170,9 @@ export function registerCommands(
                 return;
             }
             
-            // 导入showShareCommentWebview函数
-            const { showShareCommentWebview } = require('../shareCommentWebview');
-            
             // 构建上下文信息
             const contextInfo = {
-                fileName: require('path').basename(filePath),
+                fileName: path.basename(filePath),
                 lineNumber: comment.line,
                 lineContent: comment.lineContent,
                 filePath: filePath,

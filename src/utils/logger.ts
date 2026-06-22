@@ -114,7 +114,7 @@ export class Logger {
     /**
      * 格式化日志消息
      */
-    private formatMessage(level: string, message: any, ...args: any[]): string {
+    private formatMessage(level: string, message: unknown, ...args: unknown[]): string {
         const timestamp = new Date().toISOString();
         const formattedMessage = typeof message === 'string' 
             ? message 
@@ -133,7 +133,7 @@ export class Logger {
     /**
      * 输出日志到控制台和输出通道
      */
-    private output(level: LogLevel, levelName: string, message: any, ...args: any[]): void {
+    private output(level: LogLevel, levelName: string, message: unknown, ...args: unknown[]): void {
         if (this.logLevel === LogLevel.NONE || level < this.logLevel) {
             return;
         }
@@ -164,28 +164,28 @@ export class Logger {
     /**
      * 调试日志（最详细）
      */
-    public debug(message: any, ...args: any[]): void {
+    public debug(message: unknown, ...args: unknown[]): void {
         this.output(LogLevel.DEBUG, 'DEBUG', message, ...args);
     }
 
     /**
      * 信息日志（一般信息）
      */
-    public info(message: any, ...args: any[]): void {
+    public info(message: unknown, ...args: unknown[]): void {
         this.output(LogLevel.INFO, 'INFO', message, ...args);
     }
 
     /**
      * 警告日志
      */
-    public warn(message: any, ...args: any[]): void {
+    public warn(message: unknown, ...args: unknown[]): void {
         this.output(LogLevel.WARN, 'WARN', message, ...args);
     }
 
     /**
      * 错误日志
      */
-    public error(message: any, ...args: any[]): void {
+    public error(message: unknown, ...args: unknown[]): void {
         this.output(LogLevel.ERROR, 'ERROR', message, ...args);
     }
 
