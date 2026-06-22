@@ -614,18 +614,22 @@
     "build": "npm run build:prod",
     "build:dev": "cross-env LOG_LEVEL=info NODE_ENV=development node scripts/set-log-level.js && node scripts/package-dev.js",
     "build:prod": "cross-env LOG_LEVEL=error NODE_ENV=production node scripts/set-log-level.js && npx @vscode/vsce package",
-    "ls": "npx @vscode/vsce ls --tree"
+    "ls": "npx @vscode/vsce ls --tree",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
     "@types/cytoscape": "^3.21.9",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.4",
     "@types/vscode": "^1.74.0",
     "cross-env": "^7.0.3",
     "katex": "^0.16.9",
     "marked": "^4.3.0",
     "mermaid": "^11.15.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "axios": "^1.11.0",
