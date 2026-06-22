@@ -10,6 +10,7 @@ import { getErrorMessage } from '../utils/utils';
 export class MarkdownPreviewWebview {
     private static currentPanel: MarkdownPreviewWebview | undefined;
     private static currentFilePath: string | undefined;
+    private static _isReplacing: boolean = false;
 
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
@@ -41,7 +42,9 @@ export class MarkdownPreviewWebview {
         }
 
         if (MarkdownPreviewWebview.currentPanel) {
+            MarkdownPreviewWebview._isReplacing = true;
             MarkdownPreviewWebview.currentPanel.panel.dispose();
+            MarkdownPreviewWebview._isReplacing = false;
         }
 
         const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
@@ -384,6 +387,8 @@ ${mermaidScript}
         MarkdownPreviewWebview.currentPanel = undefined;
         MarkdownPreviewWebview.currentFilePath = undefined;
 
-        EditorUtils.restoreFocus(this.activeEditor);
+        if (!MarkdownPreviewWebview._isReplacing) {
+            EditorUtils.restoreFocus(this.activeEditor);
+        }
     }
 }
