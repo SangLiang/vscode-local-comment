@@ -1,4 +1,4 @@
-import { LocalComment, SharedComment } from './commentManager';
+import { LocalComment, SharedComment } from './commentTypes';
 
 export interface TagDeclaration {
     tagName: string;

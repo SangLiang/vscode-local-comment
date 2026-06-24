@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from './logger';
-import { FileComments } from '../managers/commentManager';
+import { FileComments } from '../managers/commentTypes';
 
 /**
  * 将 unknown 错误转为可展示的字符串（用于 showErrorMessage 等）

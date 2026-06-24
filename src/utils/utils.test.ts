@@ -357,7 +357,14 @@ describe('utils 工具函数测试', () => {
       };
 
       const comments = {
-        'src/file.ts': [{ id: '1', line: 1, content: 'test comment' }],
+        'src/file.ts': [{
+          id: '1',
+          line: 1,
+          content: 'test comment',
+          timestamp: Date.now(),
+          originalLine: 1,
+          lineContent: 'const x = 1;'
+        }],
       };
 
       const result = utils.buildExportData(projectInfo, comments, 1);
@@ -384,7 +391,14 @@ describe('utils 工具函数测试', () => {
       };
 
       const comments = {
-        'C:\\workspace\\project\\src\\file.ts': [{ id: '1', content: 'test' }],
+        'C:\\workspace\\project\\src\\file.ts': [{
+          id: '1',
+          line: 1,
+          content: 'test',
+          timestamp: Date.now(),
+          originalLine: 1,
+          lineContent: 'const x = 1;'
+        }],
       };
 
       const result = utils.buildExportData(projectInfo, comments, 1);

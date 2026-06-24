@@ -10,52 +10,30 @@ import { logger } from '../utils/logger';
 import { DELAY_TIMES, COMMANDS } from '../constants';
 import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
 import { TimerManager } from '../utils/timerUtils';
+import { LocalComment, SharedComment, ProjectSharedComment, FileComments } from './commentTypes';
+import { CommentStorage } from './commentStorage';
 
-export interface LocalComment {
-    id: string;
-    line: number; // 当前行号
-    content: string; // 注释内容
-    timestamp: number; // 时间戳
-    originalLine: number; // 原始行号，用于跟踪位置变化
-    lineContent: string; // 该行的内容，用于智能定位和作为代码快照
-    isMatched?: boolean; // 标记注释是否匹配到代码
-    isShared?: boolean; // 标记注释是否是共享的
-}
-
-export interface SharedComment extends LocalComment {
-    userId: string; // 用户ID
-    userAvatar?: string; // 用户头像URL
-    username?: string; // 用户名
-}
-
-// 项目共享注释的接口 
-export interface ProjectSharedComment {
-    content: LocalComment; // 注释内容 - 使用 LocalComment 类型
-    file_path: string; // 文件路径
-    project_id: number; // 项目ID
-    is_public: boolean; // 是否公开
-    id: number; // 注释ID
-    user_id: number; // 用户ID
-    user_avatar?: string; // 用户头像URL
-    username?: string; // 用户名
-    created_at: string; // 创建时间
-    updated_at: string; // 更新时间
-}
-
-export interface FileComments {
-    [filePath: string]: (LocalComment | SharedComment)[];
-}
+// 类型 re-export，保持向后兼容
+export type { LocalComment, SharedComment, ProjectSharedComment, FileComments } from './commentTypes';
 
 export class CommentManager implements vscode.Disposable {
-    private comments: FileComments = {};
-    private shareComments: FileComments = {};
-    private storageFile: string;
-    private context: vscode.ExtensionContext;
+    // 存储层实例
+    private storage: CommentStorage;
+
+    // 兼容属性：直接代理到 storage（过渡期间使用）
+    private get comments(): FileComments { return this.storage.getCommentsRef(); }
+    private set comments(value: FileComments) { this.storage.replaceComments(value); }
+    private get shareComments(): FileComments { return this.storage.getShareCommentsRef(); }
+    private set shareComments(value: FileComments) { this.storage.replaceShareComments(value); }
+    private get storageFile(): string { return this.storage.getStorageFilePath(); }
+    private set storageFile(value: string) { this.storage.updateStorageFile(value); }
+    private get context(): vscode.ExtensionContext { return this.storage.getContext(); }
+
     private authManager?: AuthManager; // 认证管理器
     private _hasKeyboardActivity = false; // 记录键盘活动状态，用于区分用户编辑和Git分支切换
     public readonly commentMatcher: CommentMatcher;
     private readonly _timerManager = new TimerManager();
-    
+
     // 事件发射器，用于通知注释变化
     private _onDidChangeComments: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     readonly onDidChangeComments: vscode.Event<void> = this._onDidChangeComments.event;
@@ -65,11 +43,10 @@ export class CommentManager implements vscode.Disposable {
     readonly onDidChangeSharedComments: vscode.Event<void> = this._onDidChangeSharedComments.event;
 
     constructor(context: vscode.ExtensionContext, authManager?: AuthManager) {
-        this.context = context;
+        this.storage = new CommentStorage(context);
         this.authManager = authManager;
-        this.storageFile = this.getProjectStorageFile(context);
         this.commentMatcher = new CommentMatcher(); // 实例化注释匹配器
-        this.loadComments();
+        this.storage.loadComments();
 
         // 监听配置变更
         const configWatcher = vscode.workspace.onDidChangeConfiguration(e => {
@@ -84,9 +61,9 @@ export class CommentManager implements vscode.Disposable {
         
         // 监听工作区变化，重新加载注释数据
         const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders(() => {
-            this.handleWorkspaceChange();
+            this.storage.handleWorkspaceChange();
         });
-        
+
         context.subscriptions.push(workspaceWatcher);
     }
 
@@ -97,6 +74,13 @@ export class CommentManager implements vscode.Disposable {
         this._timerManager.dispose();
         this._onDidChangeComments.dispose();
         this._onDidChangeSharedComments.dispose();
+    }
+
+    /**
+     * 代理：保存注释（由协调器统一触发事件）
+     */
+    private async _saveComments(): Promise<void> {
+        await this.storage.saveComments();
     }
 
     /**

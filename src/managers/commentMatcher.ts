@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LocalComment, SharedComment } from './commentManager';
+import { LocalComment, SharedComment } from './commentTypes';
 import { logger } from '../utils/logger';
 
 /**
