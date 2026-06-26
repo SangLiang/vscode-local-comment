@@ -168,6 +168,11 @@ export class MarkdownPreviewWebview {
 
     private registerMessageHandler(): void {
         this.panel.webview.onDidReceiveMessage(async (message) => {
+            if (message.command === IPC_MESSAGES.GO_TO_SOURCE_LINE) {
+                await this.handleGoToSourceLine(message.line);
+                return;
+            }
+
             if (message.command === IPC_MESSAGES.GO_TO_TAG_DECLARATION && message.tagName) {
                 try {
                     await vscode.commands.executeCommand(
@@ -222,6 +227,50 @@ export class MarkdownPreviewWebview {
                 });
             }
         });
+    }
+
+    private async handleGoToSourceLine(line: number): Promise<void> {
+        const filePath = MarkdownPreviewWebview.currentFilePath;
+        if (!filePath) {
+            return;
+        }
+        if (typeof line !== 'number' || line < 0 || !Number.isFinite(line)) {
+            return;
+        }
+
+        try {
+            const uri = vscode.Uri.file(filePath);
+            const document = await vscode.workspace.openTextDocument(uri);
+
+            const existingEditor = vscode.window.visibleTextEditors.find(
+                (editor) => editor.document.uri.fsPath === filePath
+                    || editor.document.uri.fsPath.toLowerCase() === filePath.toLowerCase()
+            );
+            const viewColumn = existingEditor?.viewColumn
+                ?? vscode.ViewColumn.One;
+
+            const targetLine = Math.min(Math.max(0, Math.floor(line)), Math.max(0, document.lineCount - 1));
+            const position = new vscode.Position(targetLine, 0);
+
+            const editor = await vscode.window.showTextDocument(document, {
+                viewColumn,
+                preserveFocus: false,
+                selection: new vscode.Range(position, position)
+            });
+
+            editor.selection = new vscode.Selection(position, position);
+            editor.revealRange(
+                new vscode.Range(position, position),
+                vscode.TextEditorRevealType.InCenter
+            );
+            await vscode.commands.executeCommand('revealLine', {
+                lineNumber: targetLine + 1,
+                at: 'center'
+            });
+        } catch (error) {
+            logger.error('跳转到源文件失败:', error);
+            vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
+        }
     }
 
     private inlineLocalImages(html: string, paths: string[]): string {

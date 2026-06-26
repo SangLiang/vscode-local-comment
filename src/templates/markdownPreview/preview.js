@@ -41,10 +41,541 @@
         return false;
     }
 
+    /** 0-based 行号：offset 所在行 */
+    function offsetToLine(content, offset) {
+        if (offset <= 0) {
+            return 0;
+        }
+        const text = content.substring(0, offset);
+        return (text.match(/\r?\n/g) || []).length;
+    }
+
+    /** 自 startIndex 起查找 token.raw，返回 index；找不到返回 -1 */
+    function findTokenRawIndex(content, raw, startIndex) {
+        if (!raw) {
+            return -1;
+        }
+        let idx = content.indexOf(raw, startIndex);
+        if (idx !== -1) {
+            return idx;
+        }
+        const crlfRaw = raw.replace(/\n/g, '\r\n');
+        if (crlfRaw !== raw) {
+            idx = content.indexOf(crlfRaw, startIndex);
+            if (idx !== -1) {
+                return idx;
+            }
+        }
+        const lfRaw = raw.replace(/\r\n/g, '\n');
+        if (lfRaw !== raw) {
+            idx = content.indexOf(lfRaw, startIndex);
+            if (idx !== -1) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+    /** 查找 token 在源码中的起始位置，失败时使用类型相关兜底 */
+    function getTokenStartIndex(sourceContent, token, searchStart) {
+        let idx = findTokenRawIndex(sourceContent, token.raw, searchStart);
+        if (idx !== -1) {
+            return idx;
+        }
+        if (token.type === 'list_item' && token.raw) {
+            const trimmed = token.raw.trim();
+            idx = sourceContent.indexOf(trimmed, searchStart);
+            if (idx !== -1) {
+                return idx;
+            }
+        }
+        if (token.type === 'blockquote') {
+            const slice = sourceContent.slice(searchStart);
+            const match = slice.match(/^ *> ?/m);
+            if (match) {
+                return searchStart + match.index;
+            }
+        }
+        return -1;
+    }
+
+    /** 判断 html 渲染器输出是否为开/闭标签片段（预处理注入的行内 HTML） */
+    function isHtmlFragment(html) {
+        const trimmed = (html || '').trim();
+        if (!trimmed.startsWith('<')) {
+            return false;
+        }
+        if (/^<\/[\w-]+>\s*$/.test(trimmed)) {
+            return true;
+        }
+        if (/^<[\w-]+[^>]*>\s*$/.test(trimmed)) {
+            return true;
+        }
+        return false;
+    }
+
+    /** 按 marked Renderer 调用顺序收集块级 token */
+    function collectRenderOrderTokens(tokens, result) {
+        if (!tokens) {
+            return;
+        }
+        for (const token of tokens) {
+            switch (token.type) {
+                case 'space':
+                    break;
+                case 'blockquote':
+                    collectRenderOrderTokens(token.tokens, result);
+                    result.push(token);
+                    break;
+                case 'list':
+                    for (const item of token.items || []) {
+                        collectRenderOrderTokens(item.tokens, result);
+                        result.push(item);
+                    }
+                    break;
+                case 'heading':
+                case 'paragraph':
+                case 'code':
+                case 'hr':
+                case 'html':
+                case 'table':
+                    result.push(token);
+                    break;
+                default:
+                    if (token.tokens) {
+                        collectRenderOrderTokens(token.tokens, result);
+                    }
+                    break;
+            }
+        }
+    }
+
+    /** 基于原始 Markdown 构建块级起始行号队列（顺序与 Renderer 调用一致） */
+    function buildSourceLineQueue(sourceContent) {
+        const markedObj = getMarkedObject();
+        if (!sourceContent || !markedObj || typeof markedObj.lexer !== 'function') {
+            return [];
+        }
+        const tokens = markedObj.lexer(sourceContent);
+        const blockTokens = [];
+        collectRenderOrderTokens(tokens, blockTokens);
+
+        const queue = [];
+        let searchStart = 0;
+        for (const token of blockTokens) {
+            const idx = getTokenStartIndex(sourceContent, token, searchStart);
+            if (idx === -1) {
+                queue.push(queue.length > 0 ? queue[queue.length - 1] : 0);
+                continue;
+            }
+            queue.push(offsetToLine(sourceContent, idx));
+            searchStart = idx + (token.raw ? token.raw.length : 0);
+        }
+        return queue;
+    }
+
+    function createHighlightCodeRenderer(originalCode) {
+        return function(code, language) {
+            if (language === 'mermaid') {
+                return '<pre><code class="language-mermaid">' + code + '</code></pre>';
+            }
+            if (typeof hljs !== 'undefined') {
+                try {
+                    if (language && hljs.getLanguage(language)) {
+                        const highlighted = hljs.highlight(code, { language: language }).value;
+                        return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
+                    }
+                    const result = hljs.highlightAuto(code);
+                    const langClass = result.language ? ' language-' + result.language : '';
+                    return '<pre><code class="hljs' + langClass + '">' + result.value + '</code></pre>';
+                } catch (error) {
+                    console.warn('代码高亮失败:', error);
+                    return originalCode.call(this, code, language);
+                }
+            }
+            return originalCode.call(this, code, language);
+        };
+    }
+
+    function createSourceLineRenderer(markedObj, sourceContent) {
+        const sourceLines = sourceContent.split(/\r?\n/);
+        let currentLineIndex = 0;
+        let lastLine = 0;
+
+        function normalizeForMatch(text) {
+            return (text || '')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/^#+\s+/, '')
+                .replace(/^(\s*[-*+]|\s*\d+\.)\s+/, '')
+                .replace(/\*\*/g, '')
+                .replace(/`/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function findLineByText(hintHtml) {
+            const probe = normalizeForMatch(hintHtml);
+            if (probe.length < 2) {
+                return lastLine;
+            }
+            const shortProbe = probe.slice(0, Math.min(probe.length, 48));
+
+        function lineMatches(lineText, preferListMarker) {
+                const linePlain = normalizeForMatch(lineText);
+                if (linePlain.length < 2) {
+                    return false;
+                }
+                if (preferListMarker && !/^(\s*[-*+]|\s*\d+\.)\s/.test(lineText)) {
+                    return false;
+                }
+                const head = shortProbe.slice(0, Math.min(shortProbe.length, 20));
+                if (head.length >= 8 && linePlain.startsWith(head)) {
+                    return true;
+                }
+                if (linePlain.length >= 8 && shortProbe.startsWith(linePlain.slice(0, Math.min(linePlain.length, 20)))) {
+                    return true;
+                }
+                let common = 0;
+                for (let j = 0; j < Math.min(linePlain.length, shortProbe.length); j++) {
+                    if (linePlain[j] === shortProbe[j]) {
+                        common++;
+                    } else {
+                        break;
+                    }
+                }
+                return common >= 10;
+            }
+
+            function scanLines(preferListMarker) {
+                for (let i = currentLineIndex; i < sourceLines.length; i++) {
+                    if (lineMatches(sourceLines[i], preferListMarker)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+                for (let i = 0; i < currentLineIndex; i++) {
+                    if (lineMatches(sourceLines[i], preferListMarker)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+                return null;
+            }
+
+            let matched = scanLines(false);
+            if (matched === null && probe.length >= 4) {
+                matched = scanLines(true);
+            }
+            if (matched !== null) {
+                return matched;
+            }
+            return lastLine;
+        }
+
+        function assignLineForCode(code, language) {
+            const lang = language || '';
+            for (let i = currentLineIndex; i < sourceLines.length; i++) {
+                const trimmed = sourceLines[i].trim();
+                if (trimmed.startsWith('```')) {
+                    if (!lang || trimmed === '```' + lang || trimmed.startsWith('```' + lang)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+            }
+            return findLineByText(code);
+        }
+
+        function wrapBlockTag(tagName, innerHtml, line) {
+            return '<' + tagName + ' data-source-line="' + line + '">' + innerHtml + '</' + tagName + '>';
+        }
+
+        const renderer = new markedObj.Renderer();
+        const originalCode = renderer.code || function(code, language) {
+            return '<pre><code' + (language ? ' class="language-' + language + '"' : '') + '>' + code + '</code></pre>';
+        };
+
+        renderer.heading = function(text, level) {
+            const line = findLineByText(text);
+            return wrapBlockTag('h' + level, text, line);
+        };
+
+        renderer.paragraph = function(text) {
+            const line = findLineByText(text);
+            return wrapBlockTag('p', text, line);
+        };
+
+        renderer.blockquote = function(quote) {
+            const line = findLineByText(quote);
+            return wrapBlockTag('blockquote', quote, line);
+        };
+
+        renderer.code = function(code, language) {
+            const line = assignLineForCode(code, language);
+            const highlighted = createHighlightCodeRenderer(originalCode).call(this, code, language);
+            if (highlighted.indexOf('<pre') === 0) {
+                return highlighted.replace('<pre', '<pre data-source-line="' + line + '"');
+            }
+            const lang = language || '';
+            const cls = lang ? ' class="language-' + lang + '"' : '';
+            return '<pre data-source-line="' + line + '"><code' + cls + '>' + code + '</code></pre>';
+        };
+
+        renderer.list = function(body, ordered, start) {
+            const tag = ordered ? 'ol' : 'ul';
+            const startAttr = ordered && start !== 1 ? ' start="' + start + '"' : '';
+            return '<' + tag + startAttr + '>' + body + '</' + tag + '>';
+        };
+
+        renderer.listitem = function(text, task, checked) {
+            let line = null;
+            const probe = normalizeForMatch(text);
+            if (probe.length >= 2) {
+                const head = probe.slice(0, Math.min(probe.length, 20));
+                for (let i = currentLineIndex; i < sourceLines.length; i++) {
+                    if (!/^(\s*[-*+]|\s*\d+\.)\s/.test(sourceLines[i])) {
+                        continue;
+                    }
+                    const linePlain = normalizeForMatch(sourceLines[i]);
+                    if (linePlain.startsWith(head) || (head.length >= 8 && head.startsWith(linePlain.slice(0, 20)))) {
+                        line = i;
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        break;
+                    }
+                }
+            }
+            if (line === null) {
+                line = findLineByText(text);
+            }
+            const checkbox = task
+                ? '<input type="checkbox" disabled' + (checked ? ' checked' : '') + '> '
+                : '';
+            return '<li data-source-line="' + line + '">' + checkbox + text + '</li>';
+        };
+
+        renderer.table = function(header, body) {
+            const line = findLineByText(header + body);
+            return '<table data-source-line="' + line + '"><thead>' + header + '</thead><tbody>' + body + '</tbody></table>';
+        };
+
+        renderer.hr = function() {
+            const line = findLineByText('---');
+            return '<hr data-source-line="' + line + '">';
+        };
+
+        renderer.html = function(html) {
+            if (isHtmlFragment(html)) {
+                return html;
+            }
+            const line = findLineByText(html);
+            return '<div data-source-line="' + line + '">' + html + '</div>';
+        };
+
+        return renderer;
+    }
+
+    function getMarkedObject() {
+        let markedObj = typeof marked !== 'undefined' ? marked : undefined;
+        if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
+            markedObj = window.marked;
+        }
+        if (typeof markedObj === 'undefined' && typeof global !== 'undefined') {
+            markedObj = global.marked;
+        }
+        return markedObj;
+    }
+
+    /** 将 HTML 按 pre/code 块拆段，便于在块外做后处理 */
+    function splitHtmlPreservingCodeBlocks(html) {
+        const parts = [];
+        const regex = /(<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>)/gi;
+        let lastIndex = 0;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push({ preserved: false, html: html.slice(lastIndex, match.index) });
+            }
+            parts.push({ preserved: true, html: match[0] });
+            lastIndex = match.index + match[0].length;
+        }
+        if (lastIndex < html.length) {
+            parts.push({ preserved: false, html: html.slice(lastIndex) });
+        }
+        return parts;
+    }
+
+    /** 在 HTML 中（跳过 pre/code）将 @tag 替换为可点击链接 */
+    function applyTagLinksInHtml(html) {
+        return splitHtmlPreservingCodeBlocks(html).map(function(part) {
+            if (part.preserved) {
+                return part.html;
+            }
+            let segment = part.html;
+            if (availableTagNames && availableTagNames.length > 0) {
+                const tagPattern = availableTagNames.map(function(name) {
+                    return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                }).join('|');
+                const tagRegex = new RegExp('@(' + tagPattern + ')', 'g');
+                segment = segment.replace(tagRegex, function(match, tagName) {
+                    return '<span class="tag-link" data-tag="' + tagName + '">' + match + '</span>';
+                });
+            } else {
+                segment = segment.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, function(match, tagName) {
+                    return '<span class="tag-link" data-tag="' + tagName + '">' + match + '</span>';
+                });
+            }
+            return segment;
+        }).join('');
+    }
+
+    function maskHtmlForKatex(html) {
+        const blocks = [];
+        let masked = html.replace(/<pre[\s\S]*?<\/pre>/gi, function(match) {
+            blocks.push(match);
+            return '__LC_HTML_KATEX_MASK_' + (blocks.length - 1) + '__';
+        });
+        masked = masked.replace(/<code[\s\S]*?<\/code>/gi, function(match) {
+            blocks.push(match);
+            return '__LC_HTML_KATEX_MASK_' + (blocks.length - 1) + '__';
+        });
+        return { masked: masked, blocks: blocks };
+    }
+
+    function unmaskHtmlAfterKatex(html, blocks) {
+        return html.replace(/__LC_HTML_KATEX_MASK_(\d+)__/g, function(_, index) {
+            return blocks[Number(index)] ?? '';
+        });
+    }
+
+    /** 在 HTML 中（跳过 pre/code）渲染 KaTeX */
+    function applyKatexInHtml(html) {
+        if (typeof katex === 'undefined') {
+            return html;
+        }
+        const masked = maskHtmlForKatex(html);
+        let processed = masked.masked;
+        try {
+            processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, function(match, formula) {
+                try {
+                    return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
+                } catch (error) {
+                    console.error('KaTeX 块级公式渲染失败:', error);
+                    return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
+                }
+            });
+            processed = processed.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, function(match, formula) {
+                try {
+                    return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
+                } catch (error) {
+                    console.error('KaTeX 行内公式渲染失败:', error);
+                    return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
+                }
+            });
+        } catch (error) {
+            console.error('LaTeX 公式处理失败:', error);
+            return html;
+        }
+        return unmaskHtmlAfterKatex(processed, masked.blocks);
+    }
+
+    /** 用原始 Markdown 解析 HTML 并注入 data-source-line（不在此步注入 @tag/KaTeX HTML） */
+    function parseMarkdownWithSourceLines(markdownInput, sourceContent) {
+        const markedObj = getMarkedObject();
+        if (!markedObj || typeof markedObj.parse !== 'function' || typeof markedObj.Renderer === 'undefined') {
+            return marked.parse(markdownInput);
+        }
+        const sourceLineRenderer = createSourceLineRenderer(markedObj, sourceContent);
+        return markedObj.parse(markdownInput, {
+            breaks: true,
+            gfm: true,
+            renderer: sourceLineRenderer
+        });
+    }
+
+    /** 从已渲染 HTML 中提取 Mermaid 图表定义 */
+    function extractMermaidBlocksFromHtml(html) {
+        const blocks = [];
+        const regex = /<pre[^>]*data-source-line="(\d+)"[^>]*><code class="[^"]*\blanguage-mermaid\b[^"]*">([\s\S]*?)<\/code><\/pre>/gi;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+            blocks.push({
+                fullMatch: match[0],
+                sourceLine: match[1],
+                definition: match[2].trim()
+            });
+        }
+        if (blocks.length > 0) {
+            return blocks;
+        }
+        MERMAID_CODE_BLOCK_HTML_REGEX.lastIndex = 0;
+        while ((match = MERMAID_CODE_BLOCK_HTML_REGEX.exec(html)) !== null) {
+            const lineMatch = match[0].match(/data-source-line="(\d+)"/);
+            const codeMatch = match[0].match(/<code[^>]*>([\s\S]*?)<\/code>/);
+            blocks.push({
+                fullMatch: match[0],
+                sourceLine: lineMatch ? lineMatch[1] : '',
+                definition: codeMatch ? codeMatch[1].trim() : ''
+            });
+        }
+        return blocks;
+    }
+
+    /** 去掉 HTML 标签并规整空白，便于在源码中搜索 */
+    function stripHtmlTags(html) {
+        return (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /** Alt+单击时解析源文件行号：优先 data-source-line，否则用块文本在源码中搜索 */
+    function resolveSourceLine(blockElement) {
+        const attr = blockElement.getAttribute('data-source-line');
+        if (attr !== null && attr !== '') {
+            const line = parseInt(attr, 10);
+            if (!Number.isNaN(line) && line >= 0) {
+                return line;
+            }
+        }
+        const source = window.markdownContent;
+        if (!source || !blockElement.textContent) {
+            return null;
+        }
+        const plain = stripHtmlTags(blockElement.textContent);
+        if (plain.length < 2) {
+            return null;
+        }
+        const sourceLines = source.split(/\r?\n/);
+        const probe = plain.slice(0, Math.min(plain.length, 48));
+        const head = probe.slice(0, Math.min(probe.length, 16));
+
+        for (let i = 0; i < sourceLines.length; i++) {
+            const linePlain = sourceLines[i]
+                .replace(/^#+\s+/, '')
+                .replace(/^(\s*[-*+]|\s*\d+\.)\s+/, '')
+                .replace(/\*\*/g, '')
+                .replace(/`/g, '')
+                .trim();
+            if (linePlain.length < 2) {
+                continue;
+            }
+            if (linePlain.includes(head) || probe.includes(linePlain.slice(0, 16))) {
+                return i;
+            }
+        }
+
+        const idx = source.indexOf(probe.slice(0, Math.min(probe.length, 32)));
+        if (idx !== -1) {
+            return offsetToLine(source, idx);
+        }
+        return null;
+    }
+
     /** 从源码中提取 ```mermaid 围栏（支持 CRLF） */
     const MERMAID_FENCE_REGEX = /```mermaid\s*\r?\n([\s\S]*?)```/gi;
     /** marked 输出的 Mermaid 占位 <pre>，用于替换为已渲染的 SVG */
-    const MERMAID_CODE_BLOCK_HTML_REGEX = /<pre><code class="[^"]*\blanguage-mermaid\b[^"]*">[\s\S]*?<\/code><\/pre>/gi;
+    const MERMAID_CODE_BLOCK_HTML_REGEX = /<pre[^>]*><code class="[^"]*\blanguage-mermaid\b[^"]*">[\s\S]*?<\/code><\/pre>/gi;
     // 等待 marked / mermaid / highlight.js 就绪后再渲染
     const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
         .then(() => {
@@ -58,13 +589,7 @@
 
     /** 配置 marked：mermaid 块不走高亮，其余代码块走 highlight.js */
     function initializeMarked() {
-        let markedObj = marked;
-        if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
-            markedObj = window.marked;
-        }
-        if (typeof markedObj === 'undefined' && typeof global !== 'undefined') {
-            markedObj = global.marked;
-        }
+        const markedObj = getMarkedObject();
 
         let markdownParser = null;
 
@@ -94,29 +619,7 @@
                         return '<pre><code' + (language ? ' class="language-' + language + '"' : '') + '>' + code + '</code></pre>';
                     };
 
-                    renderer.code = function(code, language) {
-                        // 保留占位结构，后续用 MERMAID_CODE_BLOCK_HTML_REGEX 整体替换为 SVG
-                        if (language === 'mermaid') {
-                            return '<pre><code class="language-mermaid">' + code + '</code></pre>';
-                        }
-                        if (typeof hljs !== 'undefined') {
-                            try {
-                                if (language && hljs.getLanguage(language)) {
-                                    const highlighted = hljs.highlight(code, { language: language }).value;
-                                    return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
-                                } else {
-                                    const result = hljs.highlightAuto(code);
-                                    const langClass = result.language ? ' language-' + result.language : '';
-                                    return '<pre><code class="hljs' + langClass + '">' + result.value + '</code></pre>';
-                                }
-                            } catch (error) {
-                                console.warn('代码高亮失败:', error);
-                                return originalCode.call(this, code, language);
-                            }
-                        } else {
-                            return originalCode.call(this, code, language);
-                        }
-                    };
+                    renderer.code = createHighlightCodeRenderer(originalCode);
                 }
 
                 const options = {
@@ -258,118 +761,61 @@
             await initializationPromise;
 
             const tagPlaceholders = new Map();
-            let processedContent = content.replace(/\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g, (match, tagName) => {
+            let markdownInput = content.replace(/\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g, function(match, tagName) {
                 const placeholder = '__TAG_DECL_PLACEHOLDER_' + tagPlaceholders.size + '__';
                 tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
                 return placeholder;
             });
 
-            // 只将真实存在的标签渲染为可点击链接（availableTagNames 来自扩展的标签管理器）
-            // 如果 availableTagNames 为空（旧版本兼容），则回退到原正则匹配行为
-            // 注意：跳过代码块和行内代码中的 @xxx，避免破坏示例展示
-            if (availableTagNames && availableTagNames.length > 0) {
-                // 构建只匹配真实标签的正则：@标签名1|标签名2|...
-                const tagPattern = availableTagNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-                const tagRegex = new RegExp('@(' + tagPattern + ')', 'g');
-                // 使用替换函数，检查匹配位置是否在代码块内
-                processedContent = processedContent.replace(tagRegex, (match, tagName, offset) => {
-                    if (isInsideCodeBlock(processedContent, offset)) {
-                        return match; // 在代码块内，保持原样
-                    }
-                    return '<span class="tag-link" data-tag="' + tagName + '">@' + tagName + '</span>';
-                });
-            } else {
-                // 兼容模式：如果没有标签列表，匹配所有 @xxx 格式（可能误伤如 @qq.com 中的 @qq）
-                // 同样跳过代码块内的匹配
-                processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, (match, tagName, offset) => {
-                    if (isInsideCodeBlock(processedContent, offset)) {
-                        return match; // 在代码块内，保持原样
-                    }
-                    return '<span class="tag-link" data-tag="' + tagName + '">@' + tagName + '</span>';
-                });
-            }
+            // 1. 先对纯 Markdown 解析并注入行号（不在此步注入 @tag / KaTeX HTML，避免 marked 调用顺序错位）
+            let finalHtml = parseMarkdownWithSourceLines(markdownInput, content);
 
-            // 1. 查找并渲染所有Mermaid代码块
-            MERMAID_FENCE_REGEX.lastIndex = 0;
-            const mermaidBlocks = [...processedContent.matchAll(MERMAID_FENCE_REGEX)];
-            console.log('找到 ' + mermaidBlocks.length + ' 个Mermaid代码块');
+            tagPlaceholders.forEach(function(tagInfo, placeholder) {
+                finalHtml = finalHtml.split(placeholder).join(
+                    '<span class="tag-declaration">' + tagInfo.original + '</span>'
+                );
+            });
 
-            const svgPromises = mermaidBlocks.map(async (match, index) => {
-                const chartDefinition = match[1].trim();
+            finalHtml = applyTagLinksInHtml(finalHtml);
+            finalHtml = applyKatexInHtml(finalHtml);
+
+            // 2. 从 HTML 中提取 Mermaid 块并异步渲染
+            const mermaidBlockInfos = extractMermaidBlocksFromHtml(finalHtml);
+            console.log('找到 ' + mermaidBlockInfos.length + ' 个Mermaid代码块');
+
+            const svgPromises = mermaidBlockInfos.map(async function(blockInfo, index) {
                 const chartId = 'mermaid-chart-' + Date.now() + '-' + index;
                 try {
-                    const { svg } = await mermaid.render(chartId, chartDefinition);
-                    return buildMermaidChartHtml(chartId, svg);
+                    const { svg } = await mermaid.render(chartId, blockInfo.definition);
+                    return {
+                        fullMatch: blockInfo.fullMatch,
+                        sourceLine: blockInfo.sourceLine,
+                        html: buildMermaidChartHtml(chartId, svg)
+                    };
                 } catch (error) {
                     console.error('渲染Mermaid图表失败: ' + chartId, error);
-                    return '<div class="mermaid-error">图表渲染失败: ' + error.message + '<pre>' + chartDefinition + '</pre></div>';
+                    return {
+                        fullMatch: blockInfo.fullMatch,
+                        sourceLine: blockInfo.sourceLine,
+                        html: '<div class="mermaid-error">图表渲染失败: ' + error.message +
+                            '<pre>' + blockInfo.definition + '</pre></div>'
+                    };
                 }
             });
 
-            const renderedSvgs = await Promise.all(svgPromises);
+            const renderedMermaidBlocks = await Promise.all(svgPromises);
 
-            // 2. 保留预处理后的 markdown，先做 LaTeX 处理（marked 不能解析 SVG 内的 <style>，故不在此处替换 Mermaid）
-            let finalContent = processedContent;
-
-            // 3. 处理 LaTeX 公式（跳过围栏/行内代码块，避免 Makefile 中 $(VAR) 被误渲染）
-            if (typeof katex !== 'undefined') {
-                try {
-                    const maskFn = typeof window.maskMarkdownForKatex === 'function'
-                        ? window.maskMarkdownForKatex
-                        : null;
-                    const unmaskFn = typeof window.unmaskMarkdownAfterKatex === 'function'
-                        ? window.unmaskMarkdownAfterKatex
-                        : null;
-                    let katexInput = finalContent;
-                    let codeBlocks = [];
-
-                    if (maskFn && unmaskFn) {
-                        const masked = maskFn(finalContent);
-                        katexInput = masked.masked;
-                        codeBlocks = masked.blocks;
-                    }
-
-                    katexInput = katexInput.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-                        try {
-                            return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
-                        } catch (error) {
-                            console.error('KaTeX 块级公式渲染失败:', error);
-                            return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
-                        }
-                    });
-
-                    katexInput = katexInput.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, formula) => {
-                        try {
-                            return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
-                        } catch (error) {
-                            console.error('KaTeX 行内公式渲染失败:', error);
-                            return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
-                        }
-                    });
-
-                    finalContent = unmaskFn ? unmaskFn(katexInput, codeBlocks) : katexInput;
-                } catch (error) {
-                    console.error('LaTeX 公式处理失败:', error);
+            let finalHtmlWithSvg = finalHtml;
+            for (const block of renderedMermaidBlocks) {
+                let replacement = block.html;
+                if (block.sourceLine && replacement.indexOf('class="mermaid-chart"') !== -1) {
+                    replacement = replacement.replace(
+                        'class="mermaid-chart"',
+                        'class="mermaid-chart" data-source-line="' + block.sourceLine + '"'
+                    );
                 }
-            } else {
-                console.warn('KaTeX 未加载，无法渲染 LaTeX 公式');
+                finalHtmlWithSvg = finalHtmlWithSvg.replace(block.fullMatch, replacement);
             }
-
-            tagPlaceholders.forEach((tagInfo, placeholder) => {
-                finalContent = finalContent.replace(placeholder,
-                    '<span class="tag-declaration">' + tagInfo.original + '</span>');
-            });
-
-            // 4. 使用marked解析最终内容
-            const finalHtml = marked.parse(finalContent);
-
-            // 5. marked 解析后再将 Mermaid 代码块占位符替换为已渲染的 SVG
-            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
-            let svgIndex = 0;
-            MERMAID_CODE_BLOCK_HTML_REGEX.lastIndex = 0;
-            const finalHtmlWithSvg = finalHtml.replace(MERMAID_CODE_BLOCK_HTML_REGEX, () => {
-                return renderedSvgs[svgIndex++] || '';
-            });
 
             previewArea.innerHTML = finalHtmlWithSvg || '<p>预览生成失败</p>';
             console.log("预览区域已更新");
@@ -384,6 +830,9 @@
             const tagLinks = previewArea.querySelectorAll('.tag-link');
             tagLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
+                    if (e.altKey) {
+                        return;
+                    }
                     e.preventDefault();
                     const tagName = this.getAttribute('data-tag');
                     if (tagName) {
@@ -1191,6 +1640,35 @@ body {
             }
         }, remainingDelay);
     }
+
+    function isSourceJumpBlockedTarget(element) {
+        return element.closest('.mermaid-controls')
+            || element.closest('.export-actions')
+            || element.closest('button');
+    }
+
+    previewArea.addEventListener('click', function(e) {
+        if (!e.altKey) {
+            return;
+        }
+        if (isSourceJumpBlockedTarget(e.target)) {
+            return;
+        }
+        const el = e.target.closest('[data-source-line]');
+        if (!el) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const line = resolveSourceLine(el);
+        if (line === null || line < 0) {
+            return;
+        }
+        vscode.postMessage({
+            command: 'goToSourceLine',
+            line: line
+        });
+    });
 
     /** 页面加载后首次渲染（内容来自 preview.html 内嵌的 #markdownContent） */
     function initializePreview() {

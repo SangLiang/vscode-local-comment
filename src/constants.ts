@@ -171,6 +171,8 @@ export const IPC_MESSAGES = {
     EXPORT_HTML: 'exportHtml',
     EXPORT_HTML_COMPLETE: 'exportHtmlComplete',
     SET_AVAILABLE_TAGS: 'setAvailableTags',
+    /** Webview → 扩展：从 Markdown 预览跳转到源文件行 */
+    GO_TO_SOURCE_LINE: 'goToSourceLine',
 
     // 结果消息
     LOGIN_RESULT: 'loginResult',
