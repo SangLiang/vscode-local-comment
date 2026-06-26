@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [2.0.1] - 2026-06-26
+
+### Fixed
+
+- Fixed incorrect focus issue when previewing new Markdown files
+
+### Improved
+
+- Added test cases and refactored/optimized some code
+
 ## [2.0.0] - 2026-06-05
 
 This release brings better support for `.md` files. I believe that with Local Comment, you can make Markdown documentation work great without relying on any external editors!

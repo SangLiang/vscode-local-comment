@@ -2,7 +2,7 @@
   "name": "vscode-local-comment",
   "displayName": "Local Comment(本地注释)",
   "description": "Add local comments for your code, support user-defined tag jumps，support markdown notes, latex,mermaid flowcharts. The modification will not affect the original file. (支持用户标签跳转，markdown笔记，mermaid流程图latex公式。修改不会影响原文件)",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "publisher": "sangliang",
   "author": {
     "name": "SangLiang",
@@ -19,20 +19,22 @@
   },
   "keywords": [
     "markdown",
+    "markdown editor",
     "markdown preview",
     "local comment",
     "annotation",
+    "tag",
     "tag jump",
+    "tag relation graph",
     "note",
     "mermaid",
     "latex",
     "flowchart",
     "documentation",
+    "local comment",
     "code-comment",
     "bookmark",
-    "teamwork",
-    "notebook",
-    "AI recorder"
+    "teamwork"
   ],
   "categories": [
     "Other",
