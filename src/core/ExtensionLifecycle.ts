@@ -69,6 +69,7 @@ export class ExtensionLifecycle {
             this.disposables.push(...providerDisposables);
             this.providerRegistry.initialize();
             this.providerRegistry.registerUserInfoWebviewSerializer();
+            this.providerRegistry.registerCommentManageWebviewSerializer();
 
             // 步骤5：注册命令
             const commandDisposables = registerCommands(

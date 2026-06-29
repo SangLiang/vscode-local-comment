@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; img-src ${cspSource} https: http: data:; script-src 'nonce-${nonce}';">
+
+    <title>注释管理</title>
+
+    <link rel="stylesheet" href="${cssUri}">
+
+</head>
+
+<body>
+
+    <div id="toolbar" class="toolbar">
+
+        <span id="group-label" class="group-label">当前分组：—</span>
+
+        <input id="search-input" class="toolbar-input" type="search" placeholder="搜索内容或文件" />
+
+        <select id="filter-tag" class="toolbar-select">
+
+            <option value="">全部标签</option>
+
+        </select>
+
+        <select id="sort-key" class="toolbar-select">
+
+            <option value="filePath">文件</option>
+
+            <option value="line">行号</option>
+
+            <option value="updatedAt">时间</option>
+
+        </select>
+
+        <select id="sort-dir" class="toolbar-select">
+
+            <option value="asc">升序</option>
+
+            <option value="desc">降序</option>
+
+        </select>
+
+        <div class="toolbar-actions">
+
+            <button id="btn-batch-delete" class="toolbar-btn" type="button" disabled>批量删除</button>
+
+            <button id="btn-batch-export" class="toolbar-btn" type="button" disabled>批量导出</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div id="table-container" class="table-container">
+
+        <table id="comment-table" class="comment-table">
+
+            <thead>
+
+                <tr>
+
+                    <th class="col-check"><input id="select-all" type="checkbox" title="全选" /></th>
+
+                    <th class="col-file">文件</th>
+
+                    <th class="col-line">行号</th>
+
+                    <th class="col-summary">内容摘要</th>
+
+                    <th class="col-tags">标签</th>
+
+                    <th class="col-actions">操作</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="comment-tbody"></tbody>
+
+        </table>
+
+    </div>
+
+
+
+    <div id="empty-state" class="empty-state" style="display: none;">
+
+        <p>暂无注释</p>
+
+        <p class="empty-hint">当前分组中没有本地注释记录</p>
+
+    </div>
+
+
+
+    <script nonce="${nonce}" src="${jsUri}"></script>
+
+</body>
+
+</html>
+
+

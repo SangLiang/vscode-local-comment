@@ -122,6 +122,7 @@ export const VIEW_TYPES = {
     SHARE_COMMENT_PREVIEW: 'shareCommentPreview',
     MARKDOWN_PREVIEW: 'markdownPreview',
     TAG_RELATION_GRAPH: 'tagRelationGraph',
+    COMMENT_MANAGE: 'localComment.commentManage',
 } as const;
 
 /**
@@ -173,6 +174,25 @@ export const IPC_MESSAGES = {
     SET_AVAILABLE_TAGS: 'setAvailableTags',
     /** Webview → 扩展：从 Markdown 预览跳转到源文件行 */
     GO_TO_SOURCE_LINE: 'goToSourceLine',
+
+    // 注释分组 WebviewView
+    GET_COMMENT_GROUPS: 'getCommentGroups',
+    COMMENT_GROUPS_RESULT: 'commentGroupsResult',
+    SELECT_COMMENT_GROUP: 'selectCommentGroup',
+    CREATE_COMMENT_GROUP: 'createCommentGroup',
+    RENAME_COMMENT_GROUP: 'renameCommentGroup',
+    DELETE_COMMENT_GROUP: 'deleteCommentGroup',
+    COMMENT_GROUP_ERROR: 'commentGroupError',
+
+    // 注释管理 WebviewPanel
+    GET_COMMENT_ROWS: 'getCommentRows',
+    COMMENT_ROWS_RESULT: 'commentRowsResult',
+    DELETE_COMMENT_ROWS: 'deleteCommentRows',
+    EXPORT_COMMENT_ROWS: 'exportCommentRows',
+    OPEN_COMMENT_ROW: 'openCommentRow',
+    EDIT_COMMENT_ROW: 'editCommentRow',
+    PREVIEW_COMMENT_ROW: 'previewCommentRow',
+    COMMENT_MANAGE_REFRESH: 'commentManageRefresh',
 
     // 结果消息
     LOGIN_RESULT: 'loginResult',

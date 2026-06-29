@@ -1,0 +1,813 @@
+import * as vscode from 'vscode';
+
+import * as path from 'path';
+
+import { CommentManager } from '../managers/commentManager';
+
+import { ProjectManager } from '../managers/projectManager';
+
+import { AuthManager } from '../managers/authManager';
+
+import { WebviewUtils } from '../utils/webviewUtils';
+
+import { VIEW_TYPES, IPC_MESSAGES } from '../constants';
+
+import {
+
+    flattenCommentsToRows,
+
+    filterCommentRows,
+
+    sortCommentRows,
+
+    CommentRowSortKey,
+
+    SortDirection,
+
+    CommentManageRow,
+
+} from '../utils/commentManageUtils';
+
+import { openCommentEditor } from './commentEditActions';
+
+import { MarkdownPreviewWebview } from './markdownPreviewWebview';
+
+import { logger } from '../utils/logger';
+
+import { getErrorMessage } from '../utils/utils';
+
+import type { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
+
+
+
+export class CommentManageWebviewPanel {
+
+    public static currentPanel: CommentManageWebviewPanel | undefined;
+
+
+
+    public static readonly viewType = VIEW_TYPES.COMMENT_MANAGE;
+
+
+
+    private readonly _panel: vscode.WebviewPanel;
+
+    private readonly _extensionUri: vscode.Uri;
+
+    private readonly _context: vscode.ExtensionContext;
+
+    private readonly _commentManager: CommentManager;
+
+    private readonly _projectManager: ProjectManager;
+
+    private readonly _authManager: AuthManager;
+
+    private _groupFileName: string;
+
+    private _lastQuery?: string;
+
+    private _lastTag?: string;
+
+    private _lastSortKey: CommentRowSortKey = 'filePath';
+
+    private _lastSortDir: SortDirection = 'asc';
+
+    private _disposables: vscode.Disposable[] = [];
+
+
+
+    public static createOrShow(
+
+        context: vscode.ExtensionContext,
+
+        extensionUri: vscode.Uri,
+
+        commentManager: CommentManager,
+
+        projectManager: ProjectManager,
+
+        authManager: AuthManager,
+
+        groupFileName: string
+
+    ): void {
+
+        const title = `注释管理 - ${groupFileName}`;
+
+
+
+        if (CommentManageWebviewPanel.currentPanel) {
+
+            CommentManageWebviewPanel.currentPanel._panel.title = title;
+
+            CommentManageWebviewPanel.currentPanel._groupFileName = groupFileName;
+
+            CommentManageWebviewPanel.currentPanel.refreshRows();
+
+            CommentManageWebviewPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
+
+            return;
+
+        }
+
+
+
+        const panel = vscode.window.createWebviewPanel(
+
+            CommentManageWebviewPanel.viewType,
+
+            title,
+
+            vscode.ViewColumn.One,
+
+            {
+
+                enableScripts: true,
+
+                localResourceRoots: [
+
+                    vscode.Uri.joinPath(extensionUri, 'src', 'templates'),
+
+                ],
+
+                retainContextWhenHidden: true,
+
+            }
+
+        );
+
+
+
+        CommentManageWebviewPanel.currentPanel = new CommentManageWebviewPanel(
+
+            panel,
+
+            context,
+
+            extensionUri,
+
+            commentManager,
+
+            projectManager,
+
+            authManager,
+
+            groupFileName
+
+        );
+
+    }
+
+
+
+    public static revive(
+
+        panel: vscode.WebviewPanel,
+
+        context: vscode.ExtensionContext,
+
+        extensionUri: vscode.Uri,
+
+        commentManager: CommentManager,
+
+        projectManager: ProjectManager,
+
+        authManager: AuthManager
+
+    ): void {
+
+        const groupFileName = commentManager.getCurrentCommentsConfig();
+
+        CommentManageWebviewPanel.currentPanel = new CommentManageWebviewPanel(
+
+            panel,
+
+            context,
+
+            extensionUri,
+
+            commentManager,
+
+            projectManager,
+
+            authManager,
+
+            groupFileName
+
+        );
+
+    }
+
+
+
+    private constructor(
+
+        panel: vscode.WebviewPanel,
+
+        context: vscode.ExtensionContext,
+
+        extensionUri: vscode.Uri,
+
+        commentManager: CommentManager,
+
+        projectManager: ProjectManager,
+
+        authManager: AuthManager,
+
+        groupFileName: string
+
+    ) {
+
+        this._panel = panel;
+
+        this._context = context;
+
+        this._extensionUri = extensionUri;
+
+        this._commentManager = commentManager;
+
+        this._projectManager = projectManager;
+
+        this._authManager = authManager;
+
+        this._groupFileName = groupFileName;
+
+
+
+        this._update();
+
+
+
+        this._disposables.push(
+
+            commentManager.onDidChangeComments(() => {
+
+                if (CommentManageWebviewPanel.currentPanel === this) {
+
+                    this.refreshRows();
+
+                }
+
+            })
+
+        );
+
+
+
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+
+
+        this._panel.webview.onDidReceiveMessage(
+
+            async (message) => {
+
+                try {
+
+                    switch (message.command) {
+
+                        case IPC_MESSAGES.GET_COMMENT_ROWS:
+
+                            this.refreshRows({
+
+                                query: message.query,
+
+                                tag: message.tag,
+
+                                sortKey: message.sortKey,
+
+                                sortDir: message.sortDir,
+
+                            });
+
+                            return;
+
+                        case IPC_MESSAGES.OPEN_COMMENT_ROW:
+
+                            if (message.filePath != null && message.line != null) {
+
+                                await this._openRow(message.filePath, message.line);
+
+                            }
+
+                            return;
+
+                        case IPC_MESSAGES.DELETE_COMMENT_ROWS:
+
+                            await this._deleteCommentRows(message.ids ?? []);
+
+                            return;
+
+                        case IPC_MESSAGES.EDIT_COMMENT_ROW:
+
+                            if (message.id) {
+
+                                await this._editCommentRow(message.id);
+
+                            }
+
+                            return;
+
+                        case IPC_MESSAGES.PREVIEW_COMMENT_ROW:
+
+                            if (message.id) {
+
+                                await this._previewCommentRow(message.id);
+
+                            }
+
+                            return;
+
+                        case IPC_MESSAGES.EXPORT_COMMENT_ROWS:
+
+                            await this._exportCommentRows(message.ids ?? []);
+
+                            return;
+
+                    }
+
+                } catch (error) {
+
+                    logger.error('comment manage webview message failed', error);
+
+                }
+
+            },
+
+            null,
+
+            this._disposables
+
+        );
+
+    }
+
+
+
+    public dispose(): void {
+
+        CommentManageWebviewPanel.currentPanel = undefined;
+
+
+
+        this._panel.dispose();
+
+
+
+        while (this._disposables.length) {
+
+            const disposable = this._disposables.pop();
+
+            if (disposable) {
+
+                disposable.dispose();
+
+            }
+
+        }
+
+    }
+
+
+
+    public refreshRows(params?: {
+
+        query?: string;
+
+        tag?: string;
+
+        sortKey?: CommentRowSortKey;
+
+        sortDir?: SortDirection;
+
+    }): void {
+
+        if (params) {
+
+            if (params.query !== undefined) {
+
+                this._lastQuery = params.query;
+
+            }
+
+            if (params.tag !== undefined) {
+
+                this._lastTag = params.tag;
+
+            }
+
+            if (params.sortKey !== undefined) {
+
+                this._lastSortKey = params.sortKey;
+
+            }
+
+            if (params.sortDir !== undefined) {
+
+                this._lastSortDir = params.sortDir;
+
+            }
+
+        }
+
+
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+        let rows = flattenCommentsToRows(this._commentManager.getAllComments(), workspaceRoot);
+
+        const allRows = rows;
+
+
+
+        if (this._lastQuery || this._lastTag) {
+
+            rows = filterCommentRows(rows, {
+
+                query: this._lastQuery,
+
+                tag: this._lastTag,
+
+            });
+
+        }
+
+        rows = sortCommentRows(rows, this._lastSortKey, this._lastSortDir);
+
+
+
+        this._panel.webview.postMessage({
+
+            command: IPC_MESSAGES.COMMENT_ROWS_RESULT,
+
+            rows,
+
+            allRows,
+
+            groupFileName: this._groupFileName,
+
+        });
+
+    }
+
+
+
+    private _getCurrentRows(): CommentManageRow[] {
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+        return flattenCommentsToRows(this._commentManager.getAllComments(), workspaceRoot);
+
+    }
+
+
+
+    private _findRowById(id: string): CommentManageRow | undefined {
+
+        return this._getCurrentRows().find((row) => row.id === id);
+
+    }
+
+
+
+    private _resolveAbsPath(filePath: string): string {
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+        return path.isAbsolute(filePath)
+
+            ? filePath
+
+            : path.join(workspaceRoot ?? '', filePath);
+
+    }
+
+
+
+    private async _deleteCommentRows(ids: string[]): Promise<void> {
+
+        if (ids.length === 0) {
+
+            return;
+
+        }
+
+
+
+        const choice =
+
+            ids.length > 1
+
+                ? await vscode.window.showWarningMessage(
+
+                      `确定删除 ${ids.length} 条注释？`,
+
+                      '删除',
+
+                      '取消'
+
+                  )
+
+                : '删除';
+
+
+
+        if (choice !== '删除') {
+
+            return;
+
+        }
+
+
+
+        for (const id of ids) {
+
+            const row = this._findRowById(id);
+
+            if (!row) {
+
+                continue;
+
+            }
+
+            const absPath = this._resolveAbsPath(row.filePath);
+
+            await this._commentManager.removeCommentById(vscode.Uri.file(absPath), id);
+
+        }
+
+        this.refreshRows();
+
+    }
+
+
+
+    private async _editCommentRow(id: string): Promise<void> {
+
+        const row = this._findRowById(id);
+
+        if (!row) {
+
+            return;
+
+        }
+
+
+
+        const uri = vscode.Uri.file(this._resolveAbsPath(row.filePath));
+
+        const comment = this._commentManager.getCommentById(uri, row.id);
+
+        if (!comment) {
+
+            return;
+
+        }
+
+
+
+        const originalContent = comment.content;
+
+        const originalLine = comment.line;
+
+
+
+        await openCommentEditor({
+
+            context: this._context,
+
+            commentManager: this._commentManager,
+
+            projectManager: this._projectManager,
+
+            authManager: this._authManager,
+
+            uri,
+
+            comment,
+
+            onSaveAndContinue: async (
+
+                savedContent: string,
+
+                updatedContextInfo?: UpdatedContextInfo,
+
+                callback?: () => void
+
+            ): Promise<MarkdownSaveOutcome> => {
+
+                try {
+
+                    if (savedContent === originalContent) {
+
+                        callback?.();
+
+                        return 'skipped-noop';
+
+                    }
+
+
+
+                    if (
+
+                        updatedContextInfo?.lineNumber !== undefined &&
+
+                        updatedContextInfo.lineNumber !== originalLine
+
+                    ) {
+
+                        await this._commentManager.updateCommentLine(
+
+                            uri,
+
+                            row.id,
+
+                            updatedContextInfo.lineNumber,
+
+                            updatedContextInfo.lineContent || ''
+
+                        );
+
+                    }
+
+
+
+                    await this._commentManager.editComment(uri, row.id, savedContent);
+
+                    this.refreshRows();
+
+                    callback?.();
+
+                    return 'committed';
+
+                } catch (error) {
+
+                    logger.error('保存注释时发生错误:', error);
+
+                    vscode.window.showErrorMessage(`保存失败: ${getErrorMessage(error)}`);
+
+                    return 'failed';
+
+                }
+
+            },
+
+        });
+
+    }
+
+
+
+    private async _previewCommentRow(id: string): Promise<void> {
+
+        const row = this._findRowById(id);
+
+        if (!row) {
+
+            return;
+
+        }
+
+
+
+        const absPath = this._resolveAbsPath(row.filePath);
+
+        MarkdownPreviewWebview.createOrShow(
+
+            this._context,
+
+            row.content,
+
+            row.filePath,
+
+            absPath,
+
+            []
+
+        );
+
+    }
+
+
+
+    private async _exportCommentRows(ids: string[]): Promise<void> {
+
+        const saveUri = await vscode.window.showSaveDialog({
+
+            filters: { JSON: ['json'] },
+
+            defaultUri: vscode.Uri.file(`comments-export-${Date.now()}.json`),
+
+        });
+
+        if (!saveUri) {
+
+            return;
+
+        }
+
+
+
+        const ok = ids.length
+
+            ? await this._commentManager.exportCommentsSubset(saveUri.fsPath, ids)
+
+            : await this._commentManager.exportComments(saveUri.fsPath);
+
+
+
+        if (ok) {
+
+            vscode.window.showInformationMessage('导出成功');
+
+        } else {
+
+            vscode.window.showErrorMessage('导出失败');
+
+        }
+
+    }
+
+
+
+    private async _openRow(filePath: string, line: number): Promise<void> {
+
+        try {
+
+            const absPath = this._resolveAbsPath(filePath);
+
+            const uri = vscode.Uri.file(absPath);
+
+            const doc = await vscode.workspace.openTextDocument(uri);
+
+            const editor = await vscode.window.showTextDocument(doc, { preserveFocus: false });
+
+            const pos = new vscode.Position(Math.max(0, line), 0);
+
+            editor.selection = new vscode.Selection(pos, pos);
+
+            editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+
+        } catch (error) {
+
+            logger.error('open comment row failed', error);
+
+            vscode.window.showErrorMessage(`无法打开文件: ${getErrorMessage(error)}`);
+
+        }
+
+    }
+
+
+
+    private _update(): void {
+
+        this._panel.title = `注释管理 - ${this._groupFileName}`;
+
+        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+
+    }
+
+
+
+    private _getHtmlForWebview(webview: vscode.Webview): string {
+
+        const resourceUris = WebviewUtils.buildResourceUris(webview, this._extensionUri, {
+
+            css: 'comment-manage/comment-manage.css',
+
+            js: 'comment-manage/comment-manage.js',
+
+        });
+
+
+
+        const nonce = WebviewUtils.getNonce();
+
+        const template = WebviewUtils.loadTemplate(
+
+            this._commentManager.getContext(),
+
+            'comment-manage/comment-manage.html'
+
+        );
+
+
+
+        return WebviewUtils.replaceTemplateVariables(template, {
+
+            cspSource: webview.cspSource,
+
+            cssUri: resourceUris.cssUri || '',
+
+            jsUri: resourceUris.jsUri || '',
+
+            nonce,
+
+        });
+
+    }
+
+}
+
+

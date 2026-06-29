@@ -51,6 +51,36 @@ export class CommentImportExport {
     }
   }
 
+  async exportCommentsSubset(exportPath: string, commentIds: string[]): Promise<boolean> {
+    try {
+      const idSet = new Set(commentIds);
+      const all = this.storage.getCommentsRef();
+      const subset: FileComments = {};
+      for (const [filePath, comments] of Object.entries(all)) {
+        const picked = comments.filter((c) => idSet.has(c.id) && !('userId' in c));
+        if (picked.length > 0) {
+          subset[filePath] = picked;
+        }
+      }
+      const projectInfo = this.storage.getProjectInfo();
+      const totalComments = Object.values(subset).reduce((s, arr) => s + arr.length, 0);
+      const exportData = buildExportData(projectInfo, subset, totalComments);
+
+      const exportDir = path.dirname(exportPath);
+      if (!fs.existsSync(exportDir)) {
+        fs.mkdirSync(exportDir, { recursive: true });
+      }
+
+      fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2), 'utf8');
+
+      logger.info(`注释子集已导出到: ${exportPath}`);
+      return true;
+    } catch (error) {
+      logger.error('导出注释子集失败:', error);
+      return false;
+    }
+  }
+
   /**
    * 从指定文件导入注释数据
    * @param importPath 导入文件路径

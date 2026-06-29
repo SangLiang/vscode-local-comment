@@ -295,7 +295,23 @@
         "category": "Local Comment"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "localComment",
+          "title": "%activityBarTitle%",
+          "icon": "images/activity-bar.svg"
+        }
+      ]
+    },
     "views": {
+      "localComment": [
+        {
+          "id": "commentGroups",
+          "name": "%commentGroupsViewTitle%",
+          "type": "webview"
+        }
+      ],
       "explorer": [
         {
           "id": "localComments",

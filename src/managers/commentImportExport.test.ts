@@ -157,6 +157,58 @@ describe('CommentImportExport', () => {
     });
   });
 
+  describe('exportCommentsSubset', () => {
+    it('应该只导出指定 id 的本地注释', async () => {
+      const comments = storage.getCommentsRef();
+      comments['/test/file.ts'] = [
+        {
+          id: 'id-1',
+          line: 10,
+          content: 'comment one',
+          timestamp: Date.now(),
+          originalLine: 10,
+          lineContent: 'const a = 1;'
+        },
+        {
+          id: 'id-2',
+          line: 20,
+          content: 'comment two',
+          timestamp: Date.now(),
+          originalLine: 20,
+          lineContent: 'const b = 2;'
+        }
+      ];
+      comments['/test/other.ts'] = [
+        {
+          id: 'id-3',
+          line: 5,
+          content: 'comment three',
+          timestamp: Date.now(),
+          originalLine: 5,
+          lineContent: 'const c = 3;'
+        }
+      ];
+
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      const result = await importExport.exportCommentsSubset('/export/path/subset.json', ['id-1', 'id-3']);
+
+      expect(result).toBe(true);
+      expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+
+      const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+      const exportData = JSON.parse(written);
+      const exportedComments = exportData.comments;
+
+      expect(Object.keys(exportedComments)).toEqual(['/test/file.ts', '/test/other.ts']);
+      expect(exportedComments['/test/file.ts']).toHaveLength(1);
+      expect(exportedComments['/test/file.ts'][0].id).toBe('id-1');
+      expect(exportedComments['/test/other.ts']).toHaveLength(1);
+      expect(exportedComments['/test/other.ts'][0].id).toBe('id-3');
+      expect(exportData.metadata.totalComments).toBe(2);
+    });
+  });
+
   describe('validateImportFile', () => {
     it('应该验证有效的导入文件', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);

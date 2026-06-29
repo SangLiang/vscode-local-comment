@@ -6,7 +6,8 @@ import { CommentManager, LocalComment } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
 import { AuthManager } from '../../managers/authManager';
 import { ProjectManager } from '../../managers/projectManager';
-import { showMarkdownWebviewInput, getCodeContext } from '../markdownWebview';
+import { showMarkdownWebviewInput } from '../markdownWebview';
+import { openCommentEditor } from '../commentEditActions';
 import { showQuickInputWithTagCompletion } from '../../utils/quickInput';
 import { getFileNameFromPath, getFileNameFromUri } from '../../utils/pathUtils';
 import { getErrorMessage } from '../../utils/utils';
@@ -258,72 +259,19 @@ export function registerCommentCommands(
         );
     });
 
-    // 辅助函数：执行编辑注释的核心逻辑
     async function executeEditComment(
         uri: vscode.Uri,
         comment: { id: string; line: number; content: string; lineContent: string; isShared?: boolean }
     ) {
-        try {
-            // 获取上下文信息
-            const fileName = getFileNameFromUri(uri);
-            
-            let contextInfo: MarkdownContextInfo = {
-                fileName,
-                filePath: uri.fsPath, // 添加完整的文件路径
-                lineNumber: comment.line,
-                originalLineContent: comment.lineContent // 注释保存的代码快照
-            };
-
-            // 检查文件是否存在
-            let fileExists = false;
-            let document: vscode.TextDocument | null = null;
-            
-            try {
-                document = await vscode.workspace.openTextDocument(uri);
-                fileExists = true;
-            } catch (error) {
-                // 文件不存在，但这不应该阻止编辑注释
-                logger.debug(`文件不存在: ${uri.fsPath}，但仍允许编辑注释`);
-                fileExists = false;
-            }
-
-            if (fileExists && document) {
-                // 文件存在时，检查注释是否能匹配到当前代码
-                const matchedComments = commentManager.getComments(uri);
-                const isMatched = matchedComments.some(c => c.id === comment.id);
-                
-                if (isMatched) {
-                    // 注释能匹配到代码，显示完整的上下文信息
-                    const lineContent = document.lineAt(comment.line).text;
-                    const codeContext = await getCodeContext(uri, comment.line);
-                    
-                    contextInfo.lineContent = lineContent; // 当前行的实际内容
-                    contextInfo.contextLines = codeContext.contextLines;
-                    contextInfo.contextStartLine = codeContext.contextStartLine;
-                }
-            } else {
-                // 文件不存在时，在上下文信息中添加说明
-                contextInfo.fileNotFound = true;
-            }
-            
-            const result = await showMarkdownWebviewInput(
-                context!,
-                fileExists ? '修改注释内容' : '修改注释内容 (原文件已删除)',
-                projectManager,
-                fileExists ?
-                    '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签' :
-                    '原文件已删除，但您仍可以编辑注释内容。支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签',
-                comment.content,
-                contextInfo,
-                '',
-                createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
-                authManager.isLoggedIn(),
-                comment.isShared || false
-            );
-        } catch (error) {
-            logger.error('编辑注释失败:', error);
-            vscode.window.showErrorMessage(`编辑注释失败: ${getErrorMessage(error)}`);
-        }
+        await openCommentEditor({
+            context: context!,
+            commentManager,
+            projectManager,
+            authManager,
+            uri,
+            comment,
+            onSaveAndContinue: createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content),
+        });
     }
 
     // 添加editCommentFromHover命令

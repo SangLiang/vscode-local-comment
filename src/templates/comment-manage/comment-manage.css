@@ -1,0 +1,225 @@
+body {
+    margin: 0;
+    padding: 12px 16px;
+    color: var(--vscode-foreground);
+    background: var(--vscode-editor-background);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.group-label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-right: 4px;
+}
+
+.toolbar-input {
+    flex: 1 1 160px;
+    min-width: 120px;
+    max-width: 280px;
+    padding: 4px 8px;
+    border: 1px solid var(--vscode-input-border);
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-family: inherit;
+    font-size: inherit;
+    border-radius: 2px;
+}
+
+.toolbar-input:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
+.toolbar-select {
+    padding: 4px 8px;
+    border: 1px solid var(--vscode-dropdown-border);
+    background: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    font-family: inherit;
+    font-size: inherit;
+    border-radius: 2px;
+}
+
+.toolbar-select:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
+.toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.toolbar-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    font-family: inherit;
+    font-size: inherit;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.comment-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.comment-table th,
+.comment-table td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    vertical-align: top;
+    word-break: break-word;
+}
+
+.comment-table th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.comment-table tbody tr:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.col-check {
+    width: 4%;
+    text-align: center;
+}
+
+.col-file {
+    width: 22%;
+}
+
+.col-line {
+    width: 7%;
+}
+
+.col-summary {
+    width: 34%;
+}
+
+.col-tags {
+    width: 16%;
+}
+
+.col-actions {
+    width: 17%;
+    white-space: nowrap;
+}
+
+.col-check input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.action-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.action-btn {
+    padding: 2px 8px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    font-family: inherit;
+    font-size: 11px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.action-delete:hover {
+    color: var(--vscode-errorForeground);
+}
+
+.cell-link {
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cell-link:hover {
+    text-decoration: underline;
+    color: var(--vscode-textLink-activeForeground);
+}
+
+.cell-line {
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+.cell-line:hover {
+    text-decoration: underline;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+}
+
+.empty-state {
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+}
+
+.empty-state p {
+    margin: 0 0 8px;
+}
+
+.empty-hint {
+    font-size: 12px;
+    opacity: 0.85;
+}

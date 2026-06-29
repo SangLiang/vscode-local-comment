@@ -3,6 +3,8 @@ import { ExtensionContainer } from './ExtensionContainer';
 import { TagCompletionProvider } from '../providers/tagCompletionProvider';
 import { TagDefinitionProvider } from '../providers/tagDefinitionProvider';
 import { UserInfoWebview } from '../modules/userInfoWebview';
+import { CommentGroupWebviewViewProvider } from '../modules/commentGroupWebviewView';
+import { CommentManageWebviewPanel } from '../modules/commentManageWebview';
 import { CommentTreeItem } from '../providers/commentTreeProvider';
 import { SharedCommentTreeItem } from '../providers/sharedCommentTreeProvider';
 import { logger } from '../utils/logger';
@@ -13,6 +15,7 @@ import { logger } from '../utils/logger';
 export class ProviderRegistry {
     private treeView?: vscode.TreeView<CommentTreeItem>;
     private sharedTreeView?: vscode.TreeView<SharedCommentTreeItem>;
+    private commentGroupViewProvider?: CommentGroupWebviewViewProvider;
 
     constructor(
         private container: ExtensionContainer,
@@ -37,6 +40,21 @@ export class ProviderRegistry {
         // 注册文件装饰器
         const decorationDisposable = this.registerFileDecorations();
         disposables.push(decorationDisposable);
+
+        // 注册 Activity Bar 注释分组 WebviewView
+        this.commentGroupViewProvider = new CommentGroupWebviewViewProvider(
+            this.context,
+            this.context.extensionUri,
+            this.container.commentManager,
+            this.container.projectManager,
+            this.container.authManager
+        );
+        const groupViewDisposable = vscode.window.registerWebviewViewProvider(
+            'commentGroups',
+            this.commentGroupViewProvider,
+            { webviewOptions: { retainContextWhenHidden: true } }
+        );
+        disposables.push(groupViewDisposable);
 
         return disposables;
     }
@@ -189,6 +207,27 @@ export class ProviderRegistry {
                     // 如果用户未登录，关闭面板
                     webviewPanel.dispose();
                 }
+            }
+        });
+    }
+
+    /**
+     * 注册注释管理 Webview 的序列化器
+     */
+    registerCommentManageWebviewSerializer(): void {
+        const container = this.container;
+        const context = this.context;
+
+        vscode.window.registerWebviewPanelSerializer(CommentManageWebviewPanel.viewType, {
+            async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: unknown) {
+                CommentManageWebviewPanel.revive(
+                    webviewPanel,
+                    context,
+                    context.extensionUri,
+                    container.commentManager,
+                    container.projectManager,
+                    container.authManager
+                );
             }
         });
     }

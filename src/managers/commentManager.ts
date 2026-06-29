@@ -172,6 +172,22 @@ export class CommentManager implements vscode.Disposable {
         return this.storage.getCurrentCommentsConfig();
     }
 
+    public countLocalCommentsInConfigFile(configFileName: string): number {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        if (!folder) return 0;
+        return this.storage.countLocalCommentsInConfigFile(configFileName, folder.uri.fsPath);
+    }
+
+    public async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {
+        const ok = await this.storage.renameCommentsConfig(oldFileName, newFileName);
+        if (ok) await this._saveAndFireAll();
+        return ok;
+    }
+
+    public async deleteCommentsConfig(configFileName: string): Promise<boolean> {
+        return this.storage.deleteCommentsConfig(configFileName);
+    }
+
     // ============== CRUD 委托方法 ==============
 
     public findCommentIndex(comments: (LocalComment | SharedComment)[], commentId: string): number {
@@ -249,6 +265,10 @@ export class CommentManager implements vscode.Disposable {
 
     public async exportComments(exportPath: string): Promise<boolean> {
         return this.importExport.exportComments(exportPath);
+    }
+
+    public async exportCommentsSubset(exportPath: string, commentIds: string[]): Promise<boolean> {
+        return this.importExport.exportCommentsSubset(exportPath, commentIds);
     }
 
     public async importComments(

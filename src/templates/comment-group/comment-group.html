@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; img-src ${cspSource} https: http: data:; script-src 'nonce-${nonce}';">
+    <title>注释分组</title>
+    <link rel="stylesheet" href="${cssUri}">
+</head>
+<body>
+    <div id="no-workspace" class="no-workspace" style="display: none;">
+        <p>请先打开工作区文件夹以管理注释分组。</p>
+    </div>
+
+    <div id="main-content" class="container">
+        <div class="section">
+            <div class="section-label">当前分组</div>
+            <div id="current-group" class="current-group">—</div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span class="section-label">全部分组</span>
+                <button id="btn-create" class="btn-create" type="button">新建分组</button>
+            </div>
+            <div id="group-list" class="group-list"></div>
+        </div>
+
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script nonce="${nonce}" src="${jsUri}"></script>
+</body>
+</html>

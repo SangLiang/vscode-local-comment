@@ -412,6 +412,91 @@ export class CommentStorage {
     return config.comments || 'comments.json';
   }
 
+  countLocalCommentsInConfigFile(configFileName: string, workspacePath: string): number {
+    const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
+    const configFile = path.join(paths.commentsDir, configFileName);
+    if (!StoragePathUtils.fileExists(configFile)) {
+      return 0;
+    }
+    try {
+      const raw = JSON.parse(fs.readFileSync(configFile, 'utf8')) as { comments?: FileComments };
+      const comments = raw.comments ?? {};
+      return Object.values(comments)
+        .flat()
+        .filter((c) => !('userId' in c))
+        .length;
+    } catch {
+      return 0;
+    }
+  }
+
+  async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {
+    const workspacePath = getFirstWorkspacePathOrWarn();
+    if (workspacePath === null) return false;
+    if (!newFileName.endsWith('.json')) {
+      newFileName += '.json';
+    }
+    if (!/^[a-zA-Z0-9_-]+\.json$/.test(newFileName)) {
+      vscode.window.showWarningMessage('配置文件名只能包含字母、数字、下划线和连字符');
+      return false;
+    }
+    const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
+    const oldPath = path.join(paths.commentsDir, oldFileName);
+    const newPath = path.join(paths.commentsDir, newFileName);
+    if (!StoragePathUtils.fileExists(oldPath)) {
+      vscode.window.showWarningMessage(`配置文件不存在: ${oldFileName}`);
+      return false;
+    }
+    if (StoragePathUtils.fileExists(newPath)) {
+      vscode.window.showWarningMessage(`配置文件已存在: ${newFileName}`);
+      return false;
+    }
+    try {
+      fs.renameSync(oldPath, newPath);
+    } catch (error) {
+      vscode.window.showWarningMessage(`重命名失败: ${oldFileName}`);
+      logger.error('重命名注释配置失败:', error);
+      return false;
+    }
+    const config = StoragePathUtils.loadConfig(workspacePath);
+    if (config.comments === oldFileName) {
+      config.comments = newFileName;
+      await StoragePathUtils.saveConfig(config);
+      await this.loadComments();
+    }
+    vscode.window.showInformationMessage(`已重命名: ${oldFileName} → ${newFileName}`);
+    return true;
+  }
+
+  async deleteCommentsConfig(configFileName: string): Promise<boolean> {
+    const workspacePath = getFirstWorkspacePathOrWarn();
+    if (workspacePath === null) return false;
+    const config = StoragePathUtils.loadConfig(workspacePath);
+    if (config.comments === configFileName) {
+      vscode.window.showWarningMessage('不能删除当前正在使用的分组');
+      return false;
+    }
+    const count = this.countLocalCommentsInConfigFile(configFileName, workspacePath);
+    if (count > 0) {
+      vscode.window.showWarningMessage(`分组内还有 ${count} 条注释，请先清空后再删除`);
+      return false;
+    }
+    const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
+    const target = path.join(paths.commentsDir, configFileName);
+    if (!StoragePathUtils.fileExists(target)) {
+      return false;
+    }
+    try {
+      fs.unlinkSync(target);
+    } catch (error) {
+      vscode.window.showWarningMessage(`删除失败: ${configFileName}`);
+      logger.error('删除注释配置失败:', error);
+      return false;
+    }
+    vscode.window.showInformationMessage(`已删除分组: ${configFileName}`);
+    return true;
+  }
+
   // ============== 数据迁移 ==============
 
   private async _migrateToNewPath(paths: StoragePaths, workspacePath: string): Promise<void> {

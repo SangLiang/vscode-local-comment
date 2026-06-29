@@ -52,6 +52,8 @@
   "showAllFilesTags": "Show All Files Tags",
   "logout": "Logout",
   "showUserInfo": "Show User Info",
+  "activityBarTitle": "Local Comment",
+  "commentGroupsViewTitle": "Comment Groups",
   "treeViewTitle": "Local Comments",
   "sharedCommentsTreeViewTitle": "Shared Comments",
   "refreshSharedComments": "Refresh Shared Comments",
