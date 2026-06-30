@@ -11,6 +11,7 @@ import { AuthWebview } from '../modules/authWebview';
 import { logger } from '../utils/logger';
 import { COMMANDS } from '../constants';
 import { checkUnifiedMigration } from '../utils/migrationPrompt';
+import { MarkdownPreviewWebview } from '../modules/markdownPreviewWebview';
 
 /**
  * 扩展生命周期管理器 - 管理扩展的激活和停用流程
@@ -177,6 +178,8 @@ export class ExtensionLifecycle {
                 }
             });
             this.disposables = [];
+
+            MarkdownPreviewWebview.disposeAll();
 
             logger.info('✅ 本地注释插件停用完成');
         } catch (error) {

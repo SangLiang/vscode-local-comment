@@ -14,6 +14,22 @@
     let previewRenderPromise = Promise.resolve();
     /** 可用的标签名列表，用于精确识别真实标签（而非所有 @xxx 格式） */
     let availableTagNames = [];
+    let currentMermaidTheme = null;
+
+    function tagsEqual(left, right) {
+        if (!Array.isArray(left) || !Array.isArray(right)) {
+            return false;
+        }
+        if (left.length !== right.length) {
+            return false;
+        }
+        for (let i = 0; i < left.length; i++) {
+            if (left[i] !== right[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * 检查指定偏移位置是否在代码块（围栏代码块或行内代码）内
@@ -1069,6 +1085,9 @@
         switch (message.command) {
             case 'updateContent':
                 if (message.content !== undefined) {
+                    if (message.content === window.markdownContent && message.tagNames === undefined) {
+                        break;
+                    }
                     window.markdownContent = message.content;
                     // 如果消息中包含更新的标签列表，一并更新
                     if (message.tagNames && Array.isArray(message.tagNames)) {
@@ -1086,6 +1105,9 @@
                 }
                 break;
             case 'setMermaidTheme':
+                if (message.theme === currentMermaidTheme) {
+                    break;
+                }
                 if (mermaidInitialized && typeof mermaid === 'object' && typeof mermaid.initialize === 'function') {
                     try {
                         const isHandDrawn = message.theme === 'hand-drawn';
@@ -1094,20 +1116,23 @@
                             ...mermaid.defaultConfig,
                             ...config
                         });
+                        currentMermaidTheme = message.theme;
                         if (window.markdownContent) {
                             updatePreview(window.markdownContent);
                         }
                     } catch (error) {
                         console.error('设置Mermaid主题失败:', error);
                     }
+                } else {
+                    currentMermaidTheme = message.theme;
                 }
                 break;
             case 'setAvailableTags':
-                // 更新可用标签列表，用于精确识别哪些 @xxx 是真正的标签引用
                 if (message.tagNames && Array.isArray(message.tagNames)) {
+                    if (tagsEqual(message.tagNames, availableTagNames)) {
+                        break;
+                    }
                     availableTagNames = message.tagNames;
-                    console.log('已更新可用标签列表:', availableTagNames.length, '个标签');
-                    // 如果已有内容，重新渲染以应用新标签列表
                     if (window.markdownContent) {
                         updatePreview(window.markdownContent);
                     }

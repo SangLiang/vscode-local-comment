@@ -32,6 +32,14 @@ export class EditorUtils {
     }
 
     /**
+     * 在当前编辑器所在列以新 Tab 打开 Markdown 预览。
+     * 避免占用侧栏列（通常为 Column Two），防止侧栏已有预览因布局重排而闪动。
+     */
+    static selectViewColumnForPreviewTab(activeEditor: vscode.TextEditor | undefined): vscode.ViewColumn {
+        return activeEditor?.viewColumn ?? vscode.ViewColumn.One;
+    }
+
+    /**
      * 恢复编辑器焦点
      * @param editor 可选的编辑器实例，如果不提供则使用当前活动编辑器
      * @param delay 延迟时间（毫秒），默认为 DELAY_TIMES.RESTORE_EDITOR_FOCUS

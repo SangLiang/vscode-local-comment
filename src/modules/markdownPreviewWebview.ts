@@ -8,49 +8,175 @@ import { TimerManager } from '../utils/timerUtils';
 import { EditorUtils } from '../utils/editorUtils';
 import { getErrorMessage } from '../utils/utils';
 
+/**
+ * Markdown 文件自定义预览 Webview。
+ *
+ * 支持多文件同时预览：每个源文件对应一个面板，按规范化路径注册在 _panels 中。
+ * 文档变更时仅刷新路径匹配的面板，互不干扰。
+ */
 export class MarkdownPreviewWebview {
+    /** 按规范化文件路径索引的预览面板，允许多个 .md 同时预览 */
+    private static readonly _panels = new Map<string, MarkdownPreviewWebview>();
+    /** 最近一次打开/聚焦的面板（兼容旧逻辑，跳转等待场景使用） */
     private static currentPanel: MarkdownPreviewWebview | undefined;
-    private static currentFilePath: string | undefined;
+    /** 批量 dispose 或扩展停用时为 true，避免逐个 restoreFocus */
     private static _isReplacing: boolean = false;
+    /** 全局文档监听（只注册一次，分发给 _panels 中匹配的面板） */
+    private static _workspaceSyncDisposables: vscode.Disposable[] | undefined;
 
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
     private readonly activeEditor: vscode.TextEditor | undefined;
-    private readonly disposables: vscode.Disposable[] = [];
+    /** 本面板绑定的源文件路径（已 normalize，用于与 document.uri 比较） */
+    private readonly _previewFilePath: string;
     private readonly _syncTimerManager = new TimerManager();
     private _pendingSyncTimer: NodeJS.Timeout | undefined;
+    private _lastSyncedContent: string | undefined;
     private availableTagNames: string[] = [];
 
     private constructor(
         panel: vscode.WebviewPanel,
         context: vscode.ExtensionContext,
         activeEditor: vscode.TextEditor | undefined,
+        previewFilePath: string,
         availableTagNames?: string[]
     ) {
         this.panel = panel;
         this.context = context;
         this.activeEditor = activeEditor;
+        this._previewFilePath = MarkdownPreviewWebview.normalizePreviewPath(previewFilePath);
         this.availableTagNames = availableTagNames || [];
 
         this.panel.onDidDispose(() => this.dispose());
     }
 
-    static createOrShow(context: vscode.ExtensionContext, content: string, fileName: string, filePath: string, availableTagNames?: string[]): MarkdownPreviewWebview {
+    private static normalizePreviewPath(filePath: string): string {
+        const normalized = path.normalize(vscode.Uri.file(filePath).fsPath);
+        // Windows 下路径大小写不一致会导致同一文件匹配失败
+        return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+    }
+
+    /** 注册 workspace 级文档监听，避免每个面板重复订阅 */
+    private static ensureWorkspaceSyncListeners(): void {
+        if (MarkdownPreviewWebview._workspaceSyncDisposables) {
+            return;
+        }
+
+        MarkdownPreviewWebview._workspaceSyncDisposables = [
+            vscode.workspace.onDidChangeTextDocument((event) => {
+                MarkdownPreviewWebview.handleDocumentChange(event);
+            }),
+            vscode.workspace.onDidSaveTextDocument((document) => {
+                MarkdownPreviewWebview.handleDocumentSave(document);
+            }),
+        ];
+    }
+
+    private static handleDocumentChange(event: vscode.TextDocumentChangeEvent): void {
+        if (event.document.uri.scheme !== 'file') {
+            return;
+        }
+        // 装饰器刷新等会触发无 contentChanges 的事件，跳过以免误刷新预览
+        if (event.contentChanges.length === 0) {
+            return;
+        }
+
+        for (const panel of MarkdownPreviewWebview._panels.values()) {
+            if (!panel.isLiveSyncEnabled()) {
+                continue;
+            }
+            if (!panel.matchesPreviewFile(event.document)) {
+                continue;
+            }
+            panel.scheduleContentSync(event.document);
+        }
+    }
+
+    /** liveSync 关闭时，仅在保存时更新各面板 */
+    private static handleDocumentSave(document: vscode.TextDocument): void {
+        if (document.uri.scheme !== 'file') {
+            return;
+        }
+
+        for (const panel of MarkdownPreviewWebview._panels.values()) {
+            if (panel.isLiveSyncEnabled() || !panel.matchesPreviewFile(document)) {
+                continue;
+            }
+            panel.updateContent(document.getText());
+        }
+    }
+
+    /** 扩展停用时由 ExtensionLifecycle 调用，释放监听并关闭所有预览 Tab */
+    static disposeAll(): void {
+        if (MarkdownPreviewWebview._workspaceSyncDisposables) {
+            for (const disposable of MarkdownPreviewWebview._workspaceSyncDisposables) {
+                disposable.dispose();
+            }
+            MarkdownPreviewWebview._workspaceSyncDisposables = undefined;
+        }
+
+        const panels = [...MarkdownPreviewWebview._panels.values()];
+        MarkdownPreviewWebview._isReplacing = true;
+        for (const panel of panels) {
+            panel.panel.dispose();
+        }
+        MarkdownPreviewWebview._isReplacing = false;
+        MarkdownPreviewWebview._panels.clear();
+        MarkdownPreviewWebview.currentPanel = undefined;
+    }
+
+    /**
+     * F5 重载后扩展侧 _panels 已清空，但 Webview Tab 可能仍存在。
+     * 在创建第一个新面板前关闭这些遗留 Tab，避免重复面板与监听错乱。
+     */
+    private static async closeOrphanExtensionPreviewTabs(): Promise<void> {
+        if (MarkdownPreviewWebview._panels.size > 0) {
+            return;
+        }
+
+        const tabsToClose: vscode.Tab[] = [];
+
+        for (const group of vscode.window.tabGroups.all) {
+            for (const tab of group.tabs) {
+                if (!(tab.input instanceof vscode.TabInputWebview)) {
+                    continue;
+                }
+                if (tab.input.viewType === VIEW_TYPES.MARKDOWN_PREVIEW) {
+                    tabsToClose.push(tab);
+                }
+            }
+        }
+
+        if (tabsToClose.length === 0) {
+            return;
+        }
+
+        try {
+            await vscode.window.tabGroups.close(tabsToClose);
+        } catch (error) {
+            logger.error('关闭遗留 Markdown 预览标签页失败:', error);
+        }
+    }
+
+    static async createOrShow(context: vscode.ExtensionContext, content: string, fileName: string, filePath: string, availableTagNames?: string[]): Promise<MarkdownPreviewWebview> {
         const activeEditor = vscode.window.activeTextEditor;
+        const normalizedFilePath = MarkdownPreviewWebview.normalizePreviewPath(filePath);
 
-        if (MarkdownPreviewWebview.currentPanel && MarkdownPreviewWebview.currentFilePath === filePath) {
-            MarkdownPreviewWebview.currentPanel.updateContent(content, availableTagNames);
-            MarkdownPreviewWebview.currentPanel.panel.reveal();
-            return MarkdownPreviewWebview.currentPanel;
+        const existing = MarkdownPreviewWebview._panels.get(normalizedFilePath);
+        if (existing) {
+            existing.updateContent(content, availableTagNames);
+            // preserveFocus：避免抢焦点导致侧栏/其他预览闪动
+            existing.panel.reveal(undefined, true);
+            MarkdownPreviewWebview.currentPanel = existing;
+            return existing;
         }
 
-        if (MarkdownPreviewWebview.currentPanel) {
-            MarkdownPreviewWebview._isReplacing = true;
-            MarkdownPreviewWebview.currentPanel.panel.dispose();
-            MarkdownPreviewWebview._isReplacing = false;
+        if (MarkdownPreviewWebview._panels.size === 0) {
+            await MarkdownPreviewWebview.closeOrphanExtensionPreviewTabs();
         }
 
-        const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
+        // 在当前编辑器列开新 Tab，不占侧栏列，避免与已有分屏预览布局冲突
+        const viewColumn = EditorUtils.selectViewColumnForPreviewTab(activeEditor);
         const panel = vscode.window.createWebviewPanel(
             VIEW_TYPES.MARKDOWN_PREVIEW,
             '预览: ' + fileName,
@@ -69,15 +195,16 @@ export class MarkdownPreviewWebview {
             }
         );
 
-        const webview = new MarkdownPreviewWebview(panel, context, activeEditor, availableTagNames);
+        const webview = new MarkdownPreviewWebview(panel, context, activeEditor, filePath, availableTagNames);
+        MarkdownPreviewWebview._panels.set(normalizedFilePath, webview);
         MarkdownPreviewWebview.currentPanel = webview;
-        MarkdownPreviewWebview.currentFilePath = filePath;
 
+        MarkdownPreviewWebview.ensureWorkspaceSyncListeners();
         webview.initialize(content, fileName);
         return webview;
     }
 
-    static previewFile(context: vscode.ExtensionContext, availableTagNames?: string[]): void {
+    static async previewFile(context: vscode.ExtensionContext, availableTagNames?: string[]): Promise<void> {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
             vscode.window.showWarningMessage('请先打开一个 Markdown 文件');
@@ -89,7 +216,7 @@ export class MarkdownPreviewWebview {
         const fileName = path.basename(filePath);
         const content = document.getText();
 
-        MarkdownPreviewWebview.createOrShow(context, content, fileName, filePath, availableTagNames);
+        await MarkdownPreviewWebview.createOrShow(context, content, fileName, filePath, availableTagNames);
     }
 
     private initialize(content: string, fileName: string): void {
@@ -112,6 +239,7 @@ export class MarkdownPreviewWebview {
         });
 
         this.panel.webview.html = this.getWebviewContent(content, fileName, resourceUris);
+        this._lastSyncedContent = content;
 
         this.registerMessageHandler();
 
@@ -139,7 +267,7 @@ export class MarkdownPreviewWebview {
                     fontSize: fontSize
                 });
 
-                // 发送可用的标签名列表，用于精确渲染标签链接
+                // Webview 脚本就绪后再发配置，避免首屏渲染时 marked/mermaid 尚未加载
                 this.panel.webview.postMessage({
                     command: IPC_MESSAGES.SET_AVAILABLE_TAGS,
                     tagNames: this.availableTagNames
@@ -149,7 +277,6 @@ export class MarkdownPreviewWebview {
             }
         }, 0);
 
-        this.registerDocumentSyncListeners();
     }
 
     private isLiveSyncEnabled(): boolean {
@@ -158,13 +285,13 @@ export class MarkdownPreviewWebview {
     }
 
     private matchesPreviewFile(document: vscode.TextDocument): boolean {
-        const filePath = MarkdownPreviewWebview.currentFilePath;
-        if (!filePath) {
+        if (document.uri.scheme !== 'file') {
             return false;
         }
-        return document.uri.fsPath === filePath;
+        return MarkdownPreviewWebview.normalizePreviewPath(document.uri.fsPath) === this._previewFilePath;
     }
 
+    /** 防抖后推送内容，避免每次按键都完整重渲染 Mermaid 等重量级内容 */
     private scheduleContentSync(document: vscode.TextDocument): void {
         if (this._pendingSyncTimer) {
             this._syncTimerManager.clearTimeout(this._pendingSyncTimer);
@@ -177,33 +304,42 @@ export class MarkdownPreviewWebview {
         }, DELAY_TIMES.MARKDOWN_PREVIEW_LIVE_SYNC);
     }
 
-    private registerDocumentSyncListeners(): void {
-        this.disposables.push(
-            vscode.workspace.onDidChangeTextDocument((event) => {
-                if (!this.isLiveSyncEnabled() || !this.matchesPreviewFile(event.document)) {
-                    return;
-                }
-                this.scheduleContentSync(event.document);
-            }),
-            vscode.workspace.onDidSaveTextDocument((document) => {
-                if (this.isLiveSyncEnabled() || !this.matchesPreviewFile(document)) {
-                    return;
-                }
-                this.updateContent(document.getText());
-            })
-        );
+    private tagsEqual(next?: string[]): boolean {
+        if (next === undefined) {
+            return true;
+        }
+        if (next.length !== this.availableTagNames.length) {
+            return false;
+        }
+        for (let i = 0; i < next.length; i++) {
+            if (next[i] !== this.availableTagNames[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
+    /** 通过 postMessage 增量更新 Webview；内容与标签均未变时跳过，减少闪动 */
     updateContent(content: string, availableTagNames?: string[]): void {
-        // 更新标签名列表（如果提供了）
-        if (availableTagNames) {
+        const contentUnchanged = content === this._lastSyncedContent;
+        const tagsUnchanged = this.tagsEqual(availableTagNames);
+        if (contentUnchanged && tagsUnchanged) {
+            return;
+        }
+
+        if (availableTagNames !== undefined) {
             this.availableTagNames = availableTagNames;
         }
-        this.panel.webview.postMessage({
+        this._lastSyncedContent = content;
+        // liveSync 路径不传 tagNames，避免每次编辑都触发标签重渲染
+        const payload: { command: string; content: string; tagNames?: string[] } = {
             command: IPC_MESSAGES.UPDATE_CONTENT,
             content: content,
-            tagNames: this.availableTagNames
-        });
+        };
+        if (availableTagNames !== undefined) {
+            payload.tagNames = this.availableTagNames;
+        }
+        this.panel.webview.postMessage(payload);
     }
 
     private registerMessageHandler(): void {
@@ -269,8 +405,9 @@ export class MarkdownPreviewWebview {
         });
     }
 
+    /** Alt+单击预览块时，跳转到本面板绑定的源文件行（非 currentPanel） */
     private async handleGoToSourceLine(line: number): Promise<void> {
-        const filePath = MarkdownPreviewWebview.currentFilePath;
+        const filePath = this._previewFilePath;
         if (!filePath) {
             return;
         }
@@ -283,8 +420,7 @@ export class MarkdownPreviewWebview {
             const document = await vscode.workspace.openTextDocument(uri);
 
             const existingEditor = vscode.window.visibleTextEditors.find(
-                (editor) => editor.document.uri.fsPath === filePath
-                    || editor.document.uri.fsPath.toLowerCase() === filePath.toLowerCase()
+                (editor) => MarkdownPreviewWebview.normalizePreviewPath(editor.document.uri.fsPath) === filePath
             );
             const viewColumn = existingEditor?.viewColumn
                 ?? vscode.ViewColumn.One;
@@ -473,13 +609,11 @@ ${mermaidScript}
             this._pendingSyncTimer = undefined;
         }
         this._syncTimerManager.dispose();
-        for (const disposable of this.disposables) {
-            disposable.dispose();
-        }
-        this.disposables.length = 0;
 
-        MarkdownPreviewWebview.currentPanel = undefined;
-        MarkdownPreviewWebview.currentFilePath = undefined;
+        MarkdownPreviewWebview._panels.delete(this._previewFilePath);
+        if (MarkdownPreviewWebview.currentPanel === this) {
+            MarkdownPreviewWebview.currentPanel = undefined;
+        }
 
         if (!MarkdownPreviewWebview._isReplacing) {
             EditorUtils.restoreFocus(this.activeEditor);

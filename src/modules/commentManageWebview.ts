@@ -672,7 +672,7 @@ export class CommentManageWebviewPanel {
 
         const absPath = this._resolveAbsPath(row.filePath);
 
-        MarkdownPreviewWebview.createOrShow(
+        await MarkdownPreviewWebview.createOrShow(
 
             this._context,
 
