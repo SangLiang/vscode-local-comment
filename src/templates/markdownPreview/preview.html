@@ -25,11 +25,18 @@
             </div>
         </div>
             <div class="help-text">
-                支持 Markdown 语法、Mermaid 图表和 LaTeX 公式；编辑源文件时预览自动刷新；Alt+单击内容可跳转到源文件对应位置；图表支持 Ctrl+滚轮缩放
+                支持 Markdown 语法、Mermaid 图表和 LaTeX 公式；编辑源文件时预览自动刷新；Alt+单击内容可跳转到源文件对应位置；图表支持 Ctrl+滚轮缩放；Ctrl+F 在预览中搜索
             </div>
         </div>
 
         <div class="content-area">
+            <div id="previewFindBar" class="preview-find-bar" hidden>
+                <input id="previewFindInput" class="preview-find-input" type="search" placeholder="在预览中搜索..." autocomplete="off" spellcheck="false" />
+                <span id="previewFindStatus" class="preview-find-status"></span>
+                <button type="button" id="previewFindPrev" class="preview-find-btn" title="上一个 (Shift+Enter)">↑</button>
+                <button type="button" id="previewFindNext" class="preview-find-btn" title="下一个 (Enter)">↓</button>
+                <button type="button" id="previewFindClose" class="preview-find-btn preview-find-close" title="关闭 (Esc)">×</button>
+            </div>
             <div id="previewArea" class="preview-area"></div>
         </div>
     </div>
