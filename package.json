@@ -601,6 +601,11 @@
           "minimum": 0,
           "maximum": 100
         },
+        "local-comment.markdownPreview.liveSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "编辑 Markdown 源文件时实时刷新预览。关闭后仅在保存文件时更新预览。"
+        },
         "local-comment.storage.commentsConfig": {
           "type": "string",
           "default": "comments.json",

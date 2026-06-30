@@ -43,6 +43,12 @@ export const DELAY_TIMES = {
      * 用于模拟网络请求延迟（仅用于开发/测试）
      */
     MOCK_UPLOAD: 1000,
+
+    /**
+     * Markdown 预览实时同步防抖时间
+     * 编辑源文件后延迟刷新预览，避免每次按键都完整重渲染
+     */
+    MARKDOWN_PREVIEW_LIVE_SYNC: 400,
 } as const;
 
 /**

@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
-import { VIEW_TYPES, IPC_MESSAGES, COMMANDS } from '../constants';
+import { VIEW_TYPES, IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
+import { TimerManager } from '../utils/timerUtils';
 import { EditorUtils } from '../utils/editorUtils';
 import { getErrorMessage } from '../utils/utils';
 
@@ -15,7 +16,9 @@ export class MarkdownPreviewWebview {
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
     private readonly activeEditor: vscode.TextEditor | undefined;
-    private disposable: vscode.Disposable | undefined;
+    private readonly disposables: vscode.Disposable[] = [];
+    private readonly _syncTimerManager = new TimerManager();
+    private _pendingSyncTimer: NodeJS.Timeout | undefined;
     private availableTagNames: string[] = [];
 
     private constructor(
@@ -146,12 +149,49 @@ export class MarkdownPreviewWebview {
             }
         }, 0);
 
-        this.disposable = vscode.workspace.onDidSaveTextDocument((document) => {
-            if (document.uri.fsPath === MarkdownPreviewWebview.currentFilePath) {
-                const content = document.getText();
-                this.updateContent(content);
+        this.registerDocumentSyncListeners();
+    }
+
+    private isLiveSyncEnabled(): boolean {
+        return vscode.workspace.getConfiguration('local-comment')
+            .get<boolean>('markdownPreview.liveSync', true);
+    }
+
+    private matchesPreviewFile(document: vscode.TextDocument): boolean {
+        const filePath = MarkdownPreviewWebview.currentFilePath;
+        if (!filePath) {
+            return false;
+        }
+        return document.uri.fsPath === filePath;
+    }
+
+    private scheduleContentSync(document: vscode.TextDocument): void {
+        if (this._pendingSyncTimer) {
+            this._syncTimerManager.clearTimeout(this._pendingSyncTimer);
+        }
+        this._pendingSyncTimer = this._syncTimerManager.setTimeout(() => {
+            this._pendingSyncTimer = undefined;
+            if (this.matchesPreviewFile(document)) {
+                this.updateContent(document.getText());
             }
-        });
+        }, DELAY_TIMES.MARKDOWN_PREVIEW_LIVE_SYNC);
+    }
+
+    private registerDocumentSyncListeners(): void {
+        this.disposables.push(
+            vscode.workspace.onDidChangeTextDocument((event) => {
+                if (!this.isLiveSyncEnabled() || !this.matchesPreviewFile(event.document)) {
+                    return;
+                }
+                this.scheduleContentSync(event.document);
+            }),
+            vscode.workspace.onDidSaveTextDocument((document) => {
+                if (this.isLiveSyncEnabled() || !this.matchesPreviewFile(document)) {
+                    return;
+                }
+                this.updateContent(document.getText());
+            })
+        );
     }
 
     updateContent(content: string, availableTagNames?: string[]): void {
@@ -428,10 +468,15 @@ ${mermaidScript}
     }
 
     dispose(): void {
-        if (this.disposable) {
-            this.disposable.dispose();
-            this.disposable = undefined;
+        if (this._pendingSyncTimer) {
+            this._syncTimerManager.clearTimeout(this._pendingSyncTimer);
+            this._pendingSyncTimer = undefined;
         }
+        this._syncTimerManager.dispose();
+        for (const disposable of this.disposables) {
+            disposable.dispose();
+        }
+        this.disposables.length = 0;
 
         MarkdownPreviewWebview.currentPanel = undefined;
         MarkdownPreviewWebview.currentFilePath = undefined;
