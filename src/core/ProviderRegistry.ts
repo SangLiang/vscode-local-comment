@@ -56,6 +56,10 @@ export class ProviderRegistry {
         );
         disposables.push(groupViewDisposable);
 
+        CommentManageWebviewPanel.setOnGroupApplied(() => {
+            this.commentGroupViewProvider?.notifyGroupApplied();
+        });
+
         return disposables;
     }
 

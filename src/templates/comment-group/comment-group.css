@@ -65,8 +65,23 @@ body {
 
 .group-item.current {
     border-color: var(--vscode-focusBorder);
+}
+
+.group-item.viewing {
     background: var(--vscode-list-activeSelectionBackground);
     color: var(--vscode-list-activeSelectionForeground);
+}
+
+.group-item.current.viewing {
+    border-color: var(--vscode-focusBorder);
+    background: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.group-item.current:not(.viewing) {
+    border-color: var(--vscode-badge-background, var(--vscode-focusBorder));
+    background: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
 }
 
 .group-name {
@@ -111,6 +126,22 @@ body {
 
 .btn-icon:hover {
     background: var(--vscode-toolbar-hoverBackground);
+}
+
+.btn-apply {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+.btn-apply:hover {
+    background: var(--vscode-button-hoverBackground);
 }
 
 .no-workspace {

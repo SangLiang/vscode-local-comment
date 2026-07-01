@@ -18,11 +18,17 @@ const CMD = {
 
     EXPORT_COMMENT_ROWS: 'exportCommentRows',
 
+    APPLY_COMMENT_GROUP_FROM_PANEL: 'applyCommentGroupFromPanel',
+
 };
 
 
 
 const groupLabelEl = document.getElementById('group-label');
+
+const previewBannerEl = document.getElementById('preview-banner');
+
+const btnApplyGroupEl = document.getElementById('btn-apply-group');
 
 const searchInputEl = document.getElementById('search-input');
 
@@ -49,6 +55,8 @@ const emptyStateEl = document.getElementById('empty-state');
 
 
 let allRows = [];
+
+let isActiveGroup = true;
 
 let filterDebounceTimer = null;
 
@@ -330,11 +338,33 @@ function createActionButton(label, className, onClick) {
 
 
 
+function updatePreviewMode(active) {
+
+    isActiveGroup = active;
+
+    previewBannerEl.style.display = active ? 'none' : 'flex';
+
+    selectAllEl.disabled = !active;
+
+    btnBatchDeleteEl.style.display = active ? '' : 'none';
+
+    btnBatchExportEl.style.display = active ? '' : 'none';
+
+}
+
+
+
 function renderRows(data) {
 
     const rows = data.rows || [];
 
     const groupFileName = data.groupFileName || '';
+
+    const activeGroupFileName = data.activeGroupFileName || groupFileName;
+
+    const active = data.isActiveGroup !== false;
+
+    updatePreviewMode(active);
 
 
 
@@ -362,7 +392,15 @@ function renderRows(data) {
 
 
 
-    groupLabelEl.textContent = `当前分组：${formatGroupName(groupFileName)}`;
+    if (active) {
+
+        groupLabelEl.textContent = `当前分组：${formatGroupName(groupFileName)}`;
+
+    } else {
+
+        groupLabelEl.textContent = `预览分组：${formatGroupName(groupFileName)}（当前使用：${formatGroupName(activeGroupFileName)}）`;
+
+    }
 
 
 
@@ -408,35 +446,39 @@ function renderRows(data) {
 
         checkTd.className = 'col-check';
 
-        const checkbox = document.createElement('input');
+        if (isActiveGroup) {
 
-        checkbox.type = 'checkbox';
+            const checkbox = document.createElement('input');
 
-        checkbox.className = 'row-check';
+            checkbox.type = 'checkbox';
 
-        checkbox.dataset.id = row.id;
+            checkbox.className = 'row-check';
 
-        checkbox.checked = selectedIds.has(row.id);
+            checkbox.dataset.id = row.id;
 
-        checkbox.addEventListener('change', () => {
+            checkbox.checked = selectedIds.has(row.id);
 
-            if (checkbox.checked) {
+            checkbox.addEventListener('change', () => {
 
-                selectedIds.add(row.id);
+                if (checkbox.checked) {
 
-            } else {
+                    selectedIds.add(row.id);
 
-                selectedIds.delete(row.id);
+                } else {
 
-            }
+                    selectedIds.delete(row.id);
 
-            syncSelectAllState(rows);
+                }
 
-            updateBatchButtons();
+                syncSelectAllState(rows);
 
-        });
+                updateBatchButtons();
 
-        checkTd.appendChild(checkbox);
+            });
+
+            checkTd.appendChild(checkbox);
+
+        }
 
 
 
@@ -502,9 +544,13 @@ function renderRows(data) {
 
         actionsWrap.className = 'action-list';
 
-        actionsWrap.appendChild(createActionButton('编辑', 'action-edit', () => editCommentRow(row.id)));
+        if (isActiveGroup) {
 
-        actionsWrap.appendChild(createActionButton('删除', 'action-delete', () => deleteCommentRows([row.id])));
+            actionsWrap.appendChild(createActionButton('编辑', 'action-edit', () => editCommentRow(row.id)));
+
+            actionsWrap.appendChild(createActionButton('删除', 'action-delete', () => deleteCommentRows([row.id])));
+
+        }
 
         actionsWrap.appendChild(createActionButton('预览', 'action-preview', () => previewCommentRow(row.id)));
 
@@ -629,6 +675,14 @@ filterTagEl.addEventListener('change', onFilterChange);
 sortKeyEl.addEventListener('change', onFilterChange);
 
 sortDirEl.addEventListener('change', onFilterChange);
+
+
+
+btnApplyGroupEl.addEventListener('click', () => {
+
+    vscode.postMessage({ command: CMD.APPLY_COMMENT_GROUP_FROM_PANEL });
+
+});
 
 
 

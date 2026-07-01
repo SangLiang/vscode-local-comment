@@ -23,6 +23,33 @@ body {
     margin-right: 4px;
 }
 
+.preview-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--vscode-inputValidation-warningBorder);
+    border-radius: 4px;
+    background: var(--vscode-inputValidation-warningBackground);
+    color: var(--vscode-foreground);
+}
+
+.preview-hint {
+    flex: 1 1 200px;
+    font-size: 12px;
+}
+
+.toolbar-btn-primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.toolbar-btn-primary:hover:not(:disabled) {
+    background: var(--vscode-button-hoverBackground);
+}
+
 .toolbar-input {
     flex: 1 1 160px;
     min-width: 120px;

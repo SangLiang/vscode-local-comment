@@ -178,6 +178,12 @@ export class CommentManager implements vscode.Disposable {
         return this.storage.countLocalCommentsInConfigFile(configFileName, folder.uri.fsPath);
     }
 
+    public readCommentsFromConfigFile(configFileName: string): import('./commentTypes').FileComments {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        if (!folder) return {};
+        return this.storage.readCommentsFromConfigFile(configFileName, folder.uri.fsPath);
+    }
+
     public async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {
         const ok = await this.storage.renameCommentsConfig(oldFileName, newFileName);
         if (ok) await this._saveAndFireAll();

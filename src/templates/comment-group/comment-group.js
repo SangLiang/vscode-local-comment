@@ -7,6 +7,7 @@ const CMD = {
     CREATE_COMMENT_GROUP: 'createCommentGroup',
     RENAME_COMMENT_GROUP: 'renameCommentGroup',
     DELETE_COMMENT_GROUP: 'deleteCommentGroup',
+    APPLY_COMMENT_GROUP: 'applyCommentGroup',
     COMMENT_GROUP_ERROR: 'commentGroupError',
 };
 
@@ -48,6 +49,7 @@ function renderGroups(data) {
 
     const groups = data.groups || [];
     const current = data.current || '';
+    const viewing = data.viewing || '';
 
     currentGroupEl.textContent = formatName(current);
     groupListEl.innerHTML = '';
@@ -75,15 +77,38 @@ function renderGroups(data) {
 
     groups.forEach((fileName) => {
         const item = document.createElement('div');
-        item.className = 'group-item' + (fileName === current ? ' current' : '');
+        let itemClass = 'group-item';
+        if (fileName === current) {
+            itemClass += ' current';
+        }
+        if (fileName === viewing) {
+            itemClass += ' viewing';
+        }
+        item.className = itemClass;
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'group-name';
         nameSpan.textContent = formatName(fileName);
-        nameSpan.title = '点击切换到此分组并打开管理页';
+        nameSpan.title = '点击查看该分组注释';
         nameSpan.addEventListener('click', () => {
             vscode.postMessage({ command: CMD.SELECT_COMMENT_GROUP, fileName });
         });
+
+        if (fileName === viewing && fileName !== current) {
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'btn-apply';
+            applyBtn.type = 'button';
+            applyBtn.title = '应用此分组';
+            applyBtn.textContent = '应用';
+            applyBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                vscode.postMessage({ command: CMD.APPLY_COMMENT_GROUP, fileName });
+            });
+            item.appendChild(nameSpan);
+            item.appendChild(applyBtn);
+        } else {
+            item.appendChild(nameSpan);
+        }
 
         const renameBtn = document.createElement('button');
         renameBtn.className = 'btn-icon';
@@ -105,7 +130,6 @@ function renderGroups(data) {
             vscode.postMessage({ command: CMD.DELETE_COMMENT_GROUP, fileName });
         });
 
-        item.appendChild(nameSpan);
         item.appendChild(renameBtn);
         item.appendChild(deleteBtn);
         groupListEl.appendChild(item);

@@ -37,6 +37,7 @@ import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/utils';
 
 import type { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
+import type { FileComments } from '../managers/commentTypes';
 
 
 
@@ -44,9 +45,13 @@ export class CommentManageWebviewPanel {
 
     public static currentPanel: CommentManageWebviewPanel | undefined;
 
-
-
     public static readonly viewType = VIEW_TYPES.COMMENT_MANAGE;
+
+    private static _onGroupApplied?: () => void;
+
+    public static setOnGroupApplied(callback: () => void): void {
+        CommentManageWebviewPanel._onGroupApplied = callback;
+    }
 
 
 
@@ -109,8 +114,6 @@ export class CommentManageWebviewPanel {
             return;
 
         }
-
-
 
         const panel = vscode.window.createWebviewPanel(
 
@@ -242,7 +245,7 @@ export class CommentManageWebviewPanel {
 
             commentManager.onDidChangeComments(() => {
 
-                if (CommentManageWebviewPanel.currentPanel === this) {
+                if (CommentManageWebviewPanel.currentPanel === this && this._isActiveGroup()) {
 
                     this.refreshRows();
 
@@ -324,6 +327,12 @@ export class CommentManageWebviewPanel {
 
                             return;
 
+                        case IPC_MESSAGES.APPLY_COMMENT_GROUP_FROM_PANEL:
+
+                            await this._applyViewingGroup();
+
+                            return;
+
                     }
 
                 } catch (error) {
@@ -365,6 +374,16 @@ export class CommentManageWebviewPanel {
             }
 
         }
+
+    }
+
+
+
+    public onGroupApplied(groupFileName: string): void {
+
+        this._groupFileName = groupFileName;
+
+        this.refreshRows();
 
     }
 
@@ -414,9 +433,13 @@ export class CommentManageWebviewPanel {
 
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
-        let rows = flattenCommentsToRows(this._commentManager.getAllComments(), workspaceRoot);
+        let rows = flattenCommentsToRows(this._getCommentsForViewing(), workspaceRoot);
 
         const allRows = rows;
+
+        const activeGroupFileName = this._commentManager.getCurrentCommentsConfig();
+
+        const isActiveGroup = this._groupFileName === activeGroupFileName;
 
 
 
@@ -446,7 +469,67 @@ export class CommentManageWebviewPanel {
 
             groupFileName: this._groupFileName,
 
+            activeGroupFileName,
+
+            isActiveGroup,
+
         });
+
+    }
+
+
+
+    private _isActiveGroup(): boolean {
+
+        return this._groupFileName === this._commentManager.getCurrentCommentsConfig();
+
+    }
+
+
+
+    private _getCommentsForViewing(): FileComments {
+
+        if (this._isActiveGroup()) {
+
+            return this._commentManager.getAllComments();
+
+        }
+
+        return this._commentManager.readCommentsFromConfigFile(this._groupFileName);
+
+    }
+
+
+
+    private async _applyViewingGroup(): Promise<void> {
+
+        if (this._isActiveGroup()) {
+
+            return;
+
+        }
+
+        await this._commentManager.switchCommentsConfig(this._groupFileName);
+
+        CommentManageWebviewPanel._onGroupApplied?.();
+
+        this.refreshRows();
+
+    }
+
+
+
+    private _ensureActiveGroupForEdit(): boolean {
+
+        if (this._isActiveGroup()) {
+
+            return true;
+
+        }
+
+        vscode.window.showWarningMessage('当前为预览模式，请先点击「应用分组」后再编辑或删除');
+
+        return false;
 
     }
 
@@ -456,7 +539,7 @@ export class CommentManageWebviewPanel {
 
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
-        return flattenCommentsToRows(this._commentManager.getAllComments(), workspaceRoot);
+        return flattenCommentsToRows(this._getCommentsForViewing(), workspaceRoot);
 
     }
 
@@ -487,6 +570,12 @@ export class CommentManageWebviewPanel {
     private async _deleteCommentRows(ids: string[]): Promise<void> {
 
         if (ids.length === 0) {
+
+            return;
+
+        }
+
+        if (!this._ensureActiveGroupForEdit()) {
 
             return;
 
@@ -543,6 +632,12 @@ export class CommentManageWebviewPanel {
 
 
     private async _editCommentRow(id: string): Promise<void> {
+
+        if (!this._ensureActiveGroupForEdit()) {
+
+            return;
+
+        }
 
         const row = this._findRowById(id);
 
@@ -691,6 +786,14 @@ export class CommentManageWebviewPanel {
 
 
     private async _exportCommentRows(ids: string[]): Promise<void> {
+
+        if (!this._isActiveGroup()) {
+
+            vscode.window.showWarningMessage('当前为预览模式，请先应用分组后再导出');
+
+            return;
+
+        }
 
         const saveUri = await vscode.window.showSaveDialog({
 

@@ -33,6 +33,7 @@ function validateGroupFileName(value: string, existingConfigs: string[]): string
 
 export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
+    private _viewingGroupFileName?: string;
 
     constructor(
         private readonly _context: vscode.ExtensionContext,
@@ -67,12 +68,18 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
     refreshGroups(): void {
         const folders = vscode.workspace.workspaceFolders;
         if (!folders?.length) {
-            this._post(IPC_MESSAGES.COMMENT_GROUPS_RESULT, { groups: [], current: '', noWorkspace: true });
+            this._post(IPC_MESSAGES.COMMENT_GROUPS_RESULT, { groups: [], current: '', viewing: '', noWorkspace: true });
             return;
         }
         const groups = this._commentManager.listAvailableCommentsConfigs();
         const current = this._commentManager.getCurrentCommentsConfig();
-        this._post(IPC_MESSAGES.COMMENT_GROUPS_RESULT, { groups, current, noWorkspace: false });
+        const viewing = this._viewingGroupFileName ?? '';
+        this._post(IPC_MESSAGES.COMMENT_GROUPS_RESULT, { groups, current, viewing, noWorkspace: false });
+    }
+
+    notifyGroupApplied(): void {
+        this._viewingGroupFileName = this._commentManager.getCurrentCommentsConfig();
+        this.refreshGroups();
     }
 
     private _openManagePanel(groupFileName: string): void {
@@ -106,7 +113,7 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 if (!message.fileName) {
                     return;
                 }
-                await this._commentManager.switchCommentsConfig(message.fileName);
+                this._viewingGroupFileName = message.fileName;
                 this._openManagePanel(message.fileName);
                 this.refreshGroups();
                 return;
@@ -124,10 +131,19 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                     return;
                 }
                 await this._commentManager.createCommentsConfig(fileName);
-                await this._commentManager.switchCommentsConfig(
-                    fileName.endsWith('.json') ? fileName : `${fileName}.json`
-                );
-                this._openManagePanel(this._commentManager.getCurrentCommentsConfig());
+                const createdFileName = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
+                this._viewingGroupFileName = createdFileName;
+                this._openManagePanel(createdFileName);
+                this.refreshGroups();
+                return;
+            }
+            case IPC_MESSAGES.APPLY_COMMENT_GROUP: {
+                if (!message.fileName) {
+                    return;
+                }
+                await this._commentManager.switchCommentsConfig(message.fileName);
+                this._viewingGroupFileName = message.fileName;
+                CommentManageWebviewPanel.currentPanel?.onGroupApplied(message.fileName);
                 this.refreshGroups();
                 return;
             }

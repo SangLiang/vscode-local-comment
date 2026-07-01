@@ -412,22 +412,28 @@ export class CommentStorage {
     return config.comments || 'comments.json';
   }
 
-  countLocalCommentsInConfigFile(configFileName: string, workspacePath: string): number {
+  readCommentsFromConfigFile(configFileName: string, workspacePath: string): FileComments {
     const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
     const configFile = path.join(paths.commentsDir, configFileName);
     if (!StoragePathUtils.fileExists(configFile)) {
-      return 0;
+      return {};
     }
     try {
       const raw = JSON.parse(fs.readFileSync(configFile, 'utf8')) as { comments?: FileComments };
-      const comments = raw.comments ?? {};
-      return Object.values(comments)
-        .flat()
-        .filter((c) => !('userId' in c))
-        .length;
+      let comments = raw.comments ?? {};
+      comments = remapFileCommentsToWorkspace(comments, workspacePath);
+      return comments;
     } catch {
-      return 0;
+      return {};
     }
+  }
+
+  countLocalCommentsInConfigFile(configFileName: string, workspacePath: string): number {
+    const comments = this.readCommentsFromConfigFile(configFileName, workspacePath);
+    return Object.values(comments)
+      .flat()
+      .filter((c) => !('userId' in c))
+      .length;
   }
 
   async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {

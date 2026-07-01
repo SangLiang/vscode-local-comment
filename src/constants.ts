@@ -188,10 +188,12 @@ export const IPC_MESSAGES = {
     CREATE_COMMENT_GROUP: 'createCommentGroup',
     RENAME_COMMENT_GROUP: 'renameCommentGroup',
     DELETE_COMMENT_GROUP: 'deleteCommentGroup',
+    APPLY_COMMENT_GROUP: 'applyCommentGroup',
     COMMENT_GROUP_ERROR: 'commentGroupError',
 
     // 注释管理 WebviewPanel
     GET_COMMENT_ROWS: 'getCommentRows',
+    APPLY_COMMENT_GROUP_FROM_PANEL: 'applyCommentGroupFromPanel',
     COMMENT_ROWS_RESULT: 'commentRowsResult',
     DELETE_COMMENT_ROWS: 'deleteCommentRows',
     EXPORT_COMMENT_ROWS: 'exportCommentRows',
