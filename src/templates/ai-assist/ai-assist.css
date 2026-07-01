@@ -1,0 +1,220 @@
+body {
+    margin: 0;
+    padding: 12px;
+    color: var(--vscode-foreground);
+    background: var(--vscode-sideBar-background);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    line-height: 1.5;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.intro {
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.intro p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.intro code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--vscode-textCodeBlock-background);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--vscode-descriptionForeground);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.steps {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 12px;
+    color: var(--vscode-foreground);
+}
+
+.steps li {
+    margin-bottom: 4px;
+}
+
+.steps li:last-child {
+    margin-bottom: 0;
+}
+
+.skill-status {
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.45;
+    border: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-editor-background);
+}
+
+.skill-status.installed {
+    border-color: var(--vscode-testing-iconPassed, var(--vscode-charts-green));
+    color: var(--vscode-foreground);
+}
+
+.skill-status.missing {
+    color: var(--vscode-descriptionForeground);
+}
+
+.skill-status code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: 10px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    background: var(--vscode-textCodeBlock-background);
+}
+
+.skill-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    padding: 6px 12px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 5px 10px;
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 2px;
+    background: var(--vscode-button-secondaryBackground, var(--vscode-editor-background));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+.btn-secondary:hover {
+    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.no-workspace {
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: var(--vscode-inputValidation-warningBackground);
+    color: var(--vscode-inputValidation-warningForeground);
+    border: 1px solid var(--vscode-inputValidation-warningBorder);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.no-workspace p {
+    margin: 0;
+}
+
+#main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.prompt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prompt-hint {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editor-background);
+    border: 1px dashed var(--vscode-panel-border);
+}
+
+.prompt-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.prompt-text {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 3px;
+    background: var(--vscode-textCodeBlock-background);
+    font-family: var(--vscode-editor-font-family);
+    font-size: 11px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--vscode-foreground);
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.btn-copy {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    background: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+.btn-copy:hover {
+    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.btn-copy.copied {
+    opacity: 0.85;
+}

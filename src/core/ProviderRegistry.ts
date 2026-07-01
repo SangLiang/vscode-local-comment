@@ -4,6 +4,7 @@ import { TagCompletionProvider } from '../providers/tagCompletionProvider';
 import { TagDefinitionProvider } from '../providers/tagDefinitionProvider';
 import { UserInfoWebview } from '../modules/userInfoWebview';
 import { CommentGroupWebviewViewProvider } from '../modules/commentGroupWebviewView';
+import { AiAssistWebviewViewProvider } from '../modules/aiAssistWebviewView';
 import { CommentManageWebviewPanel } from '../modules/commentManageWebview';
 import { CommentTreeItem } from '../providers/commentTreeProvider';
 import { SharedCommentTreeItem } from '../providers/sharedCommentTreeProvider';
@@ -58,6 +59,17 @@ export class ProviderRegistry {
             { webviewOptions: { retainContextWhenHidden: true } }
         );
         disposables.push(groupViewDisposable);
+
+        const aiAssistViewProvider = new AiAssistWebviewViewProvider(
+            this.context,
+            this.context.extensionUri
+        );
+        const aiAssistDisposable = vscode.window.registerWebviewViewProvider(
+            'aiAssist',
+            aiAssistViewProvider,
+            { webviewOptions: { retainContextWhenHidden: true } }
+        );
+        disposables.push(aiAssistDisposable);
 
         CommentManageWebviewPanel.setOnGroupApplied(() => {
             this.commentGroupViewProvider?.notifyGroupApplied();

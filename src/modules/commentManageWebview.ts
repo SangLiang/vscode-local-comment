@@ -36,7 +36,8 @@ import { MarkdownPreviewWebview } from './markdownPreviewWebview';
 
 import { logger } from '../utils/logger';
 
-import { getErrorMessage } from '../utils/utils';
+import { getErrorMessage, buildExportData } from '../utils/utils';
+import * as fs from 'fs';
 
 import type { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
 import type { FileComments } from '../managers/commentTypes';
@@ -544,7 +545,7 @@ export class CommentManageWebviewPanel {
 
         }
 
-        vscode.window.showWarningMessage('当前为预览模式，请先点击「应用分组」后再编辑或删除');
+        vscode.window.showWarningMessage('当前为预览模式，请先点击「应用此分组」后再编辑');
 
         return false;
 
@@ -592,12 +593,6 @@ export class CommentManageWebviewPanel {
 
         }
 
-        if (!this._ensureActiveGroupForEdit()) {
-
-            return;
-
-        }
-
 
 
         const choice =
@@ -626,25 +621,43 @@ export class CommentManageWebviewPanel {
 
 
 
-        for (const id of ids) {
+        if (this._isActiveGroup()) {
 
-            const row = this._findRowById(id);
+            for (const id of ids) {
 
-            if (!row) {
+                const row = this._findRowById(id);
 
-                continue;
+                if (!row) {
+
+                    continue;
+
+                }
+
+                const absPath = this._resolveAbsPath(row.filePath);
+
+                await this._commentManager.removeCommentById(vscode.Uri.file(absPath), id);
 
             }
 
-            const absPath = this._resolveAbsPath(row.filePath);
+            CommentManageWebviewPanel._onCommentsMutated?.();
 
-            await this._commentManager.removeCommentById(vscode.Uri.file(absPath), id);
+        } else {
+
+            const removed = await this._commentManager.removeCommentsFromConfig(this._groupFileName, ids);
+
+            if (removed === 0) {
+
+                vscode.window.showWarningMessage('未找到可删除的注释');
+
+                return;
+
+            }
+
+            CommentManageWebviewPanel._onCommentsMutated?.();
 
         }
 
         this.refreshRows();
-
-        CommentManageWebviewPanel._onCommentsMutated?.();
 
     }
 
@@ -653,12 +666,6 @@ export class CommentManageWebviewPanel {
     private async _moveCommentRows(ids: string[]): Promise<void> {
 
         if (ids.length === 0) {
-
-            return;
-
-        }
-
-        if (!this._ensureActiveGroupForEdit()) {
 
             return;
 
@@ -932,14 +939,6 @@ export class CommentManageWebviewPanel {
 
     private async _exportCommentRows(ids: string[]): Promise<void> {
 
-        if (!this._isActiveGroup()) {
-
-            vscode.window.showWarningMessage('当前为预览模式，请先应用分组后再导出');
-
-            return;
-
-        }
-
         const saveUri = await vscode.window.showSaveDialog({
 
             filters: { JSON: ['json'] },
@@ -956,11 +955,21 @@ export class CommentManageWebviewPanel {
 
 
 
-        const ok = ids.length
+        let ok: boolean;
 
-            ? await this._commentManager.exportCommentsSubset(saveUri.fsPath, ids)
+        if (this._isActiveGroup()) {
 
-            : await this._commentManager.exportComments(saveUri.fsPath);
+            ok = ids.length
+
+                ? await this._commentManager.exportCommentsSubset(saveUri.fsPath, ids)
+
+                : await this._commentManager.exportComments(saveUri.fsPath);
+
+        } else {
+
+            ok = this._exportViewingGroupSubset(saveUri.fsPath, ids);
+
+        }
 
 
 
@@ -971,6 +980,70 @@ export class CommentManageWebviewPanel {
         } else {
 
             vscode.window.showErrorMessage('导出失败');
+
+        }
+
+    }
+
+
+
+    private _exportViewingGroupSubset(exportPath: string, commentIds: string[]): boolean {
+
+        try {
+
+            const idSet = new Set(commentIds);
+
+            const all = this._getCommentsForViewing();
+
+            const subset: FileComments = {};
+
+            for (const [filePath, comments] of Object.entries(all)) {
+
+                const picked = comments.filter((c) => idSet.has(c.id) && !('userId' in c));
+
+                if (picked.length > 0) {
+
+                    subset[filePath] = picked;
+
+                }
+
+            }
+
+            const totalComments = Object.values(subset).reduce((sum, arr) => sum + arr.length, 0);
+
+            if (totalComments === 0) {
+
+                return false;
+
+            }
+
+            const exportData = buildExportData(
+
+                this._commentManager.getProjectInfo(),
+
+                subset,
+
+                totalComments
+
+            );
+
+            const exportDir = path.dirname(exportPath);
+
+            if (!fs.existsSync(exportDir)) {
+
+                fs.mkdirSync(exportDir, { recursive: true });
+
+            }
+
+            fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2), 'utf8');
+
+            return true;
+
+        } catch (error) {
+
+            logger.error('export viewing group subset failed', error);
+
+            return false;
 
         }
 

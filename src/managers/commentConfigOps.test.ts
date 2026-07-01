@@ -217,4 +217,40 @@ describe('CommentStorage config ops', () => {
 
     expect(storage.getCommentsRef()[filePath] ?? []).toHaveLength(0);
   });
+
+  it('removeCommentsByIdsFromConfig 应从非当前分组删除注释', async () => {
+    const filePath = path.join(tempRoot, 'src', 'foo.ts');
+    writeConfigFile('preview.json', {
+      comments: {
+        [filePath]: [
+          {
+            id: 'del-1',
+            line: 1,
+            content: 'a',
+            timestamp: 1,
+            originalLine: 1,
+            lineContent: 'x',
+          },
+          {
+            id: 'del-2',
+            line: 2,
+            content: 'b',
+            timestamp: 1,
+            originalLine: 2,
+            lineContent: 'y',
+          },
+        ],
+      },
+      shareComments: {},
+    });
+    writeConfigFile('comments.json', { comments: {}, shareComments: {} });
+    await storage.loadComments();
+
+    const removed = await storage.removeCommentsByIdsFromConfig('preview.json', ['del-1']);
+
+    expect(removed).toBe(1);
+    const preview = JSON.parse(fs.readFileSync(path.join(commentsDir, 'preview.json'), 'utf8'));
+    expect(preview.comments[filePath]).toHaveLength(1);
+    expect(preview.comments[filePath][0].id).toBe('del-2');
+  });
 });

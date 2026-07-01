@@ -350,14 +350,6 @@ function updatePreviewMode(active) {
 
     previewBannerEl.style.display = active ? 'none' : 'flex';
 
-    selectAllEl.disabled = !active;
-
-    btnBatchDeleteEl.style.display = active ? '' : 'none';
-
-    btnBatchMoveEl.style.display = active ? '' : 'none';
-
-    btnBatchExportEl.style.display = active ? '' : 'none';
-
 }
 
 
@@ -452,39 +444,35 @@ function renderRows(data) {
 
         checkTd.className = 'col-check';
 
-        if (isActiveGroup) {
+        const checkbox = document.createElement('input');
 
-            const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
 
-            checkbox.type = 'checkbox';
+        checkbox.className = 'row-check';
 
-            checkbox.className = 'row-check';
+        checkbox.dataset.id = row.id;
 
-            checkbox.dataset.id = row.id;
+        checkbox.checked = selectedIds.has(row.id);
 
-            checkbox.checked = selectedIds.has(row.id);
+        checkbox.addEventListener('change', () => {
 
-            checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
 
-                if (checkbox.checked) {
+                selectedIds.add(row.id);
 
-                    selectedIds.add(row.id);
+            } else {
 
-                } else {
+                selectedIds.delete(row.id);
 
-                    selectedIds.delete(row.id);
+            }
 
-                }
+            syncSelectAllState(rows);
 
-                syncSelectAllState(rows);
+            updateBatchButtons();
 
-                updateBatchButtons();
+        });
 
-            });
-
-            checkTd.appendChild(checkbox);
-
-        }
+        checkTd.appendChild(checkbox);
 
 
 

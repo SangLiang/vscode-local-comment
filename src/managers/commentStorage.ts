@@ -535,6 +535,65 @@ export class CommentStorage {
     return { moved, skipped };
   }
 
+  async removeCommentsByIdsFromConfig(
+    configFileName: string,
+    commentIds: string[]
+  ): Promise<number> {
+    const workspacePath = getFirstWorkspacePathOrWarn();
+    if (workspacePath === null || commentIds.length === 0) {
+      return 0;
+    }
+
+    const activeConfig = this.getCurrentCommentsConfig();
+    const sourceIsActive = configFileName === activeConfig;
+    const idSet = new Set(commentIds);
+    let removed = 0;
+
+    let sourceComments: FileComments;
+    let sourceShareComments: FileComments;
+    if (sourceIsActive) {
+      sourceComments = this._comments;
+      sourceShareComments = this._shareComments;
+    } else {
+      const sourcePayload = this._readFullConfigPayload(configFileName, workspacePath);
+      sourceComments = sourcePayload.comments;
+      sourceShareComments = sourcePayload.shareComments;
+    }
+
+    for (const filePath of Object.keys(sourceComments)) {
+      const fileCommentList = sourceComments[filePath];
+      if (!fileCommentList) {
+        continue;
+      }
+      for (let i = fileCommentList.length - 1; i >= 0; i--) {
+        const comment = fileCommentList[i];
+        if (!idSet.has(comment.id) || 'userId' in comment) {
+          continue;
+        }
+        fileCommentList.splice(i, 1);
+        removed++;
+      }
+      if (fileCommentList.length === 0) {
+        delete sourceComments[filePath];
+      }
+    }
+
+    if (removed === 0) {
+      return 0;
+    }
+
+    if (sourceIsActive) {
+      await this.saveComments();
+    } else {
+      this._writeFullConfigPayload(configFileName, workspacePath, {
+        comments: sourceComments,
+        shareComments: sourceShareComments,
+      });
+    }
+
+    return removed;
+  }
+
   private _readFullConfigPayload(
     configFileName: string,
     workspacePath: string

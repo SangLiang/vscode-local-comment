@@ -192,6 +192,13 @@ export const IPC_MESSAGES = {
     REFRESH_COMMENT_GROUPS: 'refreshCommentGroups',
     COMMENT_GROUP_ERROR: 'commentGroupError',
 
+    // AI 辅助 WebviewView
+    GET_AI_ASSIST_CONTENT: 'getAiAssistContent',
+    AI_ASSIST_CONTENT_RESULT: 'aiAssistContentResult',
+    COPY_AI_PROMPT: 'copyAiPrompt',
+    OPEN_AI_SKILL_FILE: 'openAiSkillFile',
+    INSTALL_AI_SKILL: 'installAiSkill',
+
     // 注释管理 WebviewPanel
     GET_COMMENT_ROWS: 'getCommentRows',
     APPLY_COMMENT_GROUP_FROM_PANEL: 'applyCommentGroupFromPanel',

@@ -196,6 +196,18 @@ export class CommentManager implements vscode.Disposable {
         return result;
     }
 
+    public async removeCommentsFromConfig(
+        configFileName: string,
+        commentIds: string[]
+    ): Promise<number> {
+        const removed = await this.storage.removeCommentsByIdsFromConfig(configFileName, commentIds);
+        if (removed > 0) {
+            this._onDidChangeComments.fire();
+            this._onDidChangeSharedComments.fire();
+        }
+        return removed;
+    }
+
     public countLocalCommentsInConfigFile(configFileName: string): number {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (!folder) return 0;

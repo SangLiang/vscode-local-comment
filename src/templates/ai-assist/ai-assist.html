@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; img-src ${cspSource} https: http: data:; script-src 'nonce-${nonce}';">
+    <title>AI辅助</title>
+    <link rel="stylesheet" href="${cssUri}">
+</head>
+<body>
+    <div class="container">
+        <div class="intro">
+            <p>使用 AI Agent（Copilot、Cursor 等）自动为源文件生成本地注释，注释写入 <code>.vscode/local-comment/</code></p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">快速开始</div>
+            <ol class="steps">
+                <li>另存或阅读 Skill 文件，了解写入规则</li>
+                <li>打开要注释的源文件，复制下方提示词到 AI 对话</li>
+                <li>AI 完成后，在 <strong>注释分组</strong> 侧栏 ↻ 刷新并切换新分组</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Skill 文件</div>
+            <div id="skill-status" class="skill-status"></div>
+            <div class="skill-actions">
+                <button id="btn-install-skill" class="btn-secondary" type="button">另存 Skill 文件…</button>
+                <button id="btn-open-skill" class="btn-secondary" type="button">阅读 Skill</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-label">提示词</div>
+            <div id="prompt-card" class="prompt-card"></div>
+        </div>
+    </div>
+
+    <script nonce="${nonce}" src="${jsUri}"></script>
+</body>
+</html>
