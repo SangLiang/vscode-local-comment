@@ -26,6 +26,8 @@ import {
 
     CommentManageRow,
 
+    CommentKindFilter,
+
 } from '../utils/commentManageUtils';
 
 import { openCommentEditor } from './commentEditActions';
@@ -71,7 +73,7 @@ export class CommentManageWebviewPanel {
 
     private _lastQuery?: string;
 
-    private _lastTag?: string;
+    private _lastCommentKind: CommentKindFilter = '';
 
     private _lastSortKey: CommentRowSortKey = 'filePath';
 
@@ -275,7 +277,7 @@ export class CommentManageWebviewPanel {
 
                                 query: message.query,
 
-                                tag: message.tag,
+                                commentKind: message.commentKind,
 
                                 sortKey: message.sortKey,
 
@@ -393,7 +395,7 @@ export class CommentManageWebviewPanel {
 
         query?: string;
 
-        tag?: string;
+        commentKind?: CommentKindFilter;
 
         sortKey?: CommentRowSortKey;
 
@@ -409,9 +411,9 @@ export class CommentManageWebviewPanel {
 
             }
 
-            if (params.tag !== undefined) {
+            if (params.commentKind !== undefined) {
 
-                this._lastTag = params.tag;
+                this._lastCommentKind = params.commentKind;
 
             }
 
@@ -443,13 +445,13 @@ export class CommentManageWebviewPanel {
 
 
 
-        if (this._lastQuery || this._lastTag) {
+        if (this._lastQuery || this._lastCommentKind) {
 
             rows = filterCommentRows(rows, {
 
                 query: this._lastQuery,
 
-                tag: this._lastTag,
+                commentKind: this._lastCommentKind,
 
             });
 

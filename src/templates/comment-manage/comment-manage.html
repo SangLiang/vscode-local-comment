@@ -32,9 +32,13 @@
 
         <input id="search-input" class="toolbar-input" type="search" placeholder="搜索内容或文件" />
 
-        <select id="filter-tag" class="toolbar-select">
+        <select id="filter-kind" class="toolbar-select">
 
-            <option value="">全部标签</option>
+            <option value="">全部注释</option>
+
+            <option value="tag">标签注释</option>
+
+            <option value="normal">普通注释</option>
 
         </select>
 
@@ -85,6 +89,8 @@
                     <th class="col-summary">内容摘要</th>
 
                     <th class="col-tags">标签</th>
+
+                    <th class="col-date">日期</th>
 
                     <th class="col-actions">操作</th>
 

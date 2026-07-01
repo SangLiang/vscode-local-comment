@@ -32,7 +32,7 @@ const btnApplyGroupEl = document.getElementById('btn-apply-group');
 
 const searchInputEl = document.getElementById('search-input');
 
-const filterTagEl = document.getElementById('filter-tag');
+const filterKindEl = document.getElementById('filter-kind');
 
 const sortKeyEl = document.getElementById('sort-key');
 
@@ -102,7 +102,7 @@ function getFilterParams() {
 
         query: searchInputEl.value.trim(),
 
-        tag: filterTagEl.value,
+        commentKind: filterKindEl.value,
 
         sortKey: sortKeyEl.value,
 
@@ -128,51 +128,53 @@ function requestCommentRows() {
 
 
 
-function collectTags(rows) {
+function formatCommentDate(isoString) {
 
-    const tagSet = new Set();
+    if (!isoString) {
 
-    rows.forEach((row) => {
+        return '—';
 
-        (row.tags || []).forEach((tag) => tagSet.add(tag));
+    }
+
+    const date = new Date(isoString);
+
+    if (Number.isNaN(date.getTime())) {
+
+        return '—';
+
+    }
+
+    return date.toLocaleString('zh-CN', {
+
+        year: 'numeric',
+
+        month: '2-digit',
+
+        day: '2-digit',
+
+        hour: '2-digit',
+
+        minute: '2-digit',
 
     });
-
-    return [...tagSet].sort((a, b) => a.localeCompare(b));
 
 }
 
 
 
-function rebuildTagOptions(rows) {
+function renderTagDeclarations(declarations) {
 
-    const selectedTag = filterTagEl.value;
+    if (!declarations || declarations.length === 0) {
 
-    const tags = collectTags(rows);
-
-
-
-    filterTagEl.innerHTML = '<option value="">全部标签</option>';
-
-    tags.forEach((tag) => {
-
-        const option = document.createElement('option');
-
-        option.value = tag;
-
-        option.textContent = `@${tag}`;
-
-        filterTagEl.appendChild(option);
-
-    });
-
-
-
-    if (selectedTag && tags.includes(selectedTag)) {
-
-        filterTagEl.value = selectedTag;
+        return '<span class="tag-empty">—</span>';
 
     }
+
+    return declarations
+
+        .map((tag) => `<span class="tag">${escapeHtml('${' + tag + '}')}</span>`)
+
+        .join('');
 
 }
 
@@ -296,24 +298,6 @@ function syncSelectAllState(visibleRows) {
 
 
 
-function renderTags(tags) {
-
-    if (!tags || tags.length === 0) {
-
-        return '<span class="tag-empty">—</span>';
-
-    }
-
-    return tags
-
-        .map((tag) => `<span class="tag">@${escapeHtml(tag)}</span>`)
-
-        .join('');
-
-}
-
-
-
 function createActionButton(label, className, onClick) {
 
     const btn = document.createElement('button');
@@ -371,8 +355,6 @@ function renderRows(data) {
     if (Array.isArray(data.allRows)) {
 
         allRows = data.allRows;
-
-        rebuildTagOptions(allRows);
 
     }
 
@@ -532,7 +514,21 @@ function renderRows(data) {
 
         tagsTd.className = 'col-tags';
 
-        tagsTd.innerHTML = `<span class="tag-list">${renderTags(row.tags)}</span>`;
+        tagsTd.innerHTML = `<span class="tag-list">${renderTagDeclarations(row.tagDeclarations)}</span>`;
+
+
+
+        const dateTd = document.createElement('td');
+
+        dateTd.className = 'col-date';
+
+        dateTd.textContent = formatCommentDate(row.updatedAt);
+
+        if (row.updatedAt) {
+
+            dateTd.title = new Date(row.updatedAt).toLocaleString('zh-CN');
+
+        }
 
 
 
@@ -567,6 +563,8 @@ function renderRows(data) {
         tr.appendChild(summaryTd);
 
         tr.appendChild(tagsTd);
+
+        tr.appendChild(dateTd);
 
         tr.appendChild(actionsTd);
 
@@ -670,7 +668,7 @@ btnBatchExportEl.addEventListener('click', () => {
 
 searchInputEl.addEventListener('input', onSearchInput);
 
-filterTagEl.addEventListener('change', onFilterChange);
+filterKindEl.addEventListener('change', onFilterChange);
 
 sortKeyEl.addEventListener('change', onFilterChange);
 

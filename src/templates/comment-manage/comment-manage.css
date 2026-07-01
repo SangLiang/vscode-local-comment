@@ -151,23 +151,30 @@ body {
 }
 
 .col-file {
-    width: 22%;
+    width: 20%;
 }
 
 .col-line {
-    width: 7%;
+    width: 6%;
 }
 
 .col-summary {
-    width: 34%;
+    width: 28%;
 }
 
 .col-tags {
-    width: 16%;
+    width: 14%;
+}
+
+.col-date {
+    width: 12%;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
 }
 
 .col-actions {
-    width: 17%;
+    width: 16%;
     white-space: nowrap;
 }
 

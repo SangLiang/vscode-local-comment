@@ -6,19 +6,19 @@ export interface CommentManageRow {
   filePath: string;
   line: number;
   summary: string;
-  tags: string[];
+  tagDeclarations: string[];
   updatedAt?: string;
   content: string;
   lineContent: string;
 }
 
-const TAG_REFERENCE_REGEX = /@([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)/g;
+const TAG_DECLARATION_REGEX = /\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g;
 
-export function extractTagReferences(content: string): string[] {
+export function extractTagDeclarations(content: string): string[] {
   const tags: string[] = [];
   let match: RegExpExecArray | null;
-  TAG_REFERENCE_REGEX.lastIndex = 0;
-  while ((match = TAG_REFERENCE_REGEX.exec(content)) !== null) {
+  TAG_DECLARATION_REGEX.lastIndex = 0;
+  while ((match = TAG_DECLARATION_REGEX.exec(content)) !== null) {
     tags.push(match[1]);
   }
   return [...new Set(tags)];
@@ -65,7 +65,7 @@ export function flattenCommentsToRows(
         filePath: toRelativePath(absPath, workspaceRoot),
         line: comment.line,
         summary: toCommentSummary(comment.content),
-        tags: extractTagReferences(comment.content),
+        tagDeclarations: extractTagDeclarations(comment.content),
         updatedAt: comment.timestamp ? new Date(comment.timestamp).toISOString() : undefined,
         content: comment.content,
         lineContent: comment.lineContent,
@@ -75,18 +75,24 @@ export function flattenCommentsToRows(
   return rows;
 }
 
+export type CommentKindFilter = '' | 'tag' | 'normal';
+
 export interface CommentRowFilter {
   query?: string;
-  tag?: string;
+  commentKind?: CommentKindFilter;
   filePath?: string;
 }
 
 export function filterCommentRows(rows: CommentManageRow[], filter: CommentRowFilter): CommentManageRow[] {
   const query = filter.query?.trim().toLowerCase();
-  const tag = filter.tag?.trim();
+  const commentKind = filter.commentKind ?? '';
   const filePath = filter.filePath?.trim().toLowerCase();
   return rows.filter((row) => {
-    if (tag && !row.tags.includes(tag)) {
+    const hasTag = row.tagDeclarations.length > 0;
+    if (commentKind === 'tag' && !hasTag) {
+      return false;
+    }
+    if (commentKind === 'normal' && hasTag) {
       return false;
     }
     if (filePath && !row.filePath.toLowerCase().includes(filePath)) {

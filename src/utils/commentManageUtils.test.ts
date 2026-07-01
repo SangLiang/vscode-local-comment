@@ -3,7 +3,7 @@ import {
   flattenCommentsToRows,
   filterCommentRows,
   sortCommentRows,
-  extractTagReferences,
+  extractTagDeclarations,
   toCommentSummary,
 } from './commentManageUtils';
 import { FileComments } from '../managers/commentTypes';
@@ -22,7 +22,7 @@ describe('commentManageUtils', () => {
       {
         id: 'c2',
         line: 20,
-        content: '第二条',
+        content: '${todo} 待办事项',
         timestamp: 1000,
         originalLine: 20,
         lineContent: 'const y = 2;',
@@ -53,8 +53,10 @@ describe('commentManageUtils', () => {
     expect(rows[0].filePath).toBe('x.ts');
   });
 
-  it('extractTagReferences 应提取 @tag', () => {
-    expect(extractTagReferences('见 @foo 和 @bar_baz')).toEqual(['foo', 'bar_baz']);
+  it('extractTagDeclarations 应提取 ${tag} 声明', () => {
+    expect(extractTagDeclarations('${bug} 修复问题')).toEqual(['bug']);
+    expect(extractTagDeclarations('见 @foo 和 ${bar}')).toEqual(['bar']);
+    expect(extractTagDeclarations('见 @foo 和 @bar_baz')).toEqual([]);
   });
 
   it('toCommentSummary 应截断并去除 Markdown 标题标记', () => {
@@ -63,11 +65,14 @@ describe('commentManageUtils', () => {
     expect(toCommentSummary('# Hello', 80)).toBe('Hello');
   });
 
-  it('filterCommentRows 支持 query 与 tag', () => {
+  it('filterCommentRows 支持 query 与 commentKind', () => {
     const rows = flattenCommentsToRows(sampleComments, '/proj');
-    const filtered = filterCommentRows(rows, { query: 'foo', tag: 'foo' });
+    expect(filterCommentRows(rows, { commentKind: 'tag' })).toHaveLength(1);
+    expect(filterCommentRows(rows, { commentKind: 'tag' })[0].id).toBe('c2');
+    expect(filterCommentRows(rows, { commentKind: 'normal' })).toHaveLength(2);
+    const filtered = filterCommentRows(rows, { query: 'todo', commentKind: 'tag' });
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].id).toBe('c1');
+    expect(filtered[0].id).toBe('c2');
   });
 
   it('sortCommentRows 默认按文件路径再按行号', () => {
