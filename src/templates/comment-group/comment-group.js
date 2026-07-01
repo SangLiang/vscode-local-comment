@@ -8,12 +8,14 @@ const CMD = {
     RENAME_COMMENT_GROUP: 'renameCommentGroup',
     DELETE_COMMENT_GROUP: 'deleteCommentGroup',
     APPLY_COMMENT_GROUP: 'applyCommentGroup',
+    REFRESH_COMMENT_GROUPS: 'refreshCommentGroups',
     COMMENT_GROUP_ERROR: 'commentGroupError',
 };
 
 const currentGroupEl = document.getElementById('current-group');
 const groupListEl = document.getElementById('group-list');
 const btnCreateEl = document.getElementById('btn-create');
+const btnRefreshEl = document.getElementById('btn-refresh');
 const noWorkspaceEl = document.getElementById('no-workspace');
 const mainContentEl = document.getElementById('main-content');
 const errorMessageEl = document.getElementById('error-message');
@@ -140,11 +142,21 @@ btnCreateEl.addEventListener('click', () => {
     vscode.postMessage({ command: CMD.CREATE_COMMENT_GROUP });
 });
 
+btnRefreshEl.addEventListener('click', () => {
+    btnRefreshEl.disabled = true;
+    btnRefreshEl.classList.add('spinning');
+    vscode.postMessage({ command: CMD.REFRESH_COMMENT_GROUPS });
+});
+
 window.addEventListener('message', (event) => {
     const message = event.data;
     switch (message.command) {
         case CMD.COMMENT_GROUPS_RESULT:
             renderGroups(message);
+            if (btnRefreshEl) {
+                btnRefreshEl.disabled = false;
+                btnRefreshEl.classList.remove('spinning');
+            }
             break;
         case CMD.COMMENT_GROUP_ERROR:
             showError(message.message);

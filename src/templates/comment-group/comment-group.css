@@ -34,6 +34,29 @@ body {
     gap: 8px;
 }
 
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-refresh {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    color: var(--vscode-foreground);
+}
+
+.btn-refresh.spinning {
+    animation: comment-group-spin 0.8s linear infinite;
+}
+
+@keyframes comment-group-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .current-group {
     padding: 8px 10px;
     border: 1px solid var(--vscode-panel-border);

@@ -40,7 +40,8 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
         private readonly _extensionUri: vscode.Uri,
         private readonly _commentManager: CommentManager,
         private readonly _projectManager: ProjectManager,
-        private readonly _authManager: AuthManager
+        private readonly _authManager: AuthManager,
+        private readonly _refreshCommentUi: () => void
     ) {}
 
     resolveWebviewView(
@@ -108,6 +109,13 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
         switch (message.command) {
             case IPC_MESSAGES.GET_COMMENT_GROUPS:
                 this.refreshGroups();
+                return;
+            case IPC_MESSAGES.REFRESH_COMMENT_GROUPS:
+                await this._commentManager.reloadFromDisk();
+                this._refreshCommentUi();
+                this.refreshGroups();
+                CommentManageWebviewPanel.currentPanel?.refreshRows();
+                vscode.window.showInformationMessage('注释分组已刷新');
                 return;
             case IPC_MESSAGES.SELECT_COMMENT_GROUP:
                 if (!message.fileName) {

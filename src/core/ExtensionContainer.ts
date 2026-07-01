@@ -83,6 +83,14 @@ export class ExtensionContainer {
         this.tagManager.updateTags(this.commentManager.getAllComments());
     }
 
+    /** 重新加载注释后刷新编辑器装饰、树视图与标签索引 */
+    refreshCommentUi(): void {
+        this.tagManager.updateTags(this.commentManager.getAllComments());
+        this.commentProvider.refresh();
+        this.commentTreeProvider.refresh();
+        this.sharedCommentTreeProvider.refresh();
+    }
+
     /**
      * 释放所有资源
      */

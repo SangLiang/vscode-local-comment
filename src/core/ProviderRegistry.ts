@@ -47,7 +47,10 @@ export class ProviderRegistry {
             this.context.extensionUri,
             this.container.commentManager,
             this.container.projectManager,
-            this.container.authManager
+            this.container.authManager,
+            () => {
+                this.container.refreshCommentUi();
+            }
         );
         const groupViewDisposable = vscode.window.registerWebviewViewProvider(
             'commentGroups',
@@ -58,6 +61,11 @@ export class ProviderRegistry {
 
         CommentManageWebviewPanel.setOnGroupApplied(() => {
             this.commentGroupViewProvider?.notifyGroupApplied();
+        });
+
+        CommentManageWebviewPanel.setOnCommentsMutated(() => {
+            this.container.refreshCommentUi();
+            this.commentGroupViewProvider?.refreshGroups();
         });
 
         return disposables;

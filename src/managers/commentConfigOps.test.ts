@@ -179,4 +179,42 @@ describe('CommentStorage config ops', () => {
     expect(storage.countLocalCommentsInConfigFile('mixed.json', tempRoot)).toBe(1);
     expect(storage.countLocalCommentsInConfigFile('missing.json', tempRoot)).toBe(0);
   });
+
+  it('moveCommentsBetweenConfigs 应将注释从当前分组移到其他分组', async () => {
+    const filePath = path.join(tempRoot, 'src', 'foo.ts');
+    writeConfigFile('comments.json', {
+      comments: {
+        [filePath]: [
+          {
+            id: 'move-1',
+            line: 3,
+            content: 'note',
+            timestamp: 1,
+            originalLine: 3,
+            lineContent: 'const x = 1;',
+          },
+        ],
+      },
+      shareComments: {},
+    });
+    writeConfigFile('other.json', { comments: {}, shareComments: {} });
+
+    await storage.loadComments();
+
+    const result = await storage.moveCommentsBetweenConfigs('comments.json', 'other.json', ['move-1']);
+
+    expect(result.moved).toBe(1);
+    expect(result.skipped).toBe(0);
+
+    const source = JSON.parse(fs.readFileSync(path.join(commentsDir, 'comments.json'), 'utf8'));
+    expect(source.comments[filePath] ?? []).toHaveLength(0);
+
+    const target = JSON.parse(fs.readFileSync(path.join(commentsDir, 'other.json'), 'utf8'));
+    expect(target.comments[filePath]).toHaveLength(1);
+    expect(target.comments[filePath][0].id).not.toBe('move-1');
+    expect(target.comments[filePath][0].timestamp).toBeGreaterThan(1);
+    expect(target.comments[filePath][0].content).toBe('note');
+
+    expect(storage.getCommentsRef()[filePath] ?? []).toHaveLength(0);
+  });
 });

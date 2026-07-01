@@ -41,6 +41,10 @@ import { getErrorMessage } from '../utils/utils';
 import type { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
 import type { FileComments } from '../managers/commentTypes';
 
+function formatGroupDisplayName(fileName: string): string {
+    return fileName.replace(/\.json$/i, '');
+}
+
 
 
 export class CommentManageWebviewPanel {
@@ -50,9 +54,14 @@ export class CommentManageWebviewPanel {
     public static readonly viewType = VIEW_TYPES.COMMENT_MANAGE;
 
     private static _onGroupApplied?: () => void;
+    private static _onCommentsMutated?: () => void;
 
     public static setOnGroupApplied(callback: () => void): void {
         CommentManageWebviewPanel._onGroupApplied = callback;
+    }
+
+    public static setOnCommentsMutated(callback: () => void): void {
+        CommentManageWebviewPanel._onCommentsMutated = callback;
     }
 
 
@@ -300,6 +309,12 @@ export class CommentManageWebviewPanel {
                         case IPC_MESSAGES.DELETE_COMMENT_ROWS:
 
                             await this._deleteCommentRows(message.ids ?? []);
+
+                            return;
+
+                        case IPC_MESSAGES.MOVE_COMMENT_ROWS:
+
+                            await this._moveCommentRows(message.ids ?? []);
 
                             return;
 
@@ -628,6 +643,134 @@ export class CommentManageWebviewPanel {
         }
 
         this.refreshRows();
+
+        CommentManageWebviewPanel._onCommentsMutated?.();
+
+    }
+
+
+
+    private async _moveCommentRows(ids: string[]): Promise<void> {
+
+        if (ids.length === 0) {
+
+            return;
+
+        }
+
+        if (!this._ensureActiveGroupForEdit()) {
+
+            return;
+
+        }
+
+
+
+        const targetGroups = this._commentManager
+
+            .listAvailableCommentsConfigs()
+
+            .filter((fileName) => fileName !== this._groupFileName);
+
+        if (targetGroups.length === 0) {
+
+            vscode.window.showWarningMessage('没有其他分组可移动，请先新建目标分组');
+
+            return;
+
+        }
+
+
+
+        const picked = await vscode.window.showQuickPick(
+
+            targetGroups.map((fileName) => ({
+
+                label: formatGroupDisplayName(fileName),
+
+                description: fileName,
+
+                fileName,
+
+            })),
+
+            {
+
+                title: ids.length > 1 ? `移动 ${ids.length} 条注释到` : '移动注释到',
+
+                placeHolder: '选择目标分组',
+
+            }
+
+        );
+
+        if (!picked) {
+
+            return;
+
+        }
+
+
+
+        const targetLabel = formatGroupDisplayName(picked.fileName);
+
+        const confirmMessage =
+
+            ids.length > 1
+
+                ? `确定将 ${ids.length} 条注释移动到「${targetLabel}」？`
+
+                : `确定将注释移动到「${targetLabel}」？`;
+
+        const choice = await vscode.window.showWarningMessage(confirmMessage, '移动', '取消');
+
+        if (choice !== '移动') {
+
+            return;
+
+        }
+
+
+
+        const result = await this._commentManager.moveCommentsToGroup(
+
+            this._groupFileName,
+
+            picked.fileName,
+
+            ids
+
+        );
+
+
+
+        if (result.moved === 0) {
+
+            vscode.window.showWarningMessage(
+
+                result.skipped > 0 ? '没有注释被移动（共享注释不可移动或未找到）' : '未找到可移动的注释'
+
+            );
+
+            return;
+
+        }
+
+
+
+        let message = `已移动 ${result.moved} 条注释到「${targetLabel}」`;
+
+        if (result.skipped > 0) {
+
+            message += `，跳过 ${result.skipped} 条`;
+
+        }
+
+        vscode.window.showInformationMessage(message);
+
+        this.refreshRows();
+
+        CommentManageWebviewPanel._onCommentsMutated?.();
 
     }
 

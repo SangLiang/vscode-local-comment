@@ -4,6 +4,7 @@ import * as path from 'path';
 import { LocalComment, SharedComment, FileComments } from './commentTypes';
 import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
 import { getFirstWorkspaceFolder, getFirstWorkspacePathOrWarn, remapFileCommentsToWorkspace } from '../utils/utils';
+import { generateId } from '../utils/idUtils';
 import { logger } from '../utils/logger';
 
 /**
@@ -434,6 +435,140 @@ export class CommentStorage {
       .flat()
       .filter((c) => !('userId' in c))
       .length;
+  }
+
+  async moveCommentsBetweenConfigs(
+    sourceConfigFileName: string,
+    targetConfigFileName: string,
+    commentIds: string[]
+  ): Promise<{ moved: number; skipped: number }> {
+    const workspacePath = getFirstWorkspacePathOrWarn();
+    if (workspacePath === null || commentIds.length === 0) {
+      return { moved: 0, skipped: commentIds.length };
+    }
+    if (sourceConfigFileName === targetConfigFileName) {
+      return { moved: 0, skipped: commentIds.length };
+    }
+
+    const activeConfig = this.getCurrentCommentsConfig();
+    const sourceIsActive = sourceConfigFileName === activeConfig;
+    const targetIsActive = targetConfigFileName === activeConfig;
+    const idSet = new Set(commentIds);
+    let moved = 0;
+    let skipped = 0;
+
+    let sourceComments: FileComments;
+    let sourceShareComments: FileComments;
+    if (sourceIsActive) {
+      sourceComments = this._comments;
+      sourceShareComments = this._shareComments;
+    } else {
+      const sourcePayload = this._readFullConfigPayload(sourceConfigFileName, workspacePath);
+      sourceComments = sourcePayload.comments;
+      sourceShareComments = sourcePayload.shareComments;
+    }
+
+    let targetComments: FileComments;
+    let targetShareComments: FileComments;
+    if (targetIsActive) {
+      targetComments = this._comments;
+      targetShareComments = this._shareComments;
+    } else {
+      const targetPayload = this._readFullConfigPayload(targetConfigFileName, workspacePath);
+      targetComments = targetPayload.comments;
+      targetShareComments = targetPayload.shareComments;
+    }
+
+    for (const filePath of Object.keys(sourceComments)) {
+      const fileCommentList = sourceComments[filePath];
+      if (!fileCommentList) {
+        continue;
+      }
+      for (let i = fileCommentList.length - 1; i >= 0; i--) {
+        const comment = fileCommentList[i];
+        if (!idSet.has(comment.id)) {
+          continue;
+        }
+        if ('userId' in comment) {
+          skipped++;
+          continue;
+        }
+
+        if (!targetComments[filePath]) {
+          targetComments[filePath] = [];
+        }
+        const movedComment: LocalComment = {
+          ...(comment as LocalComment),
+          id: generateId(),
+          timestamp: Date.now(),
+          isShared: false,
+        };
+        targetComments[filePath].push(movedComment);
+        fileCommentList.splice(i, 1);
+        moved++;
+      }
+      if (fileCommentList.length === 0) {
+        delete sourceComments[filePath];
+      }
+    }
+
+    if (sourceIsActive) {
+      await this.saveComments();
+    } else {
+      this._writeFullConfigPayload(sourceConfigFileName, workspacePath, {
+        comments: sourceComments,
+        shareComments: sourceShareComments,
+      });
+    }
+
+    if (targetIsActive) {
+      if (!sourceIsActive) {
+        await this.saveComments();
+      }
+    } else {
+      this._writeFullConfigPayload(targetConfigFileName, workspacePath, {
+        comments: targetComments,
+        shareComments: targetShareComments,
+      });
+    }
+
+    return { moved, skipped };
+  }
+
+  private _readFullConfigPayload(
+    configFileName: string,
+    workspacePath: string
+  ): { comments: FileComments; shareComments: FileComments } {
+    const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
+    const configFile = path.join(paths.commentsDir, configFileName);
+    const empty = { comments: {} as FileComments, shareComments: {} as FileComments };
+    if (!StoragePathUtils.fileExists(configFile)) {
+      return empty;
+    }
+    try {
+      const raw = JSON.parse(fs.readFileSync(configFile, 'utf8')) as {
+        comments?: FileComments;
+        shareComments?: FileComments;
+      };
+      return {
+        comments: remapFileCommentsToWorkspace(raw.comments ?? {}, workspacePath),
+        shareComments: remapFileCommentsToWorkspace(raw.shareComments ?? {}, workspacePath),
+      };
+    } catch (error) {
+      logger.error('读取注释配置文件失败:', error);
+      return empty;
+    }
+  }
+
+  private _writeFullConfigPayload(
+    configFileName: string,
+    workspacePath: string,
+    payload: { comments: FileComments; shareComments: FileComments }
+  ): void {
+    const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
+    StoragePathUtils.ensureDirectoryExists(paths.commentsDir);
+    const configFile = path.join(paths.commentsDir, configFileName);
+    fs.writeFileSync(configFile, JSON.stringify(payload, null, 2));
   }
 
   async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {

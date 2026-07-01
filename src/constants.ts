@@ -189,6 +189,7 @@ export const IPC_MESSAGES = {
     RENAME_COMMENT_GROUP: 'renameCommentGroup',
     DELETE_COMMENT_GROUP: 'deleteCommentGroup',
     APPLY_COMMENT_GROUP: 'applyCommentGroup',
+    REFRESH_COMMENT_GROUPS: 'refreshCommentGroups',
     COMMENT_GROUP_ERROR: 'commentGroupError',
 
     // 注释管理 WebviewPanel
@@ -196,6 +197,7 @@ export const IPC_MESSAGES = {
     APPLY_COMMENT_GROUP_FROM_PANEL: 'applyCommentGroupFromPanel',
     COMMENT_ROWS_RESULT: 'commentRowsResult',
     DELETE_COMMENT_ROWS: 'deleteCommentRows',
+    MOVE_COMMENT_ROWS: 'moveCommentRows',
     EXPORT_COMMENT_ROWS: 'exportCommentRows',
     OPEN_COMMENT_ROW: 'openCommentRow',
     EDIT_COMMENT_ROW: 'editCommentRow',

@@ -172,6 +172,30 @@ export class CommentManager implements vscode.Disposable {
         return this.storage.getCurrentCommentsConfig();
     }
 
+    /** 从磁盘重新加载当前分组的注释数据，并通知 UI 刷新 */
+    public async reloadFromDisk(): Promise<void> {
+        await this.storage.loadComments();
+        this._onDidChangeComments.fire();
+        this._onDidChangeSharedComments.fire();
+    }
+
+    public async moveCommentsToGroup(
+        sourceConfigFileName: string,
+        targetConfigFileName: string,
+        commentIds: string[]
+    ): Promise<{ moved: number; skipped: number }> {
+        const result = await this.storage.moveCommentsBetweenConfigs(
+            sourceConfigFileName,
+            targetConfigFileName,
+            commentIds
+        );
+        if (result.moved > 0) {
+            this._onDidChangeComments.fire();
+            this._onDidChangeSharedComments.fire();
+        }
+        return result;
+    }
+
     public countLocalCommentsInConfigFile(configFileName: string): number {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (!folder) return 0;

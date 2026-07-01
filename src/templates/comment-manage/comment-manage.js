@@ -12,6 +12,8 @@ const CMD = {
 
     DELETE_COMMENT_ROWS: 'deleteCommentRows',
 
+    MOVE_COMMENT_ROWS: 'moveCommentRows',
+
     EDIT_COMMENT_ROW: 'editCommentRow',
 
     PREVIEW_COMMENT_ROW: 'previewCommentRow',
@@ -41,6 +43,8 @@ const sortDirEl = document.getElementById('sort-dir');
 const selectAllEl = document.getElementById('select-all');
 
 const btnBatchDeleteEl = document.getElementById('btn-batch-delete');
+
+const btnBatchMoveEl = document.getElementById('btn-batch-move');
 
 const btnBatchExportEl = document.getElementById('btn-batch-export');
 
@@ -210,6 +214,20 @@ function deleteCommentRows(ids) {
 
 
 
+function moveCommentRows(ids) {
+
+    vscode.postMessage({
+
+        command: CMD.MOVE_COMMENT_ROWS,
+
+        ids,
+
+    });
+
+}
+
+
+
 function editCommentRow(id) {
 
     vscode.postMessage({
@@ -266,9 +284,13 @@ function updateBatchButtons() {
 
     btnBatchDeleteEl.disabled = count === 0;
 
+    btnBatchMoveEl.disabled = count === 0;
+
     btnBatchExportEl.disabled = count === 0;
 
     btnBatchDeleteEl.textContent = count > 0 ? `批量删除 (${count})` : '批量删除';
+
+    btnBatchMoveEl.textContent = count > 0 ? `移动分组 (${count})` : '移动分组';
 
     btnBatchExportEl.textContent = count > 0 ? `批量导出 (${count})` : '批量导出';
 
@@ -331,6 +353,8 @@ function updatePreviewMode(active) {
     selectAllEl.disabled = !active;
 
     btnBatchDeleteEl.style.display = active ? '' : 'none';
+
+    btnBatchMoveEl.style.display = active ? '' : 'none';
 
     btnBatchExportEl.style.display = active ? '' : 'none';
 
@@ -645,6 +669,22 @@ btnBatchDeleteEl.addEventListener('click', () => {
     }
 
     deleteCommentRows(ids);
+
+});
+
+
+
+btnBatchMoveEl.addEventListener('click', () => {
+
+    const ids = getSelectedIds();
+
+    if (ids.length === 0) {
+
+        return;
+
+    }
+
+    moveCommentRows(ids);
 
 });
 
