@@ -10,6 +10,7 @@
     };
 
     const promptCardEl = document.getElementById('prompt-card');
+    const promptActionsEl = document.getElementById('prompt-actions');
     const btnOpenSkill = document.getElementById('btn-open-skill');
     const btnInstallSkill = document.getElementById('btn-install-skill');
     const skillStatusEl = document.getElementById('skill-status');
@@ -38,31 +39,29 @@
     }
 
     function renderPrompt(prompt) {
-        if (!promptCardEl || !prompt) {
+        if (!promptCardEl || !promptActionsEl || !prompt) {
             return;
         }
         promptCardEl.innerHTML = '';
+        promptActionsEl.innerHTML = '';
 
         const pre = document.createElement('pre');
         pre.className = 'prompt-text';
         pre.textContent = prompt.text;
+        promptCardEl.appendChild(pre);
 
         const btn = document.createElement('button');
-        btn.className = 'btn-copy';
+        btn.className = 'btn-secondary';
         btn.type = 'button';
         btn.textContent = '复制提示词';
         btn.addEventListener('click', () => {
             vscode.postMessage({ command: IPC.COPY_AI_PROMPT, text: prompt.text });
             btn.textContent = '已复制';
-            btn.classList.add('copied');
             setTimeout(() => {
                 btn.textContent = '复制提示词';
-                btn.classList.remove('copied');
             }, 1500);
         });
-
-        promptCardEl.appendChild(pre);
-        promptCardEl.appendChild(btn);
+        promptActionsEl.appendChild(btn);
     }
 
     window.addEventListener('message', (event) => {

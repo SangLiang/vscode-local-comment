@@ -175,13 +175,16 @@ body {
 }
 
 .prompt-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 4px;
     background: var(--vscode-editor-background);
     border: 1px solid var(--vscode-panel-border);
+}
+
+.prompt-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .prompt-text {
@@ -199,22 +202,3 @@ body {
     overflow-y: auto;
 }
 
-.btn-copy {
-    align-self: flex-start;
-    padding: 4px 10px;
-    border: 1px solid var(--vscode-button-border, transparent);
-    border-radius: 2px;
-    background: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
-    cursor: pointer;
-    font-size: 11px;
-    font-family: inherit;
-}
-
-.btn-copy:hover {
-    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
-}
-
-.btn-copy.copied {
-    opacity: 0.85;
-}
