@@ -3,6 +3,20 @@
 本文件记录本项目所有重要变更。
 
 
+## [2.1.0] - 2026-07-07
+
+### 新增
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
+
+- 加入active bar，用户可以更好的去管理本地注释，可以很方便的切换group组，迁移不同组之间的本地注释内容。
+
+- 添加AI辅助功能，提供一个skill，方便用户直接对源文件进行local comment的自动生成。
+
+- 在markdown文件的预览页面中加入了查找功能
+
+- 使用 [alt + 鼠标左键] 允许用户从markdown的预览页面跳转到.md的源码页面，方便用户编辑修改源码
+
 ## [2.0.1] - 2026-06-26
 
 ### 修复

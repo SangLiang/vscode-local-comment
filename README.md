@@ -17,13 +17,15 @@
 | **Local comments** | Stored in separate data; **not written into source files**; does not clutter Git commits with notes. |
 | **Markdown knowledge management** | Write in `.md` files, link to code with `@tags`, click to jump — documents and code seamlessly connected. |
 | **Tag relation graph** | **New in v2.0**: Generate a visual graph of tag references with one click; organize knowledge like Obsidian with zoom, pan, and click-to-view details. |
+| **Activity Bar groups** | Dedicated Activity Bar view to manage comment groups—create, switch, rename, and batch-move comments to other groups from the manage panel. |
+| **AI Assist** | Built-in Skill and prompt for Copilot, Cursor, and other AI agents to write comments into separate groups without touching source files. |
 | **Tag jumps** | Declare with `${tagName}`, reference with `@tagName`, jump between comments, Markdown docs, and code; **Chinese tag names** supported. |
 | **Smart anchoring** | Tries to follow lines as code moves; anchor on **meaningful code lines** (see best practices below). |
 | **Mermaid / LaTeX** | Diagrams and formulas render in preview for technical explanations. |
 | **Bookmarks** | Mark lines across files and navigate in order—pairs well with comments as a reading path. |
 | **Sidebar tree** | Browse comments and bookmarks for the project and jump back to code. |
 | **Projects / groups** | Multiple independent comment groups per project: switch between several configs under `.vscode/local-comment/` (e.g. notes for one branch vs another). |
-| **Markdown preview & export** | Preview `.md` files (diagrams, formulas, highlighting); one-click export to self-contained HTML for sharing and offline viewing. |
+| **Markdown preview & export** | Preview `.md` files (diagrams, formulas, **Ctrl+F search**); **Alt+click** to jump back to the matching source line; one-click export to self-contained HTML for sharing and offline viewing. |
 
 **In short:** keep “how you read the code” in VS Code, **local and private by default**.
 
@@ -32,8 +34,9 @@
 ## 30-second start
 
 1. Put the cursor on a line of code and press **`Ctrl+Shift+M`** to write a Markdown local comment (**the shortcut to remember**).
-2. Open the **Local Comments** view in the sidebar for the list and navigation.
-3. For quick landmarks, **`Ctrl+Alt+K`** toggles a bookmark; **`Ctrl+Alt+J`** / **`Ctrl+Alt+Shift+J`** moves between bookmarks.
+2. Click the **Local Comment** icon in the Activity Bar and use **Comment Groups** to view, switch, or manage multiple comment groups.
+3. You can also open the **Local Comments** tree in the Explorer sidebar to browse and jump back to code.
+4. For quick landmarks, **`Ctrl+Alt+K`** toggles a bookmark; **`Ctrl+Alt+J`** / **`Ctrl+Alt+Shift+J`** moves between bookmarks.
 
 Full shortcut tables are at the end of this file.
 
@@ -48,6 +51,10 @@ Full shortcut tables are at the end of this file.
 ### Markdown local comments
 
 ![Markdown local comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
+
+### Activity Bar and comment groups
+
+![Activity Bar comment groups](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
 
 ### Comments and bookmarks list
 
@@ -106,7 +113,7 @@ Typical cases: **researching a codebase**, **design notes that should not land i
 
 - **Reference code tags in Markdown**: In any `.md` file, right-click and select "Insert tag reference" to insert `@tagName`. When previewing, click these references to **jump directly to the tag definition in code**.
 - **Tags as links**: Declare with `${tagName}` in code, reference with `@tagName` in Markdown — documents and code form a two-way connection.
-- **Preview and export**: Right-click and select "Preview Markdown" for Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; click "Export HTML" to generate a self-contained file for offline viewing.
+- **Preview and export**: Right-click and select "Preview Markdown" for Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; **Ctrl+F** to search in the preview; **Alt+click** a preview block to jump to the matching line in the `.md` source; click "Export HTML" to generate a self-contained file for offline viewing.
 
 > 💡 **Use cases**: Write architecture docs referencing key code implementations with `@`; take notes while reading source, then jump back to code with one click.
 
@@ -128,7 +135,25 @@ Typical cases: **researching a codebase**, **design notes that should not land i
 - **Delete**: `Ctrl+Shift+D` removes the comment on the current line.
 - **Selection to comment**: `Ctrl+Shift+T` turns the selection into a comment.
 
-### 4. Bookmarks
+### 4. Activity Bar and comment groups
+
+**Manage multiple comment groups from the Activity Bar:**
+
+- **Entry**: Click the **Local Comment** icon in the Activity Bar → **Comment Groups** view.
+- **Group actions**: See the active group and list all groups; create, rename, or delete groups; click a group name to open the manage panel.
+- **Switch groups**: Click **Apply** in the list to switch the active comment configuration.
+- **Move across groups**: In the manage panel, select comments and use **Move to group** to batch-migrate them to another group.
+- **Refresh list**: Click **↻** to refresh (common after AI generates a new group).
+
+### 5. AI Assist
+
+**Let AI write local comments without changing source files:**
+
+- **Entry**: Activity Bar **Local Comment** → **AI Assist** view.
+- **Built-in Skill**: Explains how to write AI-generated comments into a **new group** under `.vscode/local-comment/` (without overwriting existing groups).
+- **Workflow**: Save or read the Skill → open the target source file → copy the prompt into Cursor, Copilot, or another AI chat → after AI finishes, **↻ refresh** in **Comment Groups** and switch to the new group.
+
+### 6. Bookmarks
 
 - **Toggle**: `Ctrl+Alt+K` adds or removes a bookmark on the current line.  
 - **Visuals**: Gutter icons, scrollbar markers, hover details.  
@@ -162,6 +187,13 @@ That makes it easier to stay aligned after **branch switches** or **large refact
 | `Ctrl+Shift+D` | Delete comment | Remove comment on current line |
 | `Ctrl+Shift+T` | Selection to comment | Convert selection |
 | - | Preview Markdown | Right-click menu or Command Palette (`.md` files only) |
+
+### Markdown preview
+
+| Shortcut | Action | Notes |
+|----------|--------|--------|
+| `Ctrl+F` | Search in preview | Find text in the Markdown preview panel |
+| `Alt+left click` | Jump to source | Click a preview block to open the matching line in the `.md` file |
 
 ### Bookmarks
 
@@ -255,7 +287,7 @@ With **`.vscode/local-comment/`**, you usually **do not need frequent import/exp
 
 - **Comments:** `.vscode/local-comment/comments/`, default `comments.json`; add more JSON files (e.g. `work.json`, `study.json`).
 - **Bookmarks:** `.vscode/local-comment/bookmarks/`, default `bookmarks.json`; same pattern for multiple files.
-- **Switching:** VS Code Settings → search **local comment** → under **Local Comment: Storage**, change the active comments or bookmarks config file name; or run `switch comments config` from `F1`.
+- **Switching:** Prefer the Activity Bar **Comment Groups** view for one-click switching; or VS Code Settings → search **local comment** → under **Local Comment: Storage**, change the active comments or bookmarks config file name; or run `switch comments config` from `F1`.
 
 ![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
 

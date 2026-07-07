@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [2.1.0] - 2026-07-07
+
+### Added
+
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
+
+- Added an Activity Bar view for better local comment management — easily switch between comment groups and migrate comments across groups.
+
+- Added AI assist with a skill that helps users automatically generate local comments for source files.
+
+- Added search in the Markdown file preview panel.
+
+- Use [Alt + left mouse click] to jump from the Markdown preview to the `.md` source file for editing.
+
 ## [2.0.1] - 2026-06-26
 
 ### Fixed
