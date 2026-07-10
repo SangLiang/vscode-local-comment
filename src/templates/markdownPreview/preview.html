@@ -19,6 +19,10 @@
                     <input type="checkbox" id="keepPrintBg">
                     <span>保留打印背景</span>
                 </label>
+                <label class="export-option" title="在预览右侧显示浮动文章目录">
+                    <input type="checkbox" id="showTocToggle">
+                    <span>显示目录</span>
+                </label>
                 <button class="export-btn" id="exportHtmlBtn" title="导出为 HTML">
                     导出 HTML
                 </button>
@@ -39,6 +43,14 @@
             </div>
             <div id="previewArea" class="preview-area"></div>
         </div>
+
+        <nav id="previewToc" class="preview-toc" hidden aria-label="文章目录">
+            <div class="preview-toc-header" id="previewTocHeader" title="拖拽移动目录">
+                <span class="preview-toc-title">目录</span>
+                <button type="button" id="previewTocClose" class="preview-toc-close" title="关闭目录">×</button>
+            </div>
+            <div id="previewTocList" class="preview-toc-list"></div>
+        </nav>
     </div>
 
     <script src="${markedJsUri}" onerror="console.error('marked.js 加载失败')"></script>
