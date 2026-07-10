@@ -378,10 +378,9 @@
             if (line === null) {
                 line = findLineByText(text);
             }
-            const checkbox = task
-                ? '<input type="checkbox" disabled' + (checked ? ' checked' : '') + '> '
-                : '';
-            return '<li data-source-line="' + line + '">' + checkbox + text + '</li>';
+            // marked(GFM) 已在 text 内注入 checkbox，此处勿再拼接，否则会重复
+            const attrs = ' data-source-line="' + line + '"' + (task ? ' class="task-list-item"' : '');
+            return '<li' + attrs + '>' + text + '</li>';
         };
 
         renderer.table = function(header, body) {
