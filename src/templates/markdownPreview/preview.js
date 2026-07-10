@@ -18,6 +18,9 @@
     let tocScrollRaf = 0;
     let tocDrag = null;
     let tocPosition = null;
+    /** 点击目录跳转期间锁定高亮，避免平滑滚动途中闪烁切换 */
+    let tocHighlightLocked = false;
+    let tocUnlockTimer = null;
     let markedInitialized = false;
     let mermaidInitialized = false;
     let currentPreviewFontSize = null;
@@ -903,6 +906,25 @@
         }
     }
 
+    function clearTocUnlockTimer() {
+        if (tocUnlockTimer) {
+            clearTimeout(tocUnlockTimer);
+            tocUnlockTimer = null;
+        }
+    }
+
+    function unlockTocHighlight() {
+        tocHighlightLocked = false;
+        clearTocUnlockTimer();
+    }
+
+    /** 点击跳转时锁定当前高亮；滚动停稳或超时后解锁，恢复跟滚高亮 */
+    function lockTocHighlightForNavigation() {
+        tocHighlightLocked = true;
+        clearTocUnlockTimer();
+        tocUnlockTimer = setTimeout(unlockTocHighlight, 450);
+    }
+
     function setActiveTocButton(activeButton) {
         let activeIndex = -1;
         for (let i = 0; i < tocEntries.length; i++) {
@@ -929,7 +951,7 @@
 
     /** 视口顶部附近最后一个已越过的标题视为当前章节 */
     function updateActiveTocFromScroll() {
-        if (!tocEntries.length) {
+        if (!tocEntries.length || tocHighlightLocked) {
             return;
         }
 
@@ -950,6 +972,11 @@
         if (!showToc || !tocEntries.length || tocDrag) {
             return;
         }
+        if (tocHighlightLocked) {
+            clearTocUnlockTimer();
+            tocUnlockTimer = setTimeout(unlockTocHighlight, 180);
+            return;
+        }
         if (tocScrollRaf) {
             return;
         }
@@ -964,6 +991,7 @@
             return;
         }
 
+        unlockTocHighlight();
         previewTocList.innerHTML = '';
         tocEntries = [];
 
@@ -988,6 +1016,7 @@
             btn.textContent = getHeadingLabel(headingEl);
             btn.title = btn.textContent;
             btn.addEventListener('click', function() {
+                lockTocHighlightForNavigation();
                 setActiveTocButton(btn);
                 headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
