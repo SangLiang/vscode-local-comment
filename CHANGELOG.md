@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/active_bar.png)
 
 - Added an Activity Bar view for better local comment management — easily switch between comment groups and migrate comments across groups.
 
@@ -117,9 +117,9 @@ Now you can preview Markdown files directly, with LaTeX formula support, Mermaid
 Press F1 to open the Command Palette, then run `switch comments config` to switch local comments groups or create a new local comment config.
 
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/switch_storage_config.png)
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/multi_group_comments.png)
 
 
 ## [1.3.3] - 2026-02-03
@@ -163,7 +163,7 @@ Press F1 to open the Command Palette, then run `switch comments config` to switc
 
 Now you can add LaTeX formulas in local comments!
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/latex_support.png)
 
 - LaTeX formula support in local comments
 - Allow outputting logs to the editor Output channel
@@ -195,14 +195,14 @@ Now you can add LaTeX formulas in local comments!
 **Multi-user collaboration**
 
 Display other users' (here admin user) comment information in the editor. You can see others' evaluations of code segments like reading WeChat Books:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/other_comment.png)
 
 Distinguish between users' local comment information and online shared information from others:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/local_and_online.png)
 
 Manage your shared comments in the web interface:
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/manager.png)
 
 **Note**: The multi-user collaboration version is not currently available for free public use.
 
@@ -223,7 +223,7 @@ Manage your shared comments in the web interface:
 
 ### Added
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/render_mermaid.png)
 
 - Mermaid flowchart support in Markdown comments
 

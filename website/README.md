@@ -22,7 +22,7 @@ bundle install
 bundle exec jekyll serve
 ```
 
-访问 http://localhost:4000/vscode-local-commet/
+访问 http://localhost:4000/vscode-local-comment/
 
 ## 构建生产版本
 
@@ -46,5 +46,5 @@ bundle exec jekyll build
 
 ## 注意事项
 
-- `baseurl` 配置为 `/vscode-local-commet`，部署时需配合 GitHub Pages
+- `baseurl` 配置为 `/vscode-local-comment`，部署时需配合 GitHub Pages
 - 文档链接使用 `relative_url` 过滤器，确保在不同路径下正确解析

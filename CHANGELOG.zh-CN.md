@@ -7,7 +7,7 @@
 
 ### 新增
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/active_bar.png)
 
 - 加入active bar，用户可以更好的去管理本地注释，可以很方便的切换group组，迁移不同组之间的本地注释内容。
 
@@ -21,7 +21,7 @@
 
 ### 修复
 
-- 修复markdwon预览时候，预览新markdown文件的焦点不正确的问题
+- 修复markdown预览时候，预览新markdown文件的焦点不正确的问题
 
 ### 优化
 
@@ -31,17 +31,17 @@
 
 这次更新对.md类型的文件做了更好的支持。我相信，完全不依赖外部的md编辑器，在local comment中，就能把md文档做得很好用！
 
-所以我把版本提升到了2.0.0，这是一次全新的探索，目标已经不仅在于写本地注释，更好做好markdown的内容和知识管理了。
+所以我把版本提升到了2.0.0，这是一次全新的探索，目标已经不仅在于写本地注释，更好的做好markdown的内容和知识管理了。
 
 ### 新增
 
-- **从Markdown文件直接跳进源码**: 在此之前，我们所有的操作都是在local comment的注释里进行，现在，我把原生的.md文件也进行了拓展。上一个版本中，我们已经能很好的预览原生的.md文件了，这个版本，我们在预览md内容的同事，还能通过点击`@tag`标记进行跳转了。这意味着，我们可以更好的把文档内容和代码实现结合在一起了。
+- **从Markdown文件直接跳进源码**: 在此之前，我们所有的操作都是在local comment的注释里进行，现在，我把原生的.md文件也进行了拓展。上一个版本中，我们已经能很好的预览原生的.md文件了，这个版本，我们在预览md内容的同时，还能通过点击`@tag`标记进行跳转了。这意味着，我们可以更好的把文档内容和代码实现结合在一起了。
 
-  具体使用的方法使在.md文件中，使用鼠标右键，可以看到有`insert tag reference`的选项，点击后，会列出项目中全部的tag标记，选择要插入的标记即可。然后，通过鼠标右键点击`preview markdown`预览文档。你会发现，你添加的`tag reference`是颜色不同的样式，点击后，会跳转到对应的声明处。
+  具体使用的方法是在.md文件中，使用鼠标右键，可以看到有`insert tag reference`的选项，点击后，会列出项目中全部的tag标记，选择要插入的标记即可。然后，通过鼠标右键点击`preview markdown`预览文档。你会发现，你添加的`tag reference`是颜色不同的样式，点击后，会跳转到对应的声明处。
 
 - **tag关系图**：可视化展示项目内标签之间的引用关系，支持力导向图交互（缩放、拖拽、点击查看详情）。在命令面板执行 `Local Comment: 显示标签关系图` 即可打开。
 
-  这个功能可以很好的把项目里的文档组织起来，只要你在写文档的适合稍微有点耐心，给他们做一个`${tag}`标记，下次你就能直接引用该文档，再通过点击tag名称跳转过去。没错，听起来有obsidian那样的味道了。但你要知道，我们还能跳转进代码的具体实现，这才是程序员手里该有的工具。
+  这个功能可以很好的把项目里的文档组织起来，只要你在写文档的时候稍微有点耐心，给他们做一个`${tag}`标记，下次你就能直接引用该文档，再通过点击tag名称跳转过去。没错，听起来有obsidian那样的味道了。但你要知道，我们还能跳转进代码的具体实现，这才是程序员手里该有的工具。
 
 - **导出 HTML 体验优化**：导出过程中显示按钮加载状态，完成后显示成功提示消息。
 
@@ -109,15 +109,15 @@
 
 - 调整了存储文件的路径，默认将会在当前项目下的.vscode/路径下创建local comment所需要的存储文件，对于旧数据可以从全局目录迁移到当前路径下
 
-- 导入导出的功能优化，允许通过直接复制粘贴存储文件(如 .vscode/local-commnet/comments/comments.json)到新项目的.vscode相同路径下，而不需要使用命令面板中的导入导出功能。
+- 导入导出的功能优化，允许通过直接复制粘贴存储文件(如 .vscode/local-comment/comments/comments.json)到新项目的.vscode相同路径下，而不需要使用命令面板中的导入导出功能。
 
 - 允许多分组的local comment注释，可以通过打开local comment设置，选择不同的comment.json文件，来实现不同分组的注释切换。
 
 按F1调出命令行，执行`switch comments config`即可切换local comments分组或者创建新的local comment
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/switch_storage_config.png)
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/multi_group_comments.png)
 
 ## [1.3.3] - 2026-02-03
 
@@ -162,7 +162,7 @@
 
 现在在本地注释中可以添加latex公式啦！
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/latex_support.png)
 
 - 本地注释支持 LaTeX 公式
 - 支持在编辑器 Output 中输出日志信息
@@ -194,14 +194,14 @@
 **多人协作**
 
 在编辑器上显示其他人(此处为admin用户)的注释信息，你可以像看微信读书那样，看到别人对该段代码的评价:
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/other_comment.png)
 
 用户的本地注释信息和线上其他人的分享的信息区分：
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/local_and_online.png)
 
 在web页面，管理自己分享的comment:
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/manager.png)
 
 **注意** :多人协作版暂不对外免费提供。
 
@@ -222,7 +222,7 @@
 
 ### 新增
 
-![image](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/render_mermaid.png)
 
 - 支持 Mermaid 流程图（可在 Markdown 注释中自由使用 Mermaid 语法）
 

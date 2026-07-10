@@ -46,41 +46,41 @@ Full shortcut tables are at the end of this file.
 
 ### Tag navigation
 
-![Tag navigation](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/jump.gif)
+![Tag navigation](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/jump.gif)
 
 ### Markdown local comments
 
-![Markdown local comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/markdown.gif)
+![Markdown local comments](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/markdown.gif)
 
 ### Activity Bar and comment groups
 
-![Activity Bar comment groups](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/active_bar.png)
+![Activity Bar comment groups](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/active_bar.png)
 
 ### Comments and bookmarks list
 
-![Sidebar list](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/view_panel.png)
+![Sidebar list](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/view_panel.png)
 
 ### Mermaid diagrams
 
-![Mermaid rendering](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/render_mermaid.png)
+![Mermaid rendering](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/render_mermaid.png)
 
 ### LaTeX formulas
 
 You can embed LaTeX in local comments and render it in preview.
 
-![LaTeX support](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/latex_support.png)
+![LaTeX support](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/latex_support.png)
 
 ### Multi-user collaboration (optional)
 
 Distinguish **your local notes** from **shared online annotations** (similar to highlights in a shared book).
 
-![Others' comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/other_comment.png)
+![Others' comments](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/other_comment.png)
 
-![Local vs online](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/local_and_online.png)
+![Local vs online](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/local_and_online.png)
 
 Manage comments you have shared from the web UI:
 
-![Manage shared comments](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/manager.png)
+![Manage shared comments](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/manager.png)
 
 **Note:** The multi-user collaboration offering is **not** currently available as a free public product.
 
@@ -289,9 +289,9 @@ With **`.vscode/local-comment/`**, you usually **do not need frequent import/exp
 - **Bookmarks:** `.vscode/local-comment/bookmarks/`, default `bookmarks.json`; same pattern for multiple files.
 - **Switching:** Prefer the Activity Bar **Comment Groups** view for one-click switching; or VS Code Settings → search **local comment** → under **Local Comment: Storage**, change the active comments or bookmarks config file name; or run `switch comments config` from `F1`.
 
-![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/multi_group_comments.png)
+![Multi-group comments settings](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/multi_group_comments.png)
 
-![Switch comments config command](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/switch_storage_config.png)
+![Switch comments config command](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/switch_storage_config.png)
 
 ### Data characteristics
 
@@ -315,7 +315,7 @@ See [`CHANGELOG.md`](./CHANGELOG.md). Chinese notes: [`CHANGELOG.zh-CN.md`](./CH
 
 This may sound silly, but chipping in for a bit of AI usage or buying the author a coffee goes a long way toward keeping the extension maintained.
 
-![Support the author](https://raw.githubusercontent.com/SangLiang/vscode-local-commet/refs/heads/master/images/donate.jpg)
+![Support the author](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/donate.jpg)
 
 ## License
 
