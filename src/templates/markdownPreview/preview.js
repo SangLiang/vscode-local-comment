@@ -13,6 +13,10 @@
     const previewTocClose = document.getElementById('previewTocClose');
     const showTocToggle = document.getElementById('showTocToggle');
     let showToc = false;
+    const previewActionMenu = document.getElementById('previewActionMenu');
+    const previewActionMenuToggle = document.getElementById('previewActionMenuToggle');
+    const previewActionMenuPanel = document.getElementById('previewActionMenuPanel');
+    let actionMenuOpen = false;
     /** @type {{ heading: Element, row: HTMLElement, button: HTMLButtonElement, twistie: HTMLButtonElement|null, level: number, collapsed: boolean, hasChildren: boolean }[]} */
     let tocEntries = [];
     let tocScrollRaf = 0;
@@ -1104,6 +1108,45 @@
                 previewToc.classList.remove('dragging');
             }
             persistTocState();
+        });
+    }
+
+    function applyActionMenuVisibility() {
+        if (!previewActionMenu || !previewActionMenuToggle || !previewActionMenuPanel) {
+            return;
+        }
+        previewActionMenuToggle.setAttribute('aria-expanded', actionMenuOpen ? 'true' : 'false');
+        if (actionMenuOpen) {
+            previewActionMenu.classList.add('is-open');
+            previewActionMenuPanel.removeAttribute('hidden');
+        } else {
+            previewActionMenu.classList.remove('is-open');
+            previewActionMenuPanel.setAttribute('hidden', '');
+        }
+    }
+
+    function setActionMenuOpen(open) {
+        actionMenuOpen = !!open;
+        applyActionMenuVisibility();
+    }
+
+    function initActionMenuControls() {
+        if (!previewActionMenuToggle || !previewActionMenuPanel) {
+            return;
+        }
+        applyActionMenuVisibility();
+        previewActionMenuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setActionMenuOpen(!actionMenuOpen);
+        });
+        document.addEventListener('mousedown', function(e) {
+            if (!actionMenuOpen || !previewActionMenu) {
+                return;
+            }
+            if (previewActionMenu.contains(e.target)) {
+                return;
+            }
+            setActionMenuOpen(false);
         });
     }
 
@@ -2396,6 +2439,7 @@ body {
 
     function isSourceJumpBlockedTarget(element) {
         return element.closest('.mermaid-controls')
+            || element.closest('.preview-action-menu')
             || element.closest('.export-actions')
             || element.closest('button');
     }
@@ -2439,6 +2483,7 @@ body {
         });
     }
 
+    initActionMenuControls();
     initTocControls();
 
     if (document.readyState === 'loading') {

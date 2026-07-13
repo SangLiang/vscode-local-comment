@@ -14,19 +14,6 @@
         <div class="header">
         <div class="title-row">
             <div class="title">${fileName}</div>
-            <div class="export-actions">
-                <label class="export-option" title="仅影响打印时的背景色，不影响屏幕浏览；关闭可节约墨水">
-                    <input type="checkbox" id="keepPrintBg">
-                    <span>保留打印背景</span>
-                </label>
-                <label class="export-option" title="在预览右侧显示浮动文章目录">
-                    <input type="checkbox" id="showTocToggle">
-                    <span>显示目录</span>
-                </label>
-                <button class="export-btn" id="exportHtmlBtn" title="导出为 HTML">
-                    导出 HTML
-                </button>
-            </div>
         </div>
             <div class="help-text">
                 支持 Markdown 语法、Mermaid 图表和 LaTeX 公式；编辑源文件时预览自动刷新；Alt+单击内容可跳转到源文件对应位置；图表支持 Ctrl+滚轮缩放；Ctrl+F 在预览中搜索
@@ -42,6 +29,27 @@
                 <button type="button" id="previewFindClose" class="preview-find-btn preview-find-close" title="关闭 (Esc)">×</button>
             </div>
             <div id="previewArea" class="preview-area"></div>
+        </div>
+
+        <div id="previewActionMenu" class="preview-action-menu">
+            <button type="button" id="previewActionMenuToggle" class="preview-action-menu-toggle" aria-expanded="false" aria-controls="previewActionMenuPanel" title="操作菜单">
+                <span class="preview-action-menu-icon" aria-hidden="true"></span>
+            </button>
+            <div id="previewActionMenuPanel" class="preview-action-menu-panel" hidden>
+                <div class="export-actions">
+                    <label class="export-option" title="仅影响打印时的背景色，不影响屏幕浏览；关闭可节约墨水">
+                        <input type="checkbox" id="keepPrintBg">
+                        <span>保留打印背景</span>
+                    </label>
+                    <label class="export-option" title="在预览右侧显示浮动文章目录">
+                        <input type="checkbox" id="showTocToggle">
+                        <span>显示目录</span>
+                    </label>
+                    <button class="export-btn" id="exportHtmlBtn" title="导出为 HTML">
+                        导出 HTML
+                    </button>
+                </div>
+            </div>
         </div>
 
         <nav id="previewToc" class="preview-toc" hidden aria-label="文章目录">

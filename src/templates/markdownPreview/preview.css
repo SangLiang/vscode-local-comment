@@ -34,9 +34,7 @@
 
 .title-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 12px;
     margin-bottom: 8px;
 }
 
@@ -66,13 +64,15 @@
     white-space: nowrap;
     line-height: 1.4;
     transition: background-color 0.1s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .export-actions {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
-    flex-shrink: 0;
 }
 
 .export-option {
@@ -618,4 +618,61 @@
 .preview-toc-item.is-active:hover {
     background-color: var(--vscode-list-activeSelectionBackground);
     color: var(--vscode-list-activeSelectionForeground);
+}
+
+.preview-action-menu {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 25;
+}
+
+.preview-action-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 6px;
+    background-color: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.preview-action-menu-toggle:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.preview-action-menu.is-open .preview-action-menu-toggle {
+    border-color: var(--vscode-focusBorder, var(--vscode-editorWidget-border));
+}
+
+.preview-action-menu-icon {
+    display: block;
+    width: 14px;
+    height: 2px;
+    background-color: currentColor;
+    border-radius: 1px;
+    box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor;
+}
+
+.preview-action-menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 160px;
+    box-sizing: border-box;
+    padding: 10px;
+    background-color: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.preview-action-menu-panel[hidden] {
+    display: none !important;
 }
