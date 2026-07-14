@@ -25,6 +25,8 @@
     /** 点击目录跳转期间锁定高亮，避免平滑滚动途中闪烁切换 */
     let tocHighlightLocked = false;
     let tocUnlockTimer = null;
+    /** 当前高亮目录项索引；仅在正文滚动导致索引变化时才滚动目录列表 */
+    let lastActiveTocIndex = -1;
     let markedInitialized = false;
     let mermaidInitialized = false;
     let currentPreviewFontSize = null;
@@ -929,7 +931,27 @@
         tocUnlockTimer = setTimeout(unlockTocHighlight, 450);
     }
 
-    function setActiveTocButton(activeButton) {
+    /** 仅调整目录列表 scrollTop，避免 scrollIntoView 带动正文滚动 */
+    function scrollTocRowIntoListView(row) {
+        if (!previewTocList || !row || !previewToc || previewToc.hasAttribute('hidden')) {
+            return;
+        }
+        const listRect = previewTocList.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+        if (rowRect.top < listRect.top) {
+            previewTocList.scrollTop += rowRect.top - listRect.top;
+        } else if (rowRect.bottom > listRect.bottom) {
+            previewTocList.scrollTop += rowRect.bottom - listRect.bottom;
+        }
+    }
+
+    /**
+     * @param {HTMLButtonElement} activeButton
+     * @param {{ ensureVisible?: boolean }} [options]
+     * ensureVisible: 仅正文滚动导致章节变化时为 true，用户手动滚目录时不强制对齐
+     */
+    function setActiveTocButton(activeButton, options) {
+        const ensureVisible = !!(options && options.ensureVisible);
         let activeIndex = -1;
         for (let i = 0; i < tocEntries.length; i++) {
             const entry = tocEntries[i];
@@ -941,15 +963,12 @@
             }
         }
         if (activeIndex >= 0) {
+            const indexChanged = activeIndex !== lastActiveTocIndex;
             expandTocAncestors(activeIndex);
-            const activeRow = tocEntries[activeIndex].row;
-            if (previewToc && !previewToc.hasAttribute('hidden') && previewTocList) {
-                const rowRect = activeRow.getBoundingClientRect();
-                const listRect = previewTocList.getBoundingClientRect();
-                if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
-                    activeRow.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                }
+            if (ensureVisible && indexChanged) {
+                scrollTocRowIntoListView(tocEntries[activeIndex].row);
             }
+            lastActiveTocIndex = activeIndex;
         }
     }
 
@@ -969,10 +988,18 @@
                 break;
             }
         }
-        setActiveTocButton(tocEntries[activeIndex].button);
+        setActiveTocButton(tocEntries[activeIndex].button, { ensureVisible: true });
     }
 
-    function scheduleActiveTocUpdate() {
+    /** 忽略目录面板自身滚动，避免跟滚高亮把用户的目录滚动拽回去 */
+    function isTocScrollEvent(e) {
+        return !!(previewToc && e && e.target && previewToc.contains(e.target));
+    }
+
+    function scheduleActiveTocUpdate(e) {
+        if (isTocScrollEvent(e)) {
+            return;
+        }
         if (!showToc || !tocEntries.length || tocDrag) {
             return;
         }
@@ -996,6 +1023,7 @@
         }
 
         unlockTocHighlight();
+        lastActiveTocIndex = -1;
         previewTocList.innerHTML = '';
         tocEntries = [];
 
