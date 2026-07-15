@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [2.1.1] - 2026-07-15
+
+### Changed
+
+- Added a table of contents panel to the Markdown preview
+
+- Fixed some incorrect image path names
+
 ## [2.1.0] - 2026-07-07
 
 ### Added
