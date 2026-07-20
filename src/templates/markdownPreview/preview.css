@@ -22,9 +22,10 @@
 }
 
 .container {
-    max-width: 100%;
-    margin: 0 10px;
-    width: calc(100% - 20px);
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 16px 32px 32px;
     box-sizing: border-box;
 }
 
@@ -41,7 +42,7 @@
 .title {
     font-size: 18px;
     font-weight: bold;
-    color: var(--vscode-textPreformat-foreground);
+    color: var(--vscode-editor-foreground, var(--vscode-foreground));
     flex: 1;
     min-width: 0;
     word-break: break-all;
@@ -56,7 +57,7 @@
     background-color: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: 1px solid transparent;
-    border-radius: 2px;
+    border-radius: 4px;
     padding: 4px 12px;
     font-size: 12px;
     font-family: inherit;
@@ -228,14 +229,13 @@
 #previewArea {
     background-color: var(--vscode-editor-background);
     color: var(--vscode-editor-foreground);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
-    padding: 20px;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 32px;
     min-height: 200px;
     overflow-y: auto;
     font-size: var(--vscode-editor-font-size);
     line-height: 1.5;
-    transition: all 0.3s ease;
     word-wrap: break-word;
 }
 
@@ -245,27 +245,123 @@
 #previewArea h4,
 #previewArea h5,
 #previewArea h6 {
-    margin-top: 16px;
-    margin-bottom: 8px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 24px;
+    margin-bottom: 16px;
 }
 
-#previewArea p {
-    margin: 8px 0;
+#previewArea h1 {
+    font-size: 2em;
+}
+
+#previewArea h2 {
+    font-size: 1.5em;
+}
+
+#previewArea h3 {
+    font-size: 1.25em;
+}
+
+#previewArea h4 {
+    font-size: 1em;
+}
+
+#previewArea h5 {
+    font-size: 0.875em;
+}
+
+#previewArea h6 {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+}
+
+#previewArea h1:first-child,
+#previewArea h2:first-child,
+#previewArea h3:first-child,
+#previewArea h4:first-child,
+#previewArea h5:first-child,
+#previewArea h6:first-child {
+    margin-top: 0;
+}
+
+#previewArea p,
+#previewArea blockquote,
+#previewArea ul,
+#previewArea ol,
+#previewArea dl,
+#previewArea table,
+#previewArea pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+#previewArea hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 24px 0;
+    border: 0;
+    background-color: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+#previewArea strong {
+    font-weight: 600;
+}
+
+#previewArea code {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    border-radius: 6px;
+    background-color: var(--vscode-textCodeBlock-background, rgba(127, 127, 127, 0.15));
+    font-size: 85%;
+}
+
+#previewArea pre {
+    padding: 16px;
+    overflow: auto;
+    line-height: 1.45;
+    border-radius: 6px;
+    background-color: var(--vscode-textCodeBlock-background, rgba(127, 127, 127, 0.12));
+    font-size: 85%;
+}
+
+#previewArea pre code {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
 }
 
 #previewArea blockquote {
-    margin: 8px 0;
-    padding-left: 12px;
+    padding: 0 1em;
+    color: var(--vscode-textBlockQuote-foreground, var(--vscode-descriptionForeground));
+    border-left: 0.25em solid var(--vscode-textBlockQuote-border, var(--vscode-panel-border));
+    background: transparent;
+}
+
+#previewArea blockquote > :first-child {
+    margin-top: 0;
+}
+
+#previewArea blockquote > :last-child {
+    margin-bottom: 0;
 }
 
 #previewArea ul,
 #previewArea ol {
-    padding-left: 24px;
-    margin: 4px 0;
+    padding-left: 2em;
 }
 
 #previewArea li {
-    margin: 2px 0;
+    margin: 0;
+}
+
+#previewArea li + li {
+    margin-top: 0.25em;
 }
 
 #previewArea li.task-list-item {
@@ -273,12 +369,20 @@
 }
 
 #previewArea li.task-list-item > input[type="checkbox"] {
-    margin-right: 6px;
+    margin: 0 0.2em 0.25em -1.4em;
     vertical-align: middle;
 }
 
+#previewArea li > p {
+    margin-top: 16px;
+}
+
+#previewArea li > p:first-child {
+    margin-top: 0;
+}
+
 #previewArea li p {
-    margin: 0;
+    margin-bottom: 0;
 }
 
 #previewArea a:hover {
@@ -288,15 +392,35 @@
 #previewArea img {
     max-width: 100%;
     height: auto;
+    box-sizing: content-box;
 }
 
 #previewArea table {
-    margin: 8px 0;
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
+    border-spacing: 0;
+    border-collapse: collapse;
 }
 
-#previewArea th,
-#previewArea td {
-    padding: 6px 12px;
+#previewArea table th {
+    font-weight: 600;
+}
+
+#previewArea table th,
+#previewArea table td {
+    padding: 6px 13px;
+    border: 1px solid var(--vscode-panel-border, #c8c8c8);
+}
+
+#previewArea table tr {
+    background-color: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+#previewArea table tr:nth-child(2n) {
+    background-color: var(--vscode-editor-inactiveSelectionBackground, rgba(127, 127, 127, 0.08));
 }
 
 #previewArea .mermaid-chart {
@@ -635,7 +759,7 @@
     height: 32px;
     padding: 0;
     border: 1px solid var(--vscode-editorWidget-border);
-    border-radius: 6px;
+    border-radius: 4px;
     background-color: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
     cursor: pointer;
@@ -669,7 +793,7 @@
     background-color: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
     border: 1px solid var(--vscode-editorWidget-border);
-    border-radius: 6px;
+    border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
