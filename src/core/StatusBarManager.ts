@@ -24,11 +24,8 @@ export class StatusBarManager {
         // 初始化上下文变量
         this.updateContextVariables();
         
-        // 更新状态栏显示
+        // 更新状态栏显示（未登录时不展示）
         this.updateStatus();
-        
-        // 显示状态栏
-        this.statusBarItem.show();
         
         // 注册到上下文订阅中
         this.context.subscriptions.push(this.statusBarItem);
@@ -45,10 +42,9 @@ export class StatusBarManager {
             this.statusBarItem.text = `$(account) ${user?.username || '已登录'}`;
             this.statusBarItem.tooltip = '点击查看用户信息';
             this.statusBarItem.command = COMMANDS.SHOW_USER_INFO;
+            this.statusBarItem.show();
         } else {
-            this.statusBarItem.text = '$(sign-in) 未登录';
-            this.statusBarItem.tooltip = '点击登录或查看用户信息';
-            this.statusBarItem.command = COMMANDS.SHOW_USER_INFO;
+            this.statusBarItem.hide();
         }
     }
 
