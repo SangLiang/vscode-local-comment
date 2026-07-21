@@ -11,8 +11,11 @@
     const previewTocList = document.getElementById('previewTocList');
     const previewTocHeader = document.getElementById('previewTocHeader');
     const previewTocClose = document.getElementById('previewTocClose');
+    const previewTocMinimize = document.getElementById('previewTocMinimize');
+    const previewTocFab = document.getElementById('previewTocFab');
     const showTocToggle = document.getElementById('showTocToggle');
-    let showToc = false;
+    let showToc = true;
+    let tocMinimized = true;
     const previewActionMenu = document.getElementById('previewActionMenu');
     const previewActionMenuToggle = document.getElementById('previewActionMenuToggle');
     const previewActionMenuPanel = document.getElementById('previewActionMenuPanel');
@@ -787,12 +790,32 @@
 
     function persistTocState() {
         const prev = vscode.getState() || {};
-        const next = Object.assign({}, prev, { showToc: showToc });
+        const next = Object.assign({}, prev, {
+            showToc: showToc,
+            tocMinimized: tocMinimized
+        });
         if (tocPosition && typeof tocPosition.left === 'number' && typeof tocPosition.top === 'number') {
             next.tocLeft = tocPosition.left;
             next.tocTop = tocPosition.top;
         }
         vscode.setState(next);
+    }
+
+    function applyTocMinimizedUi() {
+        if (!previewToc) {
+            return;
+        }
+        if (tocMinimized) {
+            previewToc.classList.add('is-minimized');
+            if (previewTocFab) {
+                previewTocFab.removeAttribute('hidden');
+            }
+        } else {
+            previewToc.classList.remove('is-minimized');
+            if (previewTocFab) {
+                previewTocFab.setAttribute('hidden', '');
+            }
+        }
     }
 
     function clampTocPosition(left, top) {
@@ -810,7 +833,21 @@
     }
 
     function applyTocPosition() {
-        if (!previewToc || !tocPosition) {
+        if (!previewToc) {
+            return;
+        }
+        if (tocMinimized) {
+            previewToc.style.left = '';
+            previewToc.style.top = '';
+            previewToc.style.right = '';
+            previewToc.style.bottom = '';
+            return;
+        }
+        if (!tocPosition) {
+            previewToc.style.left = '';
+            previewToc.style.top = '';
+            previewToc.style.right = '';
+            previewToc.style.bottom = '';
             return;
         }
         const pos = clampTocPosition(tocPosition.left, tocPosition.top);
@@ -818,6 +855,7 @@
         previewToc.style.left = pos.left + 'px';
         previewToc.style.top = pos.top + 'px';
         previewToc.style.right = 'auto';
+        previewToc.style.bottom = 'auto';
     }
 
     function closeTocPanel() {
@@ -833,8 +871,11 @@
         showTocToggle.checked = showToc;
         if (showToc) {
             previewToc.removeAttribute('hidden');
+            applyTocMinimizedUi();
             applyTocPosition();
-            updateActiveTocFromScroll();
+            if (!tocMinimized) {
+                updateActiveTocFromScroll();
+            }
         } else {
             previewToc.setAttribute('hidden', '');
         }
@@ -842,7 +883,16 @@
 
     function restoreTocState() {
         const state = vscode.getState();
-        showToc = !!(state && state.showToc);
+        if (state && typeof state.showToc === 'boolean') {
+            showToc = state.showToc;
+        } else {
+            showToc = true;
+        }
+        if (state && typeof state.tocMinimized === 'boolean') {
+            tocMinimized = state.tocMinimized;
+        } else {
+            tocMinimized = true;
+        }
         if (state && typeof state.tocLeft === 'number' && typeof state.tocTop === 'number') {
             tocPosition = { left: state.tocLeft, top: state.tocTop };
         }
@@ -933,7 +983,7 @@
 
     /** 仅调整目录列表 scrollTop，避免 scrollIntoView 带动正文滚动 */
     function scrollTocRowIntoListView(row) {
-        if (!previewTocList || !row || !previewToc || previewToc.hasAttribute('hidden')) {
+        if (!previewTocList || !row || !previewToc || previewToc.hasAttribute('hidden') || tocMinimized) {
             return;
         }
         const listRect = previewTocList.getBoundingClientRect();
@@ -1100,11 +1150,18 @@
             return;
         }
 
+        function isTocChromeButton(target) {
+            return !!(target && target.closest && (
+                target.closest('#previewTocClose') ||
+                target.closest('#previewTocMinimize')
+            ));
+        }
+
         previewTocHeader.addEventListener('mousedown', function(e) {
-            if (e.button !== 0) {
+            if (e.button !== 0 || tocMinimized) {
                 return;
             }
-            if (e.target && e.target.closest && e.target.closest('#previewTocClose')) {
+            if (isTocChromeButton(e.target)) {
                 return;
             }
             e.preventDefault();
@@ -1117,7 +1174,7 @@
         });
 
         window.addEventListener('mousemove', function(e) {
-            if (!tocDrag || !previewToc) {
+            if (!tocDrag || !previewToc || tocMinimized) {
                 return;
             }
             const next = clampTocPosition(e.clientX - tocDrag.offsetX, e.clientY - tocDrag.offsetY);
@@ -1125,6 +1182,7 @@
             previewToc.style.left = next.left + 'px';
             previewToc.style.top = next.top + 'px';
             previewToc.style.right = 'auto';
+            previewToc.style.bottom = 'auto';
         });
 
         window.addEventListener('mouseup', function() {
@@ -1193,6 +1251,35 @@
                 closeTocPanel();
             });
         }
+        if (previewTocMinimize) {
+            previewTocMinimize.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                tocMinimized = true;
+                applyTocMinimizedUi();
+                applyTocPosition();
+                persistTocState();
+            });
+        }
+        if (previewTocFab) {
+            previewTocFab.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!tocMinimized) {
+                    return;
+                }
+                tocMinimized = false;
+                applyTocMinimizedUi();
+                applyTocPosition();
+                updateActiveTocFromScroll();
+                persistTocState();
+            });
+        }
+        window.addEventListener('resize', function() {
+            if (showToc) {
+                applyTocPosition();
+            }
+        });
         if (!showTocToggle) {
             return;
         }

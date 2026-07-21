@@ -33,7 +33,10 @@
 
         <div id="previewActionMenu" class="preview-action-menu">
             <button type="button" id="previewActionMenuToggle" class="preview-action-menu-toggle" aria-expanded="false" aria-controls="previewActionMenuPanel" title="操作菜单">
-                <span class="preview-action-menu-icon" aria-hidden="true"></span>
+                <svg class="preview-action-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
             </button>
             <div id="previewActionMenuPanel" class="preview-action-menu-panel" hidden>
                 <div class="export-actions">
@@ -55,9 +58,15 @@
         <nav id="previewToc" class="preview-toc" hidden aria-label="文章目录">
             <div class="preview-toc-header" id="previewTocHeader" title="拖拽移动目录">
                 <span class="preview-toc-title">目录</span>
+                <button type="button" id="previewTocMinimize" class="preview-toc-minimize" title="最小化">−</button>
                 <button type="button" id="previewTocClose" class="preview-toc-close" title="关闭目录">×</button>
             </div>
             <div id="previewTocList" class="preview-toc-list"></div>
+            <button type="button" id="previewTocFab" class="preview-toc-fab" title="展开目录" aria-label="展开目录" hidden>
+                <span class="preview-toc-fab-icon" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                </span>
+            </button>
         </nav>
     </div>
 
