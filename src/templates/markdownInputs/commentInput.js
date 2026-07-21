@@ -1346,6 +1346,9 @@
 
     // 初始化图表交互功能
     function initChartInteractions() {
+        if (typeof window.fitAllMermaidCharts === 'function') {
+            window.fitAllMermaidCharts();
+        }
         setupChartWheelZoom();
         setupChartDrag();
     }

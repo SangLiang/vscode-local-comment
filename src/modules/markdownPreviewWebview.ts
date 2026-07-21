@@ -502,6 +502,13 @@ export class MarkdownPreviewWebview {
     }
 
     private getMermaidExportScript(): string {
+        const publicJsPath = path.join(
+            this.context.extensionUri.fsPath,
+            'src',
+            'templates',
+            'common',
+            'public.js'
+        );
         const scriptPath = path.join(
             this.context.extensionUri.fsPath,
             'src',
@@ -509,10 +516,14 @@ export class MarkdownPreviewWebview {
             'markdownPreview',
             'mermaidExport.js'
         );
-        if (fs.existsSync(scriptPath)) {
-            return fs.readFileSync(scriptPath, 'utf8');
+        const parts: string[] = [];
+        if (fs.existsSync(publicJsPath)) {
+            parts.push(fs.readFileSync(publicJsPath, 'utf8'));
         }
-        return '';
+        if (fs.existsSync(scriptPath)) {
+            parts.push(fs.readFileSync(scriptPath, 'utf8'));
+        }
+        return parts.join('\n');
     }
 
     private buildExportHtml(

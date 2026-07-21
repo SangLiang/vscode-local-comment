@@ -367,6 +367,9 @@
         charts.forEach(chart => {
             const chartId = chart.dataset.chartId;
             if (chartId) {
+                if (typeof window.fitMermaidChart === 'function') {
+                    window.fitMermaidChart(chart);
+                }
                 initChartState(chartId);
                 setupChartWheelZoom(chartId);
                 setupChartDrag(chartId);

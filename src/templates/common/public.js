@@ -122,6 +122,85 @@ function unmaskMarkdownAfterKatex(content, blocks) {
     return content.replace(/__LC_KATEX_MASK_(\d+)__/g, (_, index) => blocks[Number(index)] ?? '');
 }
 
+/** Mermaid 竖向图默认适配：高度不超过约 70vh，宽度不超过容器 */
+var MERMAID_MAX_HEIGHT_VH = 0.7;
+
+function parseSvgLength(value) {
+    if (value == null || value === '') {
+        return NaN;
+    }
+    var n = parseFloat(String(value).replace(/px$/i, ''));
+    return isFinite(n) && n > 0 ? n : NaN;
+}
+
+function getMermaidSvgIntrinsicSize(svg) {
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    if (vb && vb.width > 0 && vb.height > 0) {
+        return { width: vb.width, height: vb.height };
+    }
+    var w = parseSvgLength(svg.getAttribute('width'));
+    var h = parseSvgLength(svg.getAttribute('height'));
+    if (isFinite(w) && isFinite(h)) {
+        return { width: w, height: h };
+    }
+    try {
+        var bbox = svg.getBBox();
+        if (bbox && bbox.width > 0 && bbox.height > 0) {
+            return { width: bbox.width, height: bbox.height };
+        }
+    } catch (e) { /* ignore */ }
+    return null;
+}
+
+/**
+ * 将单个 Mermaid 图表适配到容器宽与视口高度
+ * @param {HTMLElement} chart
+ * @param {boolean} [retried]
+ */
+function fitMermaidChart(chart, retried) {
+    if (!chart) {
+        return;
+    }
+    var svg = chart.querySelector('svg');
+    if (!svg) {
+        return;
+    }
+
+    var size = getMermaidSvgIntrinsicSize(svg);
+    if (!size) {
+        return;
+    }
+
+    var containerWidth = chart.clientWidth;
+    if (!(containerWidth > 0)) {
+        if (!retried) {
+            requestAnimationFrame(function() {
+                fitMermaidChart(chart, true);
+            });
+        }
+        return;
+    }
+
+    var maxHeight = window.innerHeight * MERMAID_MAX_HEIGHT_VH;
+    var fitScale = Math.min(1, containerWidth / size.width, maxHeight / size.height);
+    if (!(fitScale > 0) || !isFinite(fitScale)) {
+        return;
+    }
+    fitScale = Math.max(0.1, Math.min(1, fitScale));
+
+    svg.style.setProperty('width', (size.width * fitScale) + 'px', 'important');
+    svg.style.setProperty('height', (size.height * fitScale) + 'px', 'important');
+    svg.style.setProperty('max-width', '100%', 'important');
+    chart.dataset.fitScale = String(fitScale);
+}
+
+/** 适配页面内全部 .mermaid-chart */
+function fitAllMermaidCharts() {
+    document.querySelectorAll('.mermaid-chart').forEach(function(chart) {
+        fitMermaidChart(chart);
+    });
+}
+
 // 如果在浏览器环境中，将函数暴露到全局作用域
 if (typeof window !== 'undefined') {
     window.escapeHtml = escapeHtml;
@@ -130,4 +209,6 @@ if (typeof window !== 'undefined') {
     window.applyPreviewFontSize = applyPreviewFontSize;
     window.maskMarkdownForKatex = maskMarkdownForKatex;
     window.unmaskMarkdownAfterKatex = unmaskMarkdownAfterKatex;
+    window.fitMermaidChart = fitMermaidChart;
+    window.fitAllMermaidCharts = fitAllMermaidCharts;
 }

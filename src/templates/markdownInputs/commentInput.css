@@ -556,7 +556,9 @@ button {
 #previewArea .mermaid-chart {
     margin: 8px 0;
     padding: 8px;
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
     visibility: visible !important;
     opacity: 1 !important;
     min-height: 100px;
@@ -569,9 +571,9 @@ button {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    width: 100% !important;
+    width: auto !important;
     height: auto !important;
-    min-height: 100px;
+    min-height: 0;
     background: transparent !important;
     max-width: 100% !important;
     border-radius: 4px !important;
@@ -581,7 +583,9 @@ button {
 
 /* Mermaid图表交互样式 - 从内联样式移植 */
 .mermaid-chart {
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
     width: 100% !important;
     overflow: hidden !important;
     margin: 1em 0 !important;
@@ -605,9 +609,9 @@ button {
 .mermaid-chart svg,
 .mermaid-chart img {
     display: block !important;
-    width: 100% !important;
+    width: auto !important;
     height: auto !important;
-    min-height: 200px !important;
+    min-height: 0 !important;
     background: transparent !important;
     visibility: visible !important;
     opacity: 1 !important;

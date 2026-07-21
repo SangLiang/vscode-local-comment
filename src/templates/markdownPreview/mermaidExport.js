@@ -1,6 +1,6 @@
 /**
  * 导出 HTML 中的 Mermaid 图表交互（缩放按钮、Ctrl+滚轮、拖拽）
- * 自包含脚本，不依赖 VS Code Webview API
+ * 依赖同页先内联的 public.js（window.fitMermaidChart）
  */
 (function() {
     function getChart(chartId) {
@@ -123,6 +123,9 @@
             chart.dataset.chartId = 'mermaid-export-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
         }
         chart.style.cursor = 'grab';
+        if (typeof window.fitMermaidChart === 'function') {
+            window.fitMermaidChart(chart);
+        }
         initChartState(chart);
         updateChartTransform(chart);
         updateZoomInfo(chart);
