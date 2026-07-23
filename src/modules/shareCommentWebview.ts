@@ -5,6 +5,7 @@ import { getErrorMessage } from '../utils/utils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
+import { generateId } from '../utils/idUtils';
 
 
 // 全局注释管理器引用
@@ -28,14 +29,23 @@ export async function showShareCommentWebview(
         contextLines?: string[];
         contextStartLine?: number;
         filePath?: string;
-        sharedCommentId?: string; // 新增：共享注释ID
-        userId?: string; // 新增：用户ID
-        username?: string; // 新增：用户名
-        timestamp?: number; // 新增：时间戳
+        sharedCommentId?: string;
+        userId?: string;
+        username?: string;
+        timestamp?: number;
+        commentContent?: string;
     }
 ): Promise<void> {
     // 保存当前活动编辑器的引用，以便稍后恢复焦点
     const activeEditor = vscode.window.activeTextEditor;
+
+    // 导出依赖 commentContent；调用方未传时回退到面板正文
+    const resolvedContextInfo = contextInfo
+        ? {
+            ...contextInfo,
+            commentContent: contextInfo.commentContent ?? markdownContent
+        }
+        : undefined;
 
     // 智能分屏：在第一列和第二列之间切换，避免覆盖当前编辑器
     const viewColumn = EditorUtils.smartSelectViewColumn(activeEditor);
@@ -84,7 +94,7 @@ export async function showShareCommentWebview(
     panel.webview.html = getShareCommentWebviewContent(
         context, 
         markdownContent, 
-        contextInfo, 
+        resolvedContextInfo, 
         resourceUris.markedJsUri || '', 
         resourceUris.cssUri || '', 
         resourceUris.jsUri || '', 
@@ -140,7 +150,7 @@ export async function showShareCommentWebview(
                     break;
                 case IPC_MESSAGES.EXPORT_TO_LOCAL_COMMENT:
                     // 处理导出为本地注释的请求
-                    await handleExportToLocalComment(context, contextInfo);
+                    await handleExportToLocalComment(context, resolvedContextInfo, markdownContent);
                     break;
             }
         }
@@ -173,8 +183,9 @@ async function handleExportToLocalComment(
         userId?: string;
         username?: string;
         timestamp?: number;
-        commentContent?: string; // 新增：注释内容
-    }
+        commentContent?: string;
+    },
+    markdownContentFallback?: string
 ): Promise<void> {
     try {
         if (!contextInfo?.filePath || contextInfo.lineNumber === undefined) {
@@ -182,8 +193,7 @@ async function handleExportToLocalComment(
             return;
         }
 
-        // 获取注释内容
-        const commentContent = contextInfo.commentContent;
+        const commentContent = contextInfo.commentContent || markdownContentFallback;
         if (!commentContent) {
             vscode.window.showErrorMessage('无法获取注释内容');
             return;
@@ -191,7 +201,7 @@ async function handleExportToLocalComment(
 
         // 创建本地注释
         const localComment = {
-            id: generateCommentId(),
+            id: generateId(),
             line: contextInfo.lineNumber,
             content: commentContent,
             timestamp: Date.now(),
@@ -247,28 +257,10 @@ async function handleExportToLocalComment(
     }
 }
 
-// 从webview获取注释内容
-async function getCommentContentFromWebview(): Promise<string | null> {
-    try {
-        // 这里我们需要从webview获取当前显示的注释内容
-        // 由于webview已经关闭，我们需要从contextInfo中获取原始内容
-        // 或者通过其他方式获取内容
-        return null; // 暂时返回null，需要实现具体逻辑
-    } catch (error) {
-        logger.error('获取注释内容失败:', error);
-        return null;
-    }
-}
-
 // 获取注释管理器
 function getCommentManager(context: vscode.ExtensionContext): CommentManager | null {
     // 返回全局注释管理器引用
     return globalCommentManager;
-}
-
-// 生成注释ID
-function generateCommentId(): string {
-    return `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 function getShareCommentWebviewContent(

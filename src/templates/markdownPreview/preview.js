@@ -31,13 +31,14 @@
     /** 当前高亮目录项索引；仅在正文滚动导致索引变化时才滚动目录列表 */
     let lastActiveTocIndex = -1;
     let markedInitialized = false;
-    let mermaidInitialized = false;
     let currentPreviewFontSize = null;
     /** 最近一次预览渲染的 Promise，导出前需 await，避免 Mermaid 尚未写入 DOM */
     let previewRenderPromise = Promise.resolve();
     /** 可用的标签名列表，用于精确识别真实标签（而非所有 @xxx 格式） */
     let availableTagNames = [];
     let currentMermaidTheme = null;
+
+    const renderCore = window.MarkdownRenderCore.create();
 
     function tagsEqual(left, right) {
         if (!Array.isArray(left) || !Array.isArray(right)) {
@@ -614,8 +615,12 @@
     const MERMAID_FENCE_REGEX = /```mermaid\s*\r?\n([\s\S]*?)```/gi;
     /** marked 输出的 Mermaid 占位 <pre>，用于替换为已渲染的 SVG */
     const MERMAID_CODE_BLOCK_HTML_REGEX = /<pre[^>]*><code class="[^"]*\blanguage-mermaid\b[^"]*">[\s\S]*?<\/code><\/pre>/gi;
-    // 等待 marked / mermaid / highlight.js 就绪后再渲染
-    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
+    // marked 仍由本页初始化（含行号 Renderer）；Mermaid 走共享 core
+    const initializationPromise = Promise.all([
+        waitForMarked(),
+        renderCore.waitForMermaid(),
+        (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())
+    ])
         .then(() => {
             console.log('所有库初始化成功');
         })
@@ -703,81 +708,6 @@
                 }
             };
             checkMarked();
-        });
-    }
-
-    /** 构建 mermaid.initialize 配置，handDrawn 对应设置项 hand-drawn */
-    function buildMermaidConfig(handDrawnEnabled) {
-        const config = {
-            startOnLoad: false,
-            theme: 'default',
-            flowchart: {
-                useMaxWidth: true,
-                htmlLabels: true,
-                curve: handDrawnEnabled ? 'basis' : 'linear'
-            },
-            sequence: {
-                useMaxWidth: true,
-                diagramMarginX: 50,
-                diagramMarginY: 10
-            },
-            gantt: {
-                useMaxWidth: true
-            },
-            journey: {
-                useMaxWidth: true
-            },
-            pie: {
-                useMaxWidth: true
-            },
-            gitGraph: {
-                useMaxWidth: true
-            }
-        };
-
-        if (handDrawnEnabled) {
-            config.look = 'handDrawn';
-            config.handDrawn = {
-                jitter: 5,
-                roughness: 5,
-                seed: 20
-            };
-        }
-
-        return config;
-    }
-
-    function initializeMermaid(handDrawnEnabled) {
-        if (typeof mermaid !== 'undefined' && typeof mermaid.initialize === 'function' && !mermaidInitialized) {
-            try {
-                const config = buildMermaidConfig(handDrawnEnabled);
-                mermaid.initialize(config);
-                mermaidInitialized = true;
-                return true;
-            } catch (error) {
-                console.error('Mermaid初始化失败:', error);
-                return false;
-            }
-        }
-        return false;
-    }
-
-    function waitForMermaid() {
-        return new Promise((resolve, reject) => {
-            const maxAttempts = 50;
-            let attempts = 0;
-
-            const checkMermaid = () => {
-                attempts++;
-                if (initializeMermaid()) {
-                    resolve();
-                } else if (attempts >= maxAttempts) {
-                    reject(new Error('Mermaid 库加载超时'));
-                } else {
-                    setTimeout(checkMermaid, 100);
-                }
-            };
-            checkMermaid();
         });
     }
 
@@ -1331,7 +1261,7 @@
                     return {
                         fullMatch: blockInfo.fullMatch,
                         sourceLine: blockInfo.sourceLine,
-                        html: buildMermaidChartHtml(chartId, svg)
+                        html: renderCore.wrapMermaidChartHtml(chartId, svg)
                     };
                 } catch (error) {
                     console.error('渲染Mermaid图表失败: ' + chartId, error);
@@ -1399,17 +1329,9 @@
         }
     }
 
-    /** 生成带缩放控件的 Mermaid 图表 HTML（预览与导出共用结构） */
+    /** 生成带缩放控件的 Mermaid 图表 HTML（委托共享 core） */
     function buildMermaidChartHtml(chartId, svg) {
-        return '<div class="mermaid-chart" data-chart-id="' + chartId + '">' +
-            '<div class="mermaid-controls">' +
-            '<button type="button" class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
-            '<button type="button" class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
-            '<button type="button" class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>' +
-            '</div>' +
-            '<div class="mermaid-zoom-info" id="zoom-info-' + chartId + '">100%</div>' +
-            svg +
-            '</div>';
+        return renderCore.wrapMermaidChartHtml(chartId, svg);
     }
 
     function appendMermaidControlsToChart(chart) {
@@ -1996,22 +1918,21 @@
                 if (message.theme === currentMermaidTheme) {
                     break;
                 }
-                if (mermaidInitialized && typeof mermaid === 'object' && typeof mermaid.initialize === 'function') {
-                    try {
-                        const isHandDrawn = message.theme === 'hand-drawn';
-                        const config = isHandDrawn ? buildMermaidConfig(true) : { theme: message.theme };
-                        mermaid.initialize({
-                            ...mermaid.defaultConfig,
-                            ...config
-                        });
+                try {
+                    const isHandDrawn = message.theme === 'hand-drawn';
+                    if (renderCore.reinitializeMermaid({
+                        handDrawnEnabled: isHandDrawn,
+                        theme: isHandDrawn ? undefined : message.theme
+                    })) {
                         currentMermaidTheme = message.theme;
                         if (window.markdownContent) {
                             updatePreview(window.markdownContent);
                         }
-                    } catch (error) {
-                        console.error('设置Mermaid主题失败:', error);
+                    } else {
+                        currentMermaidTheme = message.theme;
                     }
-                } else {
+                } catch (error) {
+                    console.error('设置Mermaid主题失败:', error);
                     currentMermaidTheme = message.theme;
                 }
                 break;

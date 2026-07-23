@@ -8,9 +8,11 @@
  *
  * 用法：
  *   var core = window.MarkdownRenderCore.create({ handDrawnEnabled: false });
- *   await core.waitForLibs();
+ *   await core.waitForLibs();                    // 注释预览：marked + mermaid + highlight
+ *   await core.waitForMermaid();                 // 文件预览：仅 mermaid（marked 自管）
  *   var html = await core.renderMarkdownToHtml(markdownText);
- *   // 主题切换：core.reinitializeMermaid({ handDrawnEnabled: true })
+ *   core.wrapMermaidChartHtml(id, svg);          // 或 MarkdownRenderCore.wrapMermaidChartHtml
+ *   core.reinitializeMermaid({ handDrawnEnabled, theme });
  *
  * 渲染顺序（勿随意调换）：
  *   1. ${标签} 占位（避免被 KaTeX 的 $ 正则误伤）
@@ -24,14 +26,15 @@
 (function (global) {
     'use strict';
 
-    /** @param {boolean} handDrawnEnabled */
-    function buildMermaidConfig(handDrawnEnabled) {
+    /** @param {boolean} handDrawnEnabled @param {string} [theme] */
+    function buildMermaidConfig(handDrawnEnabled, theme) {
         var config = {
             startOnLoad: false,
-            theme: 'default',
+            theme: theme || 'default',
             flowchart: {
                 useMaxWidth: true,
-                htmlLabels: true
+                htmlLabels: true,
+                curve: handDrawnEnabled ? 'basis' : 'linear'
             },
             sequence: {
                 useMaxWidth: true
@@ -58,16 +61,21 @@
      * @param {string} chartId
      * @param {string} svg
      */
-    function wrapMermaidSvg(chartId, svg) {
+    function wrapMermaidChartHtml(chartId, svg) {
         return '<div class="mermaid-chart" data-chart-id="' + chartId + '">' +
             '<div class="mermaid-controls">' +
-            '<button class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
-            '<button class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
-            '<button class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>' +
+            '<button type="button" class="mermaid-control-btn" title="放大" onclick="zoomChart(\'' + chartId + '\', 1.2)">+</button>' +
+            '<button type="button" class="mermaid-control-btn" title="缩小" onclick="zoomChart(\'' + chartId + '\', 0.8)">−</button>' +
+            '<button type="button" class="mermaid-control-btn" title="重置" onclick="resetChart(\'' + chartId + '\')">↺</button>' +
             '</div>' +
             '<div class="mermaid-zoom-info" id="zoom-info-' + chartId + '">100%</div>' +
             svg +
             '</div>';
+    }
+
+    /** @deprecated 使用 wrapMermaidChartHtml */
+    function wrapMermaidSvg(chartId, svg) {
+        return wrapMermaidChartHtml(chartId, svg);
     }
 
     /**
@@ -141,15 +149,16 @@
 
         /**
          * @param {boolean} [handDrawn] 传入则更新手绘开关后再 initialize
+         * @param {string} [theme] Mermaid 主题名（非手绘时常用）
          */
-        function initializeMermaid(handDrawn) {
+        function initializeMermaid(handDrawn, theme) {
             if (typeof handDrawn === 'boolean') {
                 handDrawnEnabled = handDrawn;
             }
             if (typeof mermaid === 'undefined') {
                 return false;
             }
-            mermaid.initialize(buildMermaidConfig(handDrawnEnabled));
+            mermaid.initialize(buildMermaidConfig(handDrawnEnabled, theme));
             mermaidInitialized = true;
             return true;
         }
@@ -288,21 +297,29 @@
 
         /**
          * 切换手绘/主题后调用；会清空 libsPromise，下次 waitForLibs / render 可重新走初始化。
-         * @param {{ handDrawnEnabled?: boolean }} [opts]
+         * @param {{ handDrawnEnabled?: boolean, theme?: string }} [opts]
          */
         function reinitializeMermaid(opts) {
             opts = opts || {};
             libsPromise = null;
             mermaidInitialized = false;
-            return initializeMermaid(!!opts.handDrawnEnabled);
+            var handDrawn = !!opts.handDrawnEnabled;
+            var theme = opts.theme;
+            return initializeMermaid(handDrawn, theme);
         }
 
         return {
             waitForLibs: waitForLibs,
+            /** 仅等待 Mermaid（preview 自管 marked 初始化时用，避免覆盖行号 Renderer） */
+            waitForMermaid: waitForMermaid,
+            wrapMermaidChartHtml: wrapMermaidChartHtml,
             renderMarkdownToHtml: renderMarkdownToHtml,
             reinitializeMermaid: reinitializeMermaid
         };
     }
 
-    global.MarkdownRenderCore = { create: create };
+    global.MarkdownRenderCore = {
+        create: create,
+        wrapMermaidChartHtml: wrapMermaidChartHtml
+    };
 })(typeof window !== 'undefined' ? window : globalThis);

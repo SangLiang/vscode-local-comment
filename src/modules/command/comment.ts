@@ -359,7 +359,8 @@ export function registerCommentCommands(
                         lineContent: targetComment.lineContent || '',
                         contextLines: contextLines,
                         contextStartLine: contextStartLine,
-                        filePath: filePath
+                        filePath: filePath,
+                        commentContent: targetComment.content
                     };
                     
                     // 显示webview
@@ -1001,8 +1002,9 @@ export function registerCommentCommands(
             const contextInfo = {
                 fileName: fileName,
                 lineNumber: lineNumber,
-                lineContent: content as string,
-                filePath: documentUri.fsPath
+                lineContent: '',
+                filePath: documentUri.fsPath,
+                commentContent: content as string
             };
 
             // 导入并显示shareCommentWebview

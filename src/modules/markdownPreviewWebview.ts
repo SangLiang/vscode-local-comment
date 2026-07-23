@@ -234,7 +234,8 @@ export class MarkdownPreviewWebview {
             highlightCss: true,
             highlightTheme: highlightTheme,
             customResources: [
-                { path: 'src/templates/common/public.js', name: 'publicJsUri' }
+                { path: 'src/templates/common/public.js', name: 'publicJsUri' },
+                { path: 'src/templates/common/markdownRenderCore.js', name: 'markdownRenderCoreJsUri' }
             ]
         });
 
@@ -589,6 +590,10 @@ ${mermaidScript}
         const publicJsScript = publicJsUri
             ? '<script src="' + publicJsUri + '" onerror="console.error(\'public.js 加载失败\')"></script>'
             : '';
+        const coreJsUri = resourceUris?.markdownRenderCoreJsUri || '';
+        const coreJsScript = coreJsUri
+            ? '<script src="' + coreJsUri + '" onerror="console.error(\'markdownRenderCore.js 加载失败\')"></script>'
+            : '';
 
         const templateVariables: Record<string, string> = {
             fileName: WebviewUtils.escapeHtml(fileName),
@@ -603,6 +608,7 @@ ${mermaidScript}
             highlightCssUri: resourceUris.highlightCssUri || '',
             publicJsUri: publicJsUri,
             publicJsScript: publicJsScript,
+            coreJsScript: coreJsScript,
             cspSource: this.panel.webview.cspSource
         };
 
