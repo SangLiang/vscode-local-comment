@@ -109,7 +109,8 @@ export async function showMarkdownWebviewInput(
             highlightCss: true,
             highlightTheme: highlightTheme,
             customResources: [
-                { path: 'src/templates/common/public.js', name: 'publicJsUri' }
+                { path: 'src/templates/common/public.js', name: 'publicJsUri' },
+                { path: 'src/templates/common/markdownRenderCore.js', name: 'markdownRenderCoreJsUri' }
             ]
         });
 
@@ -623,10 +624,14 @@ function getMarkdownWebviewContent(
     contextHtml += '</div>'; // 结束context-tabs
     contextHtml += '</div>'; // 结束context-info
 
-    // 计算 publicJsScript 的值
+    // 计算 publicJsScript / coreJsScript 的值
     const publicJsUri = resourceUris?.publicJsUri || '';
     const publicJsScript = publicJsUri 
         ? `<script src="${publicJsUri}" onerror="console.error('public.js 加载失败')"></script>`
+        : '';
+    const coreJsUri = resourceUris?.markdownRenderCoreJsUri || '';
+    const coreJsScript = coreJsUri
+        ? `<script src="${coreJsUri}" onerror="console.error('markdownRenderCore.js 加载失败')"></script>`
         : '';
 
     // 准备模板变量
@@ -645,6 +650,7 @@ function getMarkdownWebviewContent(
         highlightCssUri: highlightCssUri || '',
         publicJsUri: publicJsUri,
         publicJsScript: publicJsScript,
+        coreJsScript: coreJsScript,
         tagSuggestions: tagSuggestions,
         cspSource: webview ? webview.cspSource : "'self'", // 从webview获取CSP源
         shareButtonHtml: (isUserLoggedIn && !isCommentShared) ? 

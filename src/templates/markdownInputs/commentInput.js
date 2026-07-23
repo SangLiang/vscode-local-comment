@@ -5,13 +5,11 @@
     /** 打开面板时磁盘/模板上的正文，用于 dirty 判断（早于 getState 恢复） */
     const diskCommittedBaseline = textarea.value;
     let previewVisible = false;
-    let markedInitialized = false;
-    let mermaidInitialized = false;
     let currentPreviewFontSize = null; // 保存当前预览字体大小
 
-
+    const renderCore = window.MarkdownRenderCore.create();
     // 全局、一次性的初始化任务
-    const initializationPromise = Promise.all([waitForMarked(), waitForMermaid(), (typeof window.waitForHighlight === 'function' ? window.waitForHighlight() : Promise.resolve())])
+    const initializationPromise = renderCore.waitForLibs()
         .catch(error => {
             console.error("关键库初始化失败:", error);
             // 可以在预览区域显示一个永久性的错误
@@ -150,147 +148,6 @@
             currentTab: currentTab
         });
     }
-    
-    // 初始化marked
-    function initializeMarked() {
-        if (typeof marked !== 'undefined' && !markedInitialized) {
-            // 配置代码高亮渲染器
-            const renderer = new marked.Renderer();
-            const originalCode = renderer.code;
-            
-            renderer.code = function(code, language) {
-                // mermaid 不交给 highlight.js，否则 language-mermaid 会被覆盖为自动识别的语言
-                if (language === 'mermaid') {
-                    return `<pre><code class="language-mermaid">${code}</code></pre>`;
-                }
-                // 如果没有指定语言，使用原始渲染
-                if (!language) {
-                    return originalCode.call(this, code, language);
-                }
-                
-                // 如果 highlight.js 已加载，使用它进行高亮
-                if (typeof hljs !== 'undefined') {
-                    try {
-                        if (hljs.getLanguage(language)) {
-                            const highlighted = hljs.highlight(code, { language: language }).value;
-                            return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
-                        } else {
-                            const result = hljs.highlightAuto(code);
-                            return `<pre><code class="hljs language-${result.language}">${result.value}</code></pre>`;
-                        }
-                    } catch (error) {
-                        // 如果高亮失败，使用原始渲染
-                        console.warn('代码高亮失败:', error);
-                        return originalCode.call(this, code, language);
-                    }
-                } else {
-                    // highlight.js 未加载，使用原始渲染
-                    return originalCode.call(this, code, language);
-                }
-            };
-            
-            marked.setOptions({
-                breaks: true,
-                gfm: true,
-                sanitize: false,
-                renderer: renderer
-            });
-            markedInitialized = true;
-            return true;
-        }
-        return false;
-    }
-
-    // 等待marked库加载完成
-    function waitForMarked() {
-        return new Promise((resolve) => {
-            const checkMarked = () => {
-                if (initializeMarked()) {
-                    resolve();
-                } else {
-                    setTimeout(checkMarked, 100);
-                }
-            };
-            checkMarked();
-        });
-    }
-
-    // 构建Mermaid配置（可选启用手绘风格）
-    function buildMermaidConfig(handDrawnEnabled) {
-        const config = {
-            startOnLoad: false,
-            theme: 'default',
-            flowchart: {
-                useMaxWidth: true,
-                htmlLabels: true
-            },
-            sequence: {
-                useMaxWidth: true
-            },
-            gantt: {
-                useMaxWidth: true
-            }
-        };
-
-        if (handDrawnEnabled) {
-            config.look = 'handDrawn';
-            config.handDrawn = {
-                jitter: 5,       // 提升线条抖动程度
-                roughness: 5,  // 提升线条粗糙度
-                seed: 20         // 保持一致性的随机种子
-            };
-        }
-
-        return config;
-    }
-
-    // 初始化mermaid
-    function initializeMermaid(handDrawnEnabled = false) {
-        if (typeof mermaid !== 'undefined') {
-            mermaid.initialize(buildMermaidConfig(handDrawnEnabled));
-            mermaidInitialized = true;
-            return true;
-        }
-        return false;
-    }
-
-    // 等待mermaid库加载完成
-    function waitForMermaid() {
-        return new Promise((resolve, reject) => {
-            if (mermaidInitialized) {
-                resolve();
-                return;
-            }
-            let attempts = 0;
-            const maxAttempts = 50; // 最多等待5秒
-            
-            const checkMermaid = () => {
-                if (mermaidInitialized) {
-                    resolve();
-                    return;
-                }
-
-                attempts++;
-                
-                if (typeof mermaid !== 'undefined') {
-                    if (initializeMermaid()) {
-                        console.log('mermaid库初始化成功');
-                        resolve();
-                    }
-                } else {
-                    console.log('等待mermaid库加载...', attempts);
-                    if (attempts >= maxAttempts) {
-                        reject(new Error('mermaid库加载超时'));
-                    } else {
-                        setTimeout(checkMermaid, 100);
-                    }
-                }
-            };
-            checkMermaid();
-        });
-    }
-
-
 
     // 更新预览内容
     async function updatePreview(content) {
@@ -300,107 +157,13 @@
                 return;
             }
 
-            // 等待关键库初始化完成
             await initializationPromise;
+            const finalHtmlWithSvg = await renderCore.renderMarkdownToHtml(content);
 
-            // 1. 预处理Markdown，先处理标签声明 ${标签名}（必须在 LaTeX 处理之前）
-            // 将 ${标签名} 替换为占位符，避免被 LaTeX 正则误匹配
-            const tagPlaceholders = new Map();
-            let processedContent = content.replace(/\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g, (match, tagName) => {
-                const placeholder = `__TAG_DECL_PLACEHOLDER_${tagPlaceholders.size}__`;
-                tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
-                return placeholder;
-            });
-
-            // 2. 处理 @标签引用并添加点击事件
-            processedContent = processedContent.replace(/@([\u4e00-\u9fa5a-zA-Z0-9_]+)/g, '<span class="tag-link" data-tag="$1" style="color: var(--vscode-symbolIcon-functionForeground); font-weight: bold; cursor: pointer; text-decoration: underline;">@$1</span>');
-
-            // 3. 查找所有的Mermaid代码块
-            const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
-            const mermaidBlocks = [...processedContent.matchAll(mermaidRegex)];
-            console.log(`找到 ${mermaidBlocks.length} 个Mermaid代码块`);
-
-            // 3. 异步渲染所有的Mermaid图表为SVG字符串
-            const svgPromises = mermaidBlocks.map(async (match, index) => {
-                const chartDefinition = match[1].trim();
-                const chartId = `mermaid-chart-${Date.now()}-${index}`;
-                try {
-                    console.log(`开始在内存中渲染图表: ${chartId}`);
-                    const { svg } = await mermaid.render(chartId, chartDefinition);
-                    console.log(`成功渲染图表: ${chartId}`);
-                    // 将SVG包裹在一个div中，添加控制按钮和交互功能
-                    return `<div class="mermaid-chart" data-chart-id="${chartId}">
-                        <div class="mermaid-controls">
-                            <button class="mermaid-control-btn" title="放大" onclick="zoomChart('${chartId}', 1.2)">+</button>
-                            <button class="mermaid-control-btn" title="缩小" onclick="zoomChart('${chartId}', 0.8)">−</button>
-                            <button class="mermaid-control-btn" title="重置" onclick="resetChart('${chartId}')">↺</button>
-                        </div>
-                        <div class="mermaid-zoom-info" id="zoom-info-${chartId}">100%</div>
-                        ${svg}
-                    </div>`;
-                } catch (error) {
-                    console.error(`渲染Mermaid图表失败: ${chartId}`, error);
-                    return `<div class="mermaid-error">图表渲染失败: ${error.message}<pre>${chartDefinition}</pre></div>`;
-                }
-            });
-
-            const renderedSvgs = await Promise.all(svgPromises);
-
-            // 4. 保留 processedContent（Mermaid 代码块仍是文本），先做 LaTeX 和标签占位符处理
-            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
-            let finalContent = processedContent;
-
-            // 5. 处理 LaTeX 公式（在 marked.parse 之前，此时 ${标签名} 已被占位符替换）
-            if (typeof katex !== 'undefined') {
-                try {
-                    // 先处理块级公式 $$...$$（避免被行内公式正则误匹配）
-                    finalContent = finalContent.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-                        try {
-                            return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
-                        } catch (error) {
-                            console.error('KaTeX 块级公式渲染失败:', error);
-                            return `<span class="katex-error">公式渲染失败: ${formula}</span>`;
-                        }
-                    });
-
-                    // 再处理行内公式 $...$（使用负向前瞻/后顾避免匹配 $$）
-                    finalContent = finalContent.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, formula) => {
-                        try {
-                            return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
-                        } catch (error) {
-                            console.error('KaTeX 行内公式渲染失败:', error);
-                            return `<span class="katex-error">公式渲染失败: ${formula}</span>`;
-                        }
-                    });
-                } catch (error) {
-                    console.error('LaTeX 公式处理失败:', error);
-                }
-            } else {
-                console.warn('KaTeX 未加载，无法渲染 LaTeX 公式');
-            }
-
-            // 6. 恢复标签声明占位符为 HTML 格式（在 marked.parse 之前）
-            tagPlaceholders.forEach((tagInfo, placeholder) => {
-                finalContent = finalContent.replace(placeholder, `<span class="tag-declaration" style="color: var(--vscode-symbolIcon-variableForeground); font-weight: bold;">${tagInfo.original}</span>`);
-            });
-
-            // 7. 使用marked将整个内容（包括已插入的SVG和LaTeX公式）转换为HTML
-            const finalHtml = marked.parse(finalContent);
-
-            // 7.1 marked 解析后再将 Mermaid 代码块占位符替换为已渲染的 SVG
-            // 避免把含 <style> 的 SVG 直接交给 marked，导致 style 内容被当成文本输出
-            let svgIndex = 0;
-            const mermaidCodeBlockRegex = /<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/g;
-            const finalHtmlWithSvg = finalHtml.replace(mermaidCodeBlockRegex, () => {
-                return renderedSvgs[svgIndex++] || '';
-            });
-
-            // 8. 一次性更新DOM（更新前保存输入框滚动比例，更新后恢复预览滚动，避免输入时预览总回到顶部）
+            // 一次性更新DOM（更新前保存输入框滚动比例，更新后恢复预览滚动，避免输入时预览总回到顶部）
             const inputMax = textarea.scrollHeight - textarea.clientHeight;
-            const inputRatio = inputMax > 0 ? textarea.scrollTop / inputMax : 0; // 0~1，表示当前看到的是全文的多少比例
+            const inputRatio = inputMax > 0 ? textarea.scrollTop / inputMax : 0;
             previewArea.innerHTML = finalHtmlWithSvg || '<p>预览生成失败</p>';
-            console.log("预览区域已使用包含SVG的完整HTML更新。");
-            // 下一帧再设置 scrollTop：等新 DOM 布局完成后再按比例恢复预览滚动位置
             requestAnimationFrame(function() {
                 const previewMax = previewArea.scrollHeight - previewArea.clientHeight;
                 if (previewMax > 0 && inputRatio >= 0) {
@@ -408,19 +171,16 @@
                 }
             });
             
-            // 应用字体大小（如果有设置）
             if (currentPreviewFontSize && typeof window.applyPreviewFontSize === 'function') {
                 window.applyPreviewFontSize(previewArea, currentPreviewFontSize);
             }
             
-            // 7. 为@tag链接添加点击事件
             const tagLinks = previewArea.querySelectorAll('.tag-link');
             tagLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const tagName = this.getAttribute('data-tag');
                     if (tagName) {
-                        // 发送跳转到tag声明的消息
                         vscode.postMessage({
                             command: 'goToTagDeclaration',
                             tagName: tagName
@@ -428,15 +188,6 @@
                     }
                 });
             });
-
-            // 8. 检查最终结果
-            const allMermaidCharts = previewArea.querySelectorAll('.mermaid-chart');
-            console.log(`最终在DOM中找到 ${allMermaidCharts.length} 个Mermaid图表容器`);
-            allMermaidCharts.forEach((chart, index) => {
-                const rect = chart.getBoundingClientRect();
-                console.log(`图表 ${index + 1} (${chart.id}) 尺寸: width=${rect.width}, height=${rect.height}`);
-            });
-
         } catch (error) {
             console.error('预览更新失败:', error);
             previewArea.innerHTML = '<p>预览生成失败，请重试</p>';
@@ -518,7 +269,7 @@
             updateCurrentLineContent(message.lineContent, message.lineNumber);
         } else if (message.command === 'setMermaidTheme') {
             const handDrawn = message.theme === 'hand-drawn';
-            if (initializeMermaid(handDrawn)) {
+            if (renderCore.reinitializeMermaid({ handDrawnEnabled: handDrawn })) {
                 console.log(`Mermaid 主题已设置为: ${message.theme}`);
                 if (currentTab === 'preview-tab' && textarea.value) {
                     updatePreview(textarea.value);

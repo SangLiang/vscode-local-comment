@@ -50,6 +50,7 @@ export async function showShareCommentWebview(
             retainContextWhenHidden: true,  // 用户切换tab时，保留状态
             localResourceRoots: [
                 vscode.Uri.joinPath(context.extensionUri, 'src', 'templates', 'shareComment'),
+                vscode.Uri.joinPath(context.extensionUri, 'src', 'templates', 'common'),
                 vscode.Uri.joinPath(context.extensionUri, 'src', 'lib'),
                 vscode.Uri.joinPath(context.extensionUri, 'out', 'lib')  // 添加 out/lib 以支持打包后的库文件
             ],
@@ -74,7 +75,8 @@ export async function showShareCommentWebview(
         highlightCss: true,
         highlightTheme: highlightTheme,
         customResources: [
-            { path: 'src/templates/common/public.js', name: 'publicJsUri' }
+            { path: 'src/templates/common/public.js', name: 'publicJsUri' },
+            { path: 'src/templates/common/markdownRenderCore.js', name: 'markdownRenderCoreJsUri' }
         ]
     });
 
@@ -349,10 +351,14 @@ function getShareCommentWebviewContent(
         contextHtml += '</div>';
     }
 
-    // 计算 publicJsScript 的值
+    // 计算 publicJsScript / coreJsScript 的值
     const publicJsUri = resourceUris?.publicJsUri || '';
     const publicJsScript = publicJsUri 
         ? `<script src="${publicJsUri}" onerror="console.error('public.js 加载失败')"></script>`
+        : '';
+    const coreJsUri = resourceUris?.markdownRenderCoreJsUri || '';
+    const coreJsScript = coreJsUri
+        ? `<script src="${coreJsUri}" onerror="console.error('markdownRenderCore.js 加载失败')"></script>`
         : '';
 
     // 准备模板变量
@@ -369,6 +375,7 @@ function getShareCommentWebviewContent(
         highlightCssUri: highlightCssUri || '',
         publicJsUri: publicJsUri,
         publicJsScript: publicJsScript,
+        coreJsScript: coreJsScript,
         cspSource: webview ? webview.cspSource : "'self'"
     };
 
