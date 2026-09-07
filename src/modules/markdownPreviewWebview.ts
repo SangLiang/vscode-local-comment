@@ -240,7 +240,8 @@ export class MarkdownPreviewWebview {
             css: 'markdownPreview/preview.css',
             js: 'markdownPreview/preview.js',
             extraCustomResources: [
-                { path: 'src/templates/markdownPreview/previewToc.js', name: 'previewTocJsUri' }
+                { path: 'src/templates/markdownPreview/previewToc.js', name: 'previewTocJsUri' },
+                { path: 'src/templates/markdownPreview/previewExport.js', name: 'previewExportJsUri' }
             ]
         }));
 
@@ -631,7 +632,8 @@ ${mermaidScript}
 
         const scriptTags = buildMarkdownScriptTags(resourceUris, {
             includePreviewFind: true,
-            includePreviewToc: true
+            includePreviewToc: true,
+            includePreviewExport: true
         });
 
         const templateVariables: Record<string, string> = {
@@ -651,6 +653,7 @@ ${mermaidScript}
             coreJsScript: scriptTags.coreJsScript,
             previewFindJsScript: scriptTags.previewFindJsScript,
             previewTocJsScript: scriptTags.previewTocJsScript,
+            previewExportJsScript: scriptTags.previewExportJsScript,
             cspSource: this.panel.webview.cspSource
         };
 

@@ -382,6 +382,8 @@ export interface MarkdownScriptTagsOptions {
     includePreviewFind?: boolean;
     /** 是否生成 previewToc.js 的 script 标签（仅 .md 预览页需要）。默认 false */
     includePreviewToc?: boolean;
+    /** 是否生成 previewExport.js 的 script 标签（仅 .md 预览页需要）。默认 false */
+    includePreviewExport?: boolean;
 }
 
 /**
@@ -393,6 +395,7 @@ export interface MarkdownScriptTags {
     coreJsScript: string;
     previewFindJsScript: string;
     previewTocJsScript: string;
+    previewExportJsScript: string;
 }
 
 /**
@@ -411,7 +414,8 @@ export function buildMarkdownScriptTags(
         mermaidInteractJsScript: script(resourceUris.mermaidChartInteractJsUri, 'mermaidChartInteract.js'),
         coreJsScript: script(resourceUris.markdownRenderCoreJsUri, 'markdownRenderCore.js'),
         previewFindJsScript: opts.includePreviewFind ? script(resourceUris.previewFindJsUri, 'previewFind.js') : '',
-        previewTocJsScript: opts.includePreviewToc ? script(resourceUris.previewTocJsUri, 'previewToc.js') : ''
+        previewTocJsScript: opts.includePreviewToc ? script(resourceUris.previewTocJsUri, 'previewToc.js') : '',
+        previewExportJsScript: opts.includePreviewExport ? script(resourceUris.previewExportJsUri, 'previewExport.js') : ''
     };
 }
 

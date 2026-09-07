@@ -231,13 +231,14 @@ describe('postMarkdownPreviewConfig', () => {
 });
 
 describe('buildMarkdownScriptTags', () => {
-    it('默认不生成 previewFind / previewToc 标签', () => {
+    it('默认不生成 previewFind / previewToc / previewExport 标签', () => {
         const tags = buildMarkdownScriptTags({
             publicJsUri: 'webview://public.js',
             mermaidChartInteractJsUri: 'webview://mermaid.js',
             markdownRenderCoreJsUri: 'webview://core.js',
             previewFindJsUri: 'webview://find.js',
-            previewTocJsUri: 'webview://toc.js'
+            previewTocJsUri: 'webview://toc.js',
+            previewExportJsUri: 'webview://export.js'
         });
 
         expect(tags.publicJsScript).toContain('webview://public.js');
@@ -245,6 +246,7 @@ describe('buildMarkdownScriptTags', () => {
         expect(tags.coreJsScript).toContain('webview://core.js');
         expect(tags.previewFindJsScript).toBe('');
         expect(tags.previewTocJsScript).toBe('');
+        expect(tags.previewExportJsScript).toBe('');
     });
 
     it('includePreviewFind=true 时生成 previewFind 标签', () => {
@@ -262,6 +264,21 @@ describe('buildMarkdownScriptTags', () => {
         expect(tags.previewFindJsScript).toContain('previewFind.js 加载失败');
     });
 
+    it('includePreviewExport=true 时生成 previewExport 标签', () => {
+        const tags = buildMarkdownScriptTags(
+            {
+                publicJsUri: 'webview://public.js',
+                mermaidChartInteractJsUri: 'webview://mermaid.js',
+                markdownRenderCoreJsUri: 'webview://core.js',
+                previewExportJsUri: 'webview://export.js'
+            },
+            { includePreviewExport: true }
+        );
+
+        expect(tags.previewExportJsScript).toContain('webview://export.js');
+        expect(tags.previewExportJsScript).toContain('previewExport.js 加载失败');
+    });
+
     it('uri 缺失时对应标签为空字符串', () => {
         const tags = buildMarkdownScriptTags({});
 
@@ -270,6 +287,7 @@ describe('buildMarkdownScriptTags', () => {
         expect(tags.coreJsScript).toBe('');
         expect(tags.previewFindJsScript).toBe('');
         expect(tags.previewTocJsScript).toBe('');
+        expect(tags.previewExportJsScript).toBe('');
     });
 });
 

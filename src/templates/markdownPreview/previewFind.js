@@ -107,16 +107,26 @@
         );
     }
 
+    function unwrapFindMarks(root) {
+        if (!root) {
+            return;
+        }
+        const marks = root.querySelectorAll('mark.' + FIND_MARK_CLASS);
+        marks.forEach(function(mark) {
+            if (!mark.parentNode) {
+                return;
+            }
+            const textNode = document.createTextNode(mark.textContent);
+            mark.parentNode.replaceChild(textNode, mark);
+        });
+        root.normalize();
+    }
+
     function clearFindHighlights() {
         if (!previewArea) {
             return;
         }
-        const marks = previewArea.querySelectorAll('mark.' + FIND_MARK_CLASS);
-        marks.forEach(function(mark) {
-            const textNode = document.createTextNode(mark.textContent);
-            mark.parentNode.replaceChild(textNode, mark);
-        });
-        previewArea.normalize();
+        unwrapFindMarks(previewArea);
         previewFindState.matches = [];
         previewFindState.currentIndex = 0;
     }
@@ -389,6 +399,7 @@
 
     global.PreviewFind = {
         init: init,
-        restoreAfterRender: restoreAfterRender
+        restoreAfterRender: restoreAfterRender,
+        unwrapMarks: unwrapFindMarks
     };
 })(typeof window !== 'undefined' ? window : this);
