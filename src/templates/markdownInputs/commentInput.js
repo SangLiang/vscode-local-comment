@@ -312,19 +312,20 @@
             previewVisible = true;
         }
 
+        const container = document.querySelector('.container');
         const toggleButton = document.getElementById('toggle-preview-size-btn');
         if (toggleButton) {
             toggleButton.classList.toggle('is-hidden', targetTab !== 'preview-tab');
         }
-        if (targetTab !== 'preview-tab') {
-            const container = document.querySelector('.container');
-            if (container) {
+        if (container) {
+            container.classList.toggle('graph-fullscreen', targetTab === 'tag-graph-tab');
+            if (targetTab !== 'preview-tab') {
                 container.classList.remove('maximized');
             }
-            if (toggleButton) {
-                toggleButton.title = '编辑/预览';
-                toggleButton.textContent = '预览';
-            }
+        }
+        if (targetTab !== 'preview-tab' && toggleButton) {
+            toggleButton.title = '编辑/预览';
+            toggleButton.textContent = '预览';
         }
 
         if (targetTab === 'tag-graph-tab') {
@@ -333,9 +334,11 @@
                 content: textarea.value
             });
             requestAnimationFrame(function() {
-                if (window.TagRelationGraphView) {
-                    window.TagRelationGraphView.resize();
-                }
+                requestAnimationFrame(function() {
+                    if (window.TagRelationGraphView) {
+                        window.TagRelationGraphView.resize();
+                    }
+                });
             });
         }
         
