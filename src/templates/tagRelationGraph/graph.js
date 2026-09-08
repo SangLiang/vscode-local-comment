@@ -1,28 +1,33 @@
 (function() {
-    const vscode = acquireVsCodeApi();
+    const DEFAULT_COMMANDS = {
+        expandNode: 'expandNode',
+        goToDefinition: 'goToDefinition',
+        navigateBack: 'navigateBack',
+        resetToRoot: 'resetToRoot',
+        navigateToLevel: 'navigateToLevel',
+        refresh: 'refresh'
+    };
+
+    let vscodeApi = null;
+    let containerEl = null;
+    let chrome = {};
+    let commands = Object.assign({}, DEFAULT_COMMANDS);
+    let skipCenterJump = false;
+    let onReset = null;
     let cy = null;
-    let graphData = null;
     let breadcrumbPath = [];
+    let chromeBound = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        initEventListeners();
-    });
-
-    function initEventListeners() {
-        document.getElementById('btn-refresh').addEventListener('click', () => {
-            vscode.postMessage({ command: 'refresh' });
-        });
-        document.getElementById('btn-back').addEventListener('click', () => {
-            vscode.postMessage({ command: 'navigateBack' });
-        });
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            vscode.postMessage({ command: 'resetToRoot' });
-        });
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     function applyLayout() {
-        if (!cy) return;
-
+        if (!cy) {
+            return;
+        }
         cy.layout({
             name: 'cose',
             padding: 20,
@@ -34,20 +39,113 @@
         }).run();
     }
 
-    function renderGraph(data) {
-        graphData = data;
-        breadcrumbPath = data.breadcrumb || [];
-        
-        updateBreadcrumb();
-        updateStatus(data);
+    function showEmptyState(message) {
+        if (!containerEl) {
+            return;
+        }
+        if (cy) {
+            cy.destroy();
+            cy = null;
+        }
+        containerEl.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <div>${escapeHtml(message)}</div>
+            </div>
+        `;
+    }
 
-        if (!data.nodes || data.nodes.length === 0) {
+    function updateStatus(data) {
+        if (!chrome.status) {
+            return;
+        }
+        const levelText = data.level === 0 ? '当前层' : `第 ${data.level} 层`;
+        const countText = data.nodes ? `共 ${data.nodes.length - 1} 个引用` : '';
+        chrome.status.textContent = `${levelText} ${countText}`;
+    }
+
+    function updateBreadcrumb() {
+        const breadcrumb = chrome.breadcrumb;
+        if (!breadcrumb) {
+            return;
+        }
+        if (!breadcrumbPath.length) {
+            breadcrumb.innerHTML = '';
+            if (chrome.btnBack) {
+                chrome.btnBack.disabled = true;
+            }
+            return;
+        }
+
+        const html = breadcrumbPath.map((item, index) => {
+            const isLast = index === breadcrumbPath.length - 1;
+            const span = `<span class="breadcrumb-item ${isLast ? 'current' : ''}" data-index="${index}">${escapeHtml(item.label)}</span>`;
+            if (isLast) {
+                return span;
+            }
+            return span + '<span class="breadcrumb-separator">></span>';
+        }).join('');
+        breadcrumb.innerHTML = html;
+
+        breadcrumb.querySelectorAll('.breadcrumb-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index, 10);
+                vscodeApi.postMessage({
+                    command: commands.navigateToLevel,
+                    level: index
+                });
+            });
+        });
+
+        if (chrome.btnBack) {
+            chrome.btnBack.disabled = breadcrumbPath.length <= 1;
+        }
+    }
+
+    function bindChrome() {
+        if (chromeBound) {
+            return;
+        }
+        chromeBound = true;
+        if (chrome.btnRefresh) {
+            chrome.btnRefresh.addEventListener('click', () => {
+                vscodeApi.postMessage({ command: commands.refresh });
+            });
+        }
+        if (chrome.btnBack) {
+            chrome.btnBack.addEventListener('click', () => {
+                vscodeApi.postMessage({ command: commands.navigateBack });
+            });
+        }
+        if (chrome.btnReset) {
+            chrome.btnReset.addEventListener('click', () => {
+                if (typeof onReset === 'function') {
+                    onReset();
+                    return;
+                }
+                vscodeApi.postMessage({ command: commands.resetToRoot });
+            });
+        }
+    }
+
+    function render(data) {
+        breadcrumbPath = data && data.breadcrumb ? data.breadcrumb : [];
+        updateBreadcrumb();
+        updateStatus(data || {});
+
+        if (!data || !data.nodes || data.nodes.length === 0) {
             showEmptyState('当前文件未引用任何 tag');
             return;
         }
 
-        const container = document.getElementById('graph-container');
-        container.innerHTML = '';
+        if (!containerEl) {
+            return;
+        }
+        if (cy) {
+            cy.destroy();
+            cy = null;
+        }
+        containerEl.innerHTML = '';
 
         const elements = [
             ...data.nodes.map(n => ({
@@ -71,7 +169,7 @@
         ];
 
         cy = cytoscape({
-            container: container,
+            container: containerEl,
             elements: elements,
             maxZoom: 1.5,
             style: [
@@ -138,8 +236,11 @@
             const label = node.data('label');
 
             if (type === 'center') {
-                vscode.postMessage({
-                    command: 'goToDefinition',
+                if (skipCenterJump) {
+                    return;
+                }
+                vscodeApi.postMessage({
+                    command: commands.goToDefinition,
                     filePath: filePath,
                     line: line
                 });
@@ -148,15 +249,15 @@
 
             if (type === 'tag') {
                 if (hasChildren) {
-                    vscode.postMessage({
-                        command: 'expandNode',
+                    vscodeApi.postMessage({
+                        command: commands.expandNode,
                         nodeId: id,
                         filePath: filePath,
                         label: label
                     });
                 } else {
-                    vscode.postMessage({
-                        command: 'goToDefinition',
+                    vscodeApi.postMessage({
+                        command: commands.goToDefinition,
                         filePath: filePath,
                         line: line
                     });
@@ -167,67 +268,29 @@
         applyLayout();
     }
 
-    function updateBreadcrumb() {
-        const container = document.getElementById('breadcrumb');
-        if (!breadcrumbPath.length) {
-            container.innerHTML = '';
+    function resize() {
+        if (!cy) {
             return;
         }
-
-        const html = breadcrumbPath.map((item, index) => {
-            const isLast = index === breadcrumbPath.length - 1;
-            const span = `<span class="breadcrumb-item ${isLast ? 'current' : ''}" data-index="${index}">${escapeHtml(item.label)}</span>`;
-            if (isLast) return span;
-            return span + '<span class="breadcrumb-separator">></span>';
-        }).join('');
-
-        container.innerHTML = html;
-
-        container.querySelectorAll('.breadcrumb-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                vscode.postMessage({
-                    command: 'navigateToLevel',
-                    level: index
-                });
-            });
-        });
-
-        document.getElementById('btn-back').disabled = breadcrumbPath.length <= 1;
+        cy.resize();
+        applyLayout();
     }
 
-    function updateStatus(data) {
-        const status = document.getElementById('status');
-        const levelText = data.level === 0 ? '文件层' : `第 ${data.level} 层`;
-        const countText = data.nodes ? `共 ${data.nodes.length - 1} 个引用` : '';
-        status.textContent = `${levelText} ${countText}`;
+    function init(options) {
+        vscodeApi = options.vscode;
+        containerEl = options.container;
+        chrome = options.chrome || {};
+        commands = Object.assign({}, DEFAULT_COMMANDS, options.commands || {});
+        skipCenterJump = options.skipCenterJump === true;
+        onReset = options.onReset;
+        chromeBound = false;
+        bindChrome();
     }
 
-    function showEmptyState(message) {
-        const container = document.getElementById('graph-container');
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📊</div>
-                <div>${escapeHtml(message)}</div>
-            </div>
-        `;
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    window.addEventListener('message', (event) => {
-        const message = event.data;
-        switch (message.command) {
-            case 'updateGraph':
-                renderGraph(message.data);
-                break;
-            case 'showError':
-                showEmptyState(message.error);
-                break;
-        }
-    });
+    window.TagRelationGraphView = {
+        init: init,
+        render: render,
+        resize: resize,
+        showError: showEmptyState
+    };
 })();

@@ -184,6 +184,14 @@ export const IPC_MESSAGES = {
     /** Webview → 扩展：从 Markdown 预览跳转到源文件行 */
     GO_TO_SOURCE_LINE: 'goToSourceLine',
 
+    REQUEST_COMMENT_TAG_GRAPH: 'requestCommentTagGraph',
+    EXPAND_COMMENT_TAG_GRAPH: 'expandCommentTagGraph',
+    COMMENT_TAG_GRAPH_BACK: 'commentTagGraphBack',
+    COMMENT_TAG_GRAPH_NAVIGATE_LEVEL: 'commentTagGraphNavigateLevel',
+    GO_TO_COMMENT_TAG_DEFINITION: 'goToCommentTagDefinition',
+    UPDATE_COMMENT_TAG_GRAPH: 'updateCommentTagGraph',
+    COMMENT_TAG_GRAPH_ERROR: 'commentTagGraphError',
+
     // 注释分组 WebviewView
     GET_COMMENT_GROUPS: 'getCommentGroups',
     COMMENT_GROUPS_RESULT: 'commentGroupsResult',

@@ -255,6 +255,35 @@
         }
     }
     
+    function initCommentTagGraph() {
+        if (!window.TagRelationGraphView || !document.getElementById('commentTagGraph')) {
+            return;
+        }
+        window.TagRelationGraphView.init({
+            vscode: vscode,
+            container: document.getElementById('commentTagGraph'),
+            chrome: {
+                breadcrumb: document.getElementById('comment-tag-graph-breadcrumb'),
+                btnBack: document.getElementById('comment-tag-graph-back'),
+                btnReset: document.getElementById('comment-tag-graph-reset'),
+                status: document.getElementById('comment-tag-graph-status')
+            },
+            commands: {
+                expandNode: 'expandCommentTagGraph',
+                goToDefinition: 'goToCommentTagDefinition',
+                navigateBack: 'commentTagGraphBack',
+                navigateToLevel: 'commentTagGraphNavigateLevel'
+            },
+            skipCenterJump: true,
+            onReset: function() {
+                vscode.postMessage({
+                    command: 'requestCommentTagGraph',
+                    content: textarea.value
+                });
+            }
+        });
+    }
+
     function switchTab(targetTab) {
         // 更新按钮状态
         const tabButtons = document.querySelectorAll('.tab-btn');
@@ -280,6 +309,33 @@
             const content = textarea.value;
             updatePreview(content);
             previewVisible = true;
+        }
+
+        const toggleButton = document.getElementById('toggle-preview-size-btn');
+        if (toggleButton) {
+            toggleButton.classList.toggle('is-hidden', targetTab !== 'preview-tab');
+        }
+        if (targetTab !== 'preview-tab') {
+            const container = document.querySelector('.container');
+            if (container) {
+                container.classList.remove('maximized');
+            }
+            if (toggleButton) {
+                toggleButton.title = '编辑/预览';
+                toggleButton.textContent = '预览';
+            }
+        }
+
+        if (targetTab === 'tag-graph-tab') {
+            vscode.postMessage({
+                command: 'requestCommentTagGraph',
+                content: textarea.value
+            });
+            requestAnimationFrame(function() {
+                if (window.TagRelationGraphView) {
+                    window.TagRelationGraphView.resize();
+                }
+            });
         }
         
         currentTab = targetTab;
@@ -313,6 +369,17 @@
         } else if (message.command === 'updateCurrentLineContent') {
             // 更新当前行内容显示
             updateCurrentLineContent(message.lineContent, message.lineNumber);
+        } else if (message.command === 'updateCommentTagGraph') {
+            if (window.TagRelationGraphView) {
+                window.TagRelationGraphView.render(message.data);
+                if (currentTab === 'tag-graph-tab') {
+                    window.TagRelationGraphView.resize();
+                }
+            }
+        } else if (message.command === 'commentTagGraphError') {
+            if (window.TagRelationGraphView) {
+                window.TagRelationGraphView.showError(message.error || '构图失败');
+            }
         } else if (message.command === 'setMermaidTheme') {
             const handDrawn = message.theme === 'hand-drawn';
             if (renderCore.reinitializeMermaid({ handDrawnEnabled: handDrawn })) {
@@ -734,18 +801,31 @@
         if (currentTab === 'preview-tab') {
             debouncedUpdatePreview(textarea.value);
         }
+        if (currentTab === 'tag-graph-tab') {
+            debouncedRequestCommentTagGraph(textarea.value);
+        }
 
         // 保存状态
         saveState();
     }
     
     const debouncedUpdatePreview = typeof window.debounce === 'function' ? window.debounce(updatePreview, 500) : updatePreview;
+    const debouncedRequestCommentTagGraph = typeof window.debounce === 'function'
+        ? window.debounce(function(content) {
+            vscode.postMessage({ command: 'requestCommentTagGraph', content: content });
+        }, 300)
+        : function(content) {
+            vscode.postMessage({ command: 'requestCommentTagGraph', content: content });
+        };
 
     textarea.addEventListener('input', function(e) {
         // 如果当前在预览tab，实时更新预览
         if (currentTab === 'preview-tab') {
             const content = e.target.value;
             debouncedUpdatePreview(content);
+        }
+        if (currentTab === 'tag-graph-tab') {
+            debouncedRequestCommentTagGraph(e.target.value);
         }
         
         const cursorPos = e.target.selectionStart;
@@ -868,6 +948,7 @@
     
     // 初始化tab切换功能
     initTabSwitching();
+    initCommentTagGraph();
 
     // ========== 预览滚动同步到输入框 ==========
     // 说明：预览内容（渲染后的 HTML）与输入内容（Markdown 源码）高度不一致，

@@ -10,6 +10,7 @@ import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo, MarkdownContextInfo, MarkdownSaveCallback } from './command/comment';
 import { EditorUtils } from '../utils/editorUtils';
 import { buildDecorationColorSelectHtml } from '../utils/commentDecorationColor';
+import { buildTagRelationGraphData, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
 
 // 辅助函数：获取代码上下文（前后5行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
@@ -85,6 +86,7 @@ export async function showMarkdownWebviewInput(
                     'markdownInputs',
                     [
                         vscode.Uri.joinPath(context.extensionUri, 'src', 'templates', 'markdownPreview'),
+                        vscode.Uri.joinPath(context.extensionUri, 'src', 'templates', 'tagRelationGraph'),
                     ]
                 ),
                 // 添加对SVG的支持
@@ -97,7 +99,11 @@ export async function showMarkdownWebviewInput(
         // 构建资源 URI
         const resourceUris = WebviewUtils.buildResourceUris(panel.webview, context.extensionUri, buildMarkdownPanelResourceOptions({
             css: 'markdownInputs/commentInput.css',
-            js: 'markdownInputs/commentInput.js'
+            js: 'markdownInputs/commentInput.js',
+            extraCustomResources: [
+                { path: 'src/templates/tagRelationGraph/graph.js', name: 'tagGraphJsUri' },
+                { path: 'out/lib/cytoscape.min.js', name: 'cytoscapeUri' }
+            ]
         }));
 
         // 优化：先显示面板，使用空的标签建议，后续异步加载
@@ -175,6 +181,73 @@ export async function showMarkdownWebviewInput(
                 }
             })();
         }, 0);
+
+        const commentTagGraphStack: { items: BreadcrumbItem[]; visitedNodes: Set<string> } = {
+            items: [],
+            visitedNodes: new Set()
+        };
+        let commentTagGraphRootContent = '';
+
+        function sourceFilePath(): string {
+            return contextInfo?.filePath
+                ?? activeEditor?.document.uri.fsPath
+                ?? '';
+        }
+
+        function resetCommentTagGraphRoot(content: string): GraphData {
+            const filePath = sourceFilePath();
+            commentTagGraphRootContent = content;
+            commentTagGraphStack.items = [{
+                id: 'root',
+                label: '当前注释',
+                filePath
+            }];
+            commentTagGraphStack.visitedNodes = new Set();
+            return buildTagRelationGraphData({
+                commentManager,
+                centerFilePath: filePath,
+                centerLabel: '当前注释',
+                centerContent: content,
+                level: 0,
+                breadcrumb: commentTagGraphStack.items
+            });
+        }
+
+        function postCommentTagGraph(data: GraphData): void {
+            panel.webview.postMessage({
+                command: IPC_MESSAGES.UPDATE_COMMENT_TAG_GRAPH,
+                data
+            });
+        }
+
+        function postCommentTagGraphError(error: unknown): void {
+            logger.error('注释标签关系图失败:', error);
+            panel.webview.postMessage({
+                command: IPC_MESSAGES.COMMENT_TAG_GRAPH_ERROR,
+                error: getErrorMessage(error)
+            });
+        }
+
+        function buildStackedCommentTagGraph(level: number): GraphData {
+            const item = commentTagGraphStack.items[level];
+            if (level === 0) {
+                return buildTagRelationGraphData({
+                    commentManager,
+                    centerFilePath: item.filePath,
+                    centerLabel: '当前注释',
+                    centerContent: commentTagGraphRootContent,
+                    level: 0,
+                    breadcrumb: commentTagGraphStack.items
+                });
+            }
+            return buildTagRelationGraphData({
+                commentManager,
+                centerFilePath: item.filePath,
+                centerLabel: item.label,
+                level,
+                breadcrumb: commentTagGraphStack.items
+            });
+        }
 
         // 处理WebView消息
         panel.webview.onDidReceiveMessage(
@@ -394,6 +467,86 @@ export async function showMarkdownWebviewInput(
                             }
                         }
                         break;
+                    case IPC_MESSAGES.REQUEST_COMMENT_TAG_GRAPH:
+                        try {
+                            postCommentTagGraph(resetCommentTagGraphRoot(String(message.content ?? '')));
+                        } catch (error) {
+                            postCommentTagGraphError(error);
+                        }
+                        break;
+                    case IPC_MESSAGES.EXPAND_COMMENT_TAG_GRAPH: {
+                        const nodeId = message.nodeId as string | undefined;
+                        const filePath = message.filePath as string | undefined;
+                        const label = message.label as string | undefined;
+                        if (!nodeId || !filePath || !label) {
+                            break;
+                        }
+                        if (commentTagGraphStack.visitedNodes.has(nodeId)) {
+                            vscode.window.showInformationMessage('已访问过此节点，避免循环');
+                            break;
+                        }
+                        try {
+                            commentTagGraphStack.items.push({
+                                id: nodeId,
+                                label,
+                                filePath
+                            });
+                            commentTagGraphStack.visitedNodes.add(nodeId);
+                            postCommentTagGraph(buildStackedCommentTagGraph(commentTagGraphStack.items.length - 1));
+                        } catch (error) {
+                            postCommentTagGraphError(error);
+                        }
+                        break;
+                    }
+                    case IPC_MESSAGES.COMMENT_TAG_GRAPH_BACK:
+                        if (commentTagGraphStack.items.length <= 1) {
+                            break;
+                        }
+                        try {
+                            const removed = commentTagGraphStack.items.pop();
+                            if (removed) {
+                                commentTagGraphStack.visitedNodes.delete(removed.id);
+                            }
+                            postCommentTagGraph(buildStackedCommentTagGraph(commentTagGraphStack.items.length - 1));
+                        } catch (error) {
+                            postCommentTagGraphError(error);
+                        }
+                        break;
+                    case IPC_MESSAGES.COMMENT_TAG_GRAPH_NAVIGATE_LEVEL: {
+                        const level = message.level as number | undefined;
+                        if (level === undefined || level < 0 || level >= commentTagGraphStack.items.length) {
+                            break;
+                        }
+                        try {
+                            const newItems = commentTagGraphStack.items.slice(0, level + 1);
+                            commentTagGraphStack.items = newItems;
+                            commentTagGraphStack.visitedNodes = new Set(newItems.map(item => item.id));
+                            postCommentTagGraph(buildStackedCommentTagGraph(level));
+                        } catch (error) {
+                            postCommentTagGraphError(error);
+                        }
+                        break;
+                    }
+                    case IPC_MESSAGES.GO_TO_COMMENT_TAG_DEFINITION: {
+                        const filePath = message.filePath as string | undefined;
+                        if (!filePath) {
+                            break;
+                        }
+                        try {
+                            const uri = vscode.Uri.file(filePath);
+                            const showOptions: vscode.TextDocumentShowOptions = {
+                                viewColumn: vscode.ViewColumn.One
+                            };
+                            if (message.line !== undefined) {
+                                const position = new vscode.Position(message.line as number, 0);
+                                showOptions.selection = new vscode.Range(position, position);
+                            }
+                            await vscode.window.showTextDocument(uri, showOptions);
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
+                        }
+                        break;
+                    }
                     case IPC_MESSAGES.CANCEL:
                         // 仅当 Webview 已确认放弃未保存更改时才关闭，避免误触丢失
                         if (message.abandonConfirmed === true) {
@@ -464,6 +617,7 @@ function getMarkdownWebviewContent(
     contextHtml += '  <div class="tab-buttons">';
     contextHtml += '    <button class="tab-btn active" data-tab="preview-tab">Markdown预览</button>';
     contextHtml += '    <button class="tab-btn" data-tab="code-tab">代码快照</button>';
+    contextHtml += '    <button class="tab-btn" data-tab="tag-graph-tab">标签链接</button>';
     contextHtml += '  </div>';
     contextHtml += '  <div class="preview-controls">';
     contextHtml += '    <button id="toggle-preview-size-btn" class="control-btn" title="编辑/预览">预览</button>';
@@ -491,6 +645,27 @@ function getMarkdownWebviewContent(
     contextHtml += '<div id="previewArea" class="preview-area"></div>';
     contextHtml += '</div>'; // 结束预览tab内容
 
+    contextHtml += '<div id="tag-graph-tab" class="tab-content">';
+    contextHtml += '  <div class="tag-graph-chrome">';
+    contextHtml += '    <div class="tag-graph-header">';
+    contextHtml += '      <div class="breadcrumb" id="comment-tag-graph-breadcrumb"></div>';
+    contextHtml += '      <div class="tag-graph-actions">';
+    contextHtml += '        <button type="button" id="comment-tag-graph-back" class="tag-graph-btn" disabled>返回</button>';
+    contextHtml += '        <button type="button" id="comment-tag-graph-reset" class="tag-graph-btn">重置</button>';
+    contextHtml += '      </div>';
+    contextHtml += '    </div>';
+    contextHtml += '    <div class="tag-graph-toolbar">';
+    contextHtml += '      <span id="comment-tag-graph-status" class="tag-graph-status"></span>';
+    contextHtml += '    </div>';
+    contextHtml += '    <div class="legend">';
+    contextHtml += '      <span class="legend-item"><span class="legend-dot center"></span> 当前节点</span>';
+    contextHtml += '      <span class="legend-item"><span class="legend-dot children"></span> 可展开</span>';
+    contextHtml += '      <span class="legend-item"><span class="legend-dot leaf"></span> 叶子节点</span>';
+    contextHtml += '    </div>';
+    contextHtml += '  </div>';
+    contextHtml += '  <div id="commentTagGraph" class="comment-tag-graph"></div>';
+    contextHtml += '</div>';
+
     contextHtml += '</div>'; // 结束context-tabs
     contextHtml += '</div>'; // 结束context-info
 
@@ -517,6 +692,8 @@ function getMarkdownWebviewContent(
         mermaidInteractJsScript: scriptTags.mermaidInteractJsScript,
         coreJsScript: scriptTags.coreJsScript,
         previewFindJsScript: scriptTags.previewFindJsScript,
+        cytoscapeUri: resourceUris?.cytoscapeUri || '',
+        tagGraphJsUri: resourceUris?.tagGraphJsUri || '',
         tagSuggestions: tagSuggestions,
         cspSource: webview ? webview.cspSource : "'self'", // 从webview获取CSP源
         colorSelectHtml: buildDecorationColorSelectHtml(existingColor),

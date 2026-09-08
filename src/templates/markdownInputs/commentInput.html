@@ -76,6 +76,8 @@
     ${mermaidInteractJsScript}
     ${coreJsScript}
     ${previewFindJsScript}
+    <script src="${cytoscapeUri}" onerror="console.error('cytoscape 加载失败')"></script>
+    <script src="${tagGraphJsUri}" onerror="console.error('tag graph.js 加载失败')"></script>
     <script>
         // 将标签建议传递给主脚本
         window.tagSuggestions = '${tagSuggestions}';

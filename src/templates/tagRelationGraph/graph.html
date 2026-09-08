@@ -31,5 +31,28 @@
     
     <script src="${cytoscapeUri}"></script>
     <script src="${jsUri}"></script>
+    <script>
+        const vscode = acquireVsCodeApi();
+        window.TagRelationGraphView.init({
+            vscode: vscode,
+            container: document.getElementById('graph-container'),
+            chrome: {
+                breadcrumb: document.getElementById('breadcrumb'),
+                btnBack: document.getElementById('btn-back'),
+                btnReset: document.getElementById('btn-reset'),
+                btnRefresh: document.getElementById('btn-refresh'),
+                status: document.getElementById('status')
+            },
+            skipCenterJump: false
+        });
+        window.addEventListener('message', (event) => {
+            const message = event.data;
+            if (message.command === 'updateGraph') {
+                window.TagRelationGraphView.render(message.data);
+            } else if (message.command === 'showError') {
+                window.TagRelationGraphView.showError(message.error);
+            }
+        });
+    </script>
 </body>
 </html>

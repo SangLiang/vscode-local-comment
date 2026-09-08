@@ -966,3 +966,130 @@ button {
 .discard-confirm-btn-primary:hover {
     background: var(--vscode-button-hoverBackground);
 }
+
+#toggle-preview-size-btn.is-hidden {
+    display: none;
+}
+
+#tag-graph-tab.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-tag-graph {
+    height: 280px;
+    min-height: 280px;
+    position: relative;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+#tag-graph-tab .tag-graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 8px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+#tag-graph-tab .breadcrumb {
+    font-size: 13px;
+    color: var(--vscode-foreground);
+    min-width: 0;
+}
+
+#tag-graph-tab .breadcrumb-item {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+#tag-graph-tab .breadcrumb-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+#tag-graph-tab .breadcrumb-separator {
+    margin: 0 4px;
+    color: var(--vscode-descriptionForeground);
+}
+
+#tag-graph-tab .tag-graph-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#tag-graph-tab .tag-graph-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+}
+
+#tag-graph-tab .tag-graph-status {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+#tag-graph-tab .tag-graph-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--vscode-button-secondaryBackground);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+#tag-graph-tab .tag-graph-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+#tag-graph-tab .tag-graph-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#tag-graph-tab .legend {
+    display: flex;
+    gap: 16px;
+    padding: 4px 0 8px;
+    font-size: 12px;
+}
+
+#tag-graph-tab .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#tag-graph-tab .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+#tag-graph-tab .legend-dot.center {
+    background: #4285F4;
+}
+
+#tag-graph-tab .legend-dot.children {
+    background: #FF9800;
+}
+
+#tag-graph-tab .legend-dot.leaf {
+    background: #34A853;
+}
+
+#tag-graph-tab .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--vscode-descriptionForeground);
+}
+
+#tag-graph-tab .empty-state-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}

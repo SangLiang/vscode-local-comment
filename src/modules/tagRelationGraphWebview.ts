@@ -4,41 +4,9 @@ import { logger } from '../utils/logger';
 import { VIEW_TYPES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
 import { getErrorMessage } from '../utils/utils';
+import type { GraphData } from '../utils/tagRelationGraphData';
 
-export interface GraphNode {
-    id: string;
-    label: string;
-    type: 'center' | 'tag';
-    filePath: string;
-    line?: number;
-    color: string;
-    hasChildren: boolean;
-}
-
-export interface GraphEdge {
-    id: string;
-    source: string;
-    target: string;
-}
-
-export interface GraphData {
-    nodes: GraphNode[];
-    edges: GraphEdge[];
-    level: number;
-    centerNode: {
-        id: string;
-        filePath: string;
-        label: string;
-    };
-    breadcrumb: BreadcrumbItem[];
-}
-
-export interface BreadcrumbItem {
-    id: string;
-    label: string;
-    filePath: string;
-    line?: number;
-}
+export type { GraphNode, GraphEdge, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
 
 export interface TagRelationGraphMessage {
     command: string;
