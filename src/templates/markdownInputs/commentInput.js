@@ -275,6 +275,7 @@
                 navigateToLevel: 'commentTagGraphNavigateLevel'
             },
             skipCenterJump: true,
+            expandInPlace: true,
             onReset: function() {
                 vscode.postMessage({
                     command: 'requestCommentTagGraph',
@@ -371,9 +372,13 @@
             updateCurrentLineContent(message.lineContent, message.lineNumber);
         } else if (message.command === 'updateCommentTagGraph') {
             if (window.TagRelationGraphView) {
-                window.TagRelationGraphView.render(message.data);
-                if (currentTab === 'tag-graph-tab') {
-                    window.TagRelationGraphView.resize();
+                if (message.mode === 'append' && typeof window.TagRelationGraphView.appendChildren === 'function') {
+                    window.TagRelationGraphView.appendChildren(message.parentId, message.data);
+                } else {
+                    window.TagRelationGraphView.render(message.data);
+                    if (currentTab === 'tag-graph-tab') {
+                        window.TagRelationGraphView.resize();
+                    }
                 }
             }
         } else if (message.command === 'commentTagGraphError') {

@@ -129,7 +129,7 @@ export function buildTagRelationGraphData(options: {
             fileColorMap.set(tagFilePath, FILE_COLORS[colorIndex % FILE_COLORS.length]);
             colorIndex++;
         }
-        const nodeId = `tag-${i}`;
+        const nodeId = `tag-${tagName}`;
         nodes.push({
             id: nodeId,
             label: `@${tagName}\n${path.basename(tagFilePath)}:${declaration.line + 1}`,
@@ -140,7 +140,7 @@ export function buildTagRelationGraphData(options: {
             hasChildren: checkHasChildren(declaration.content)
         });
         edges.push({
-            id: `edge-${i}`,
+            id: `edge-${centerNode.id}-${nodeId}`,
             source: 'center',
             target: nodeId
         });
@@ -157,4 +157,26 @@ export function buildTagRelationGraphData(options: {
         },
         breadcrumb
     };
+}
+
+export function buildTagRelationChildNodes(options: {
+    commentManager: CommentManager;
+    parentId: string;
+    centerLabel: string;
+    centerFilePath: string;
+}): { nodes: GraphNode[]; edges: GraphEdge[] } {
+    const data = buildTagRelationGraphData({
+        commentManager: options.commentManager,
+        centerFilePath: options.centerFilePath,
+        centerLabel: options.centerLabel,
+        level: 1,
+        breadcrumb: []
+    });
+    const nodes = data.nodes.filter(node => node.type === 'tag');
+    const edges = data.edges.map(edge => ({
+        id: `edge-${options.parentId}-${edge.target}`,
+        source: options.parentId,
+        target: edge.target
+    }));
+    return { nodes, edges };
 }

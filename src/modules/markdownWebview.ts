@@ -10,7 +10,7 @@ import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo, MarkdownContextInfo, MarkdownSaveCallback } from './command/comment';
 import { EditorUtils } from '../utils/editorUtils';
 import { buildDecorationColorSelectHtml } from '../utils/commentDecorationColor';
-import { buildTagRelationGraphData, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
+import { buildTagRelationGraphData, buildTagRelationChildNodes, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
 
 // 辅助函数：获取代码上下文（前后5行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
@@ -478,21 +478,22 @@ export async function showMarkdownWebviewInput(
                         const nodeId = message.nodeId as string | undefined;
                         const filePath = message.filePath as string | undefined;
                         const label = message.label as string | undefined;
-                        if (!nodeId || !filePath || !label) {
-                            break;
-                        }
-                        if (commentTagGraphStack.visitedNodes.has(nodeId)) {
-                            vscode.window.showInformationMessage('已访问过此节点，避免循环');
+                        if (!nodeId || !label) {
                             break;
                         }
                         try {
-                            commentTagGraphStack.items.push({
-                                id: nodeId,
-                                label,
-                                filePath
+                            const children = buildTagRelationChildNodes({
+                                commentManager,
+                                parentId: nodeId,
+                                centerLabel: label,
+                                centerFilePath: filePath || sourceFilePath()
                             });
-                            commentTagGraphStack.visitedNodes.add(nodeId);
-                            postCommentTagGraph(buildStackedCommentTagGraph(commentTagGraphStack.items.length - 1));
+                            panel.webview.postMessage({
+                                command: IPC_MESSAGES.UPDATE_COMMENT_TAG_GRAPH,
+                                mode: 'append',
+                                parentId: nodeId,
+                                data: children
+                            });
                         } catch (error) {
                             postCommentTagGraphError(error);
                         }
@@ -661,6 +662,7 @@ function getMarkdownWebviewContent(
     contextHtml += '      <span class="legend-item"><span class="legend-dot center"></span> 当前节点</span>';
     contextHtml += '      <span class="legend-item"><span class="legend-dot children"></span> 可展开</span>';
     contextHtml += '      <span class="legend-item"><span class="legend-dot leaf"></span> 叶子节点</span>';
+    contextHtml += '      <span class="legend-item">点击节点跳转；点 + 在原图展开，点 - 收起</span>';
     contextHtml += '    </div>';
     contextHtml += '  </div>';
     contextHtml += '  <div id="commentTagGraph" class="comment-tag-graph"></div>';

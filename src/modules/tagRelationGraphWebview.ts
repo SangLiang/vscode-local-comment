@@ -100,6 +100,15 @@ export class TagRelationGraphWebview {
         });
     }
 
+    appendChildren(parentId: string, data: { nodes: GraphData['nodes']; edges: GraphData['edges'] }): void {
+        this.panel.webview.postMessage({
+            command: 'updateGraph',
+            mode: 'append',
+            parentId,
+            data
+        });
+    }
+
     showError(message: string): void {
         this.panel.webview.postMessage({
             command: 'showError',

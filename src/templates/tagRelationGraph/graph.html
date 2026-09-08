@@ -25,6 +25,7 @@
         <span class="legend-item"><span class="legend-dot center"></span> 当前节点</span>
         <span class="legend-item"><span class="legend-dot children"></span> 可展开</span>
         <span class="legend-item"><span class="legend-dot leaf"></span> 叶子节点</span>
+        <span class="legend-item">点击节点跳转；点 + 在原图展开，点 - 收起</span>
     </div>
     
     <div id="graph-container" class="graph-container"></div>
@@ -43,12 +44,17 @@
                 btnRefresh: document.getElementById('btn-refresh'),
                 status: document.getElementById('status')
             },
-            skipCenterJump: false
+            skipCenterJump: false,
+            expandInPlace: true
         });
         window.addEventListener('message', (event) => {
             const message = event.data;
             if (message.command === 'updateGraph') {
-                window.TagRelationGraphView.render(message.data);
+                if (message.mode === 'append' && window.TagRelationGraphView.appendChildren) {
+                    window.TagRelationGraphView.appendChildren(message.parentId, message.data);
+                } else {
+                    window.TagRelationGraphView.render(message.data);
+                }
             } else if (message.command === 'showError') {
                 window.TagRelationGraphView.showError(message.error);
             }

@@ -983,6 +983,37 @@ button {
     border: 1px solid var(--vscode-panel-border);
 }
 
+#tag-graph-tab .graph-node-toggles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+}
+
+#tag-graph-tab .graph-node-toggle {
+    position: absolute;
+    pointer-events: auto;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--vscode-button-border, rgba(255, 255, 255, 0.35));
+    border-radius: 50%;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+#tag-graph-tab .graph-node-toggle:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
 #tag-graph-tab .tag-graph-header {
     display: flex;
     justify-content: space-between;

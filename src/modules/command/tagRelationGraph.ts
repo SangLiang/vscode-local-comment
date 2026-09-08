@@ -5,30 +5,20 @@ import { TagRelationGraphWebview, BreadcrumbItem, TagRelationGraphMessage } from
 import { COMMANDS } from '../../constants';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/utils';
-import { buildTagRelationGraphData } from '../../utils/tagRelationGraphData';
+import { buildTagRelationGraphData, buildTagRelationChildNodes } from '../../utils/tagRelationGraphData';
 
-interface NavigationStack {
-    items: BreadcrumbItem[];
-    visitedNodes: Set<string>;
-}
+let rootItem: BreadcrumbItem | undefined;
 
-let navigationStack: NavigationStack = {
-    items: [],
-    visitedNodes: new Set()
-};
-
-function buildStandaloneGraph(
-    commentManager: CommentManager,
-    centerFilePath: string,
-    centerLabel: string,
-    level: number
-) {
+function buildRootGraph(commentManager: CommentManager) {
+    if (!rootItem) {
+        return null;
+    }
     return buildTagRelationGraphData({
         commentManager,
-        centerFilePath,
-        centerLabel,
-        level,
-        breadcrumb: navigationStack.items
+        centerFilePath: rootItem.filePath,
+        centerLabel: rootItem.label,
+        level: 0,
+        breadcrumb: [rootItem]
     });
 }
 
@@ -58,13 +48,10 @@ export function registerTagRelationGraphCommands(
                     fileName = path.basename(filePath);
                 }
 
-                navigationStack = {
-                    items: [{
-                        id: 'root',
-                        label: fileName,
-                        filePath: filePath
-                    }],
-                    visitedNodes: new Set()
+                rootItem = {
+                    id: 'root',
+                    label: fileName,
+                    filePath
                 };
 
                 const webview = TagRelationGraphWebview.createOrShow(
@@ -76,8 +63,10 @@ export function registerTagRelationGraphCommands(
                     }
                 );
 
-                const data = buildStandaloneGraph(commentManager, filePath, fileName, 0);
-                webview.updateGraph(data);
+                const data = buildRootGraph(commentManager);
+                if (data) {
+                    webview.updateGraph(data);
+                }
             } catch (error) {
                 logger.error('显示 Tag 关系图失败:', error);
                 vscode.window.showErrorMessage(`显示关系图失败: ${getErrorMessage(error)}`);
@@ -102,18 +91,14 @@ async function handleMessage(
             await handleGoToDefinition(message);
             break;
         case 'navigateBack':
-            handleNavigateBack(commentManager, webview);
-            break;
         case 'resetToRoot':
+        case 'refresh':
             handleResetToRoot(commentManager, webview);
             break;
         case 'navigateToLevel':
-            if (message.level !== undefined) {
-                handleNavigateToLevel(message.level, commentManager, webview);
+            if (message.level === 0) {
+                handleResetToRoot(commentManager, webview);
             }
-            break;
-        case 'refresh':
-            handleRefresh(commentManager, webview);
             break;
     }
 }
@@ -124,37 +109,22 @@ function handleExpandNode(
     webview: TagRelationGraphWebview
 ): void {
     const nodeId = message.nodeId;
-    const filePath = message.filePath;
     const label = message.label;
-
-    if (!nodeId || !filePath || !label) {
+    if (!nodeId || !label) {
         return;
     }
 
-    if (navigationStack.visitedNodes.has(nodeId)) {
-        vscode.window.showInformationMessage('已访问过此节点，避免循环');
-        return;
-    }
-
-    navigationStack.items.push({
-        id: nodeId,
-        label: label,
-        filePath: filePath
-    });
-    navigationStack.visitedNodes.add(nodeId);
-
-    const data = buildStandaloneGraph(
+    const children = buildTagRelationChildNodes({
         commentManager,
-        filePath,
-        label,
-        navigationStack.items.length - 1
-    );
-    webview.updateGraph(data);
+        parentId: nodeId,
+        centerLabel: label,
+        centerFilePath: message.filePath || rootItem?.filePath || ''
+    });
+    webview.appendChildren(nodeId, children);
 }
 
 async function handleGoToDefinition(message: TagRelationGraphMessage): Promise<void> {
     const filePath = message.filePath;
-
     if (!filePath) {
         return;
     }
@@ -171,77 +141,12 @@ async function handleGoToDefinition(message: TagRelationGraphMessage): Promise<v
     await vscode.window.showTextDocument(uri, showOptions);
 }
 
-function handleNavigateBack(
-    commentManager: CommentManager,
-    webview: TagRelationGraphWebview
-): void {
-    if (navigationStack.items.length <= 1) {
-        return;
-    }
-
-    const removed = navigationStack.items.pop();
-    if (removed) {
-        navigationStack.visitedNodes.delete(removed.id);
-    }
-
-    const parentItem = navigationStack.items[navigationStack.items.length - 1];
-    const data = buildStandaloneGraph(
-        commentManager,
-        parentItem.filePath,
-        parentItem.label,
-        navigationStack.items.length - 1
-    );
-    webview.updateGraph(data);
-}
-
 function handleResetToRoot(
     commentManager: CommentManager,
     webview: TagRelationGraphWebview
 ): void {
-    if (navigationStack.items.length === 0) {
-        return;
+    const data = buildRootGraph(commentManager);
+    if (data) {
+        webview.updateGraph(data);
     }
-
-    const rootItem = navigationStack.items[0];
-    navigationStack = {
-        items: [rootItem],
-        visitedNodes: new Set()
-    };
-
-    const data = buildStandaloneGraph(commentManager, rootItem.filePath, rootItem.label, 0);
-    webview.updateGraph(data);
-}
-
-function handleNavigateToLevel(
-    level: number,
-    commentManager: CommentManager,
-    webview: TagRelationGraphWebview
-): void {
-    if (level < 0 || level >= navigationStack.items.length) {
-        return;
-    }
-
-    const newItems = navigationStack.items.slice(0, level + 1);
-    const newVisited = new Set(newItems.map(item => item.id));
-
-    navigationStack.items = newItems;
-    navigationStack.visitedNodes = newVisited;
-
-    const item = navigationStack.items[level];
-    const data = buildStandaloneGraph(commentManager, item.filePath, item.label, level);
-    webview.updateGraph(data);
-}
-
-function handleRefresh(
-    commentManager: CommentManager,
-    webview: TagRelationGraphWebview
-): void {
-    if (navigationStack.items.length === 0) {
-        return;
-    }
-
-    const currentItem = navigationStack.items[navigationStack.items.length - 1];
-    const level = navigationStack.items.length - 1;
-    const data = buildStandaloneGraph(commentManager, currentItem.filePath, currentItem.label, level);
-    webview.updateGraph(data);
 }

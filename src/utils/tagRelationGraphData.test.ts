@@ -4,6 +4,7 @@ import { LocalComment } from '../managers/commentTypes';
 import type { CommentManager } from '../managers/commentManager';
 import {
     buildTagRelationGraphData,
+    buildTagRelationChildNodes,
     extractTagReferences,
     tagNameFromCenterLabel
 } from './tagRelationGraphData';
@@ -146,7 +147,20 @@ describe('buildTagRelationGraphData', () => {
         });
         expect(data.nodes[0].type).toBe('center');
         expect(data.nodes.some(n => n.type === 'tag' && n.label.startsWith('@sessionStore'))).toBe(true);
+        expect(data.nodes.some(n => n.id === 'tag-sessionStore')).toBe(true);
         expect(data.nodes.some(n => n.label.includes('notExist'))).toBe(false);
+    });
+
+    it('buildTagRelationChildNodes 把子节点挂到指定父节点', () => {
+        const children = buildTagRelationChildNodes({
+            commentManager: mockManager(declaredComments()),
+            parentId: 'tag-configLoader',
+            centerLabel: '@configLoader\nauth.ts:11',
+            centerFilePath: authPath
+        });
+        expect(children.nodes.some(n => n.id === 'tag-sessionStore')).toBe(true);
+        expect(children.nodes.some(n => n.id === 'center')).toBe(false);
+        expect(children.edges.every(e => e.source === 'tag-configLoader')).toBe(true);
     });
 
     it('未提供 centerContent 的 level 0 包含文件内全部注释引用', () => {
