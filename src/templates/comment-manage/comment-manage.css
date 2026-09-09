@@ -208,18 +208,17 @@ body {
 }
 
 .cell-link {
-    color: var(--vscode-textLink-foreground);
+    color: var(--vscode-foreground);
     cursor: pointer;
     text-decoration: none;
 }
 
 .cell-link:hover {
     text-decoration: underline;
-    color: var(--vscode-textLink-activeForeground);
 }
 
 .cell-line {
-    color: var(--vscode-textLink-foreground);
+    color: var(--vscode-foreground);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
 }

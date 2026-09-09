@@ -53,6 +53,22 @@ describe('commentManageUtils', () => {
     expect(rows[0].filePath).toBe('x.ts');
   });
 
+  it('flattenCommentsToRows 仅给非默认颜色带上 colorHex', () => {
+    const colored: FileComments = {
+      '/proj/x.ts': [
+        { id: 'plain', line: 1, content: 'a', timestamp: 1, originalLine: 1, lineContent: '' },
+        { id: 'gray', line: 2, content: 'b', timestamp: 2, originalLine: 2, lineContent: '', color: 'default' },
+        { id: 'blue', line: 3, content: 'c', timestamp: 3, originalLine: 3, lineContent: '', color: 'blue' },
+        { id: 'red', line: 4, content: 'd', timestamp: 4, originalLine: 4, lineContent: '', color: 'red' },
+      ],
+    };
+    const rows = flattenCommentsToRows(colored, '/proj');
+    expect(rows.find((row) => row.id === 'plain')?.colorHex).toBeUndefined();
+    expect(rows.find((row) => row.id === 'gray')?.colorHex).toBeUndefined();
+    expect(rows.find((row) => row.id === 'blue')?.colorHex).toBe('#3B82F6');
+    expect(rows.find((row) => row.id === 'red')?.colorHex).toBe('#EF4444');
+  });
+
   it('extractTagDeclarations 应提取 ${tag} 声明', () => {
     expect(extractTagDeclarations('${bug} 修复问题')).toEqual(['bug']);
     expect(extractTagDeclarations('见 @foo 和 ${bar}')).toEqual(['bar']);

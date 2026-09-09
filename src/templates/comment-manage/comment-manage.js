@@ -244,6 +244,9 @@ function renderRows(data) {
         fileLink.className = 'cell-link';
         fileLink.textContent = row.filePath;
         fileLink.title = row.filePath;
+        if (row.colorHex) {
+            fileLink.style.color = row.colorHex;
+        }
         fileLink.addEventListener('click', () => openCommentRow(row.filePath, row.line, row.id));
         fileTd.appendChild(fileLink);
 
@@ -253,6 +256,9 @@ function renderRows(data) {
         lineSpan.className = 'cell-line';
         lineSpan.textContent = String(row.line + 1);
         lineSpan.title = `跳转到第 ${row.line + 1} 行`;
+        if (row.colorHex) {
+            lineSpan.style.color = row.colorHex;
+        }
         lineSpan.addEventListener('click', () => openCommentRow(row.filePath, row.line, row.id));
         lineTd.appendChild(lineSpan);
 
