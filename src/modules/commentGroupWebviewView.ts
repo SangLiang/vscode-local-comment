@@ -63,7 +63,16 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 this._post(IPC_MESSAGES.COMMENT_GROUP_ERROR, { message: getErrorMessage(error) });
             }
         });
-        this.refreshGroups();
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible) {
+                this._openSelectedGroupInEditor();
+            }
+        });
+        if (webviewView.visible) {
+            this._openSelectedGroupInEditor();
+        } else {
+            this.refreshGroups();
+        }
     }
 
     refreshGroups(): void {
@@ -92,6 +101,21 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
             this._authManager,
             groupFileName
         );
+    }
+
+    private _openSelectedGroupInEditor(): void {
+        if (vscode.workspace.workspaceFolders?.length) {
+            const groups = this._commentManager.listAvailableCommentsConfigs();
+            const current = this._commentManager.getCurrentCommentsConfig();
+            const fileName = this._viewingGroupFileName && groups.includes(this._viewingGroupFileName)
+                ? this._viewingGroupFileName
+                : current;
+            if (fileName && groups.includes(fileName)) {
+                this._viewingGroupFileName = fileName;
+                this._openManagePanel(fileName);
+            }
+        }
+        this.refreshGroups();
     }
 
     private async _promptNewGroupName(title: string, value = ''): Promise<string | undefined> {
