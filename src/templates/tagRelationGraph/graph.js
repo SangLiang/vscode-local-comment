@@ -21,6 +21,10 @@
     let currentLevel = 0;
     let rootNodeIds = {};
     let expandedChildren = {};
+    let graphLoading = false;
+    let loadingShownAt = 0;
+    let hideLoadingTimer = null;
+    const LOADING_MIN_MS = 400;
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -28,8 +32,11 @@
         return div.innerHTML;
     }
 
-    function applyLayout() {
+    function applyLayout(hideLoading) {
         if (!cy) {
+            if (hideLoading) {
+                hideGraphLoading();
+            }
             return;
         }
         const layout = cy.layout({
@@ -41,8 +48,101 @@
             edgeElasticity: 100,
             gravity: 80
         });
-        layout.one('layoutstop', rebuildNodeToggles);
+        layout.one('layoutstop', function() {
+            rebuildNodeToggles();
+            if (hideLoading) {
+                hideGraphLoading();
+            }
+        });
         layout.run();
+    }
+
+    function finishLocalUpdate(hideLoading) {
+        rebuildNodeToggles();
+        if (hideLoading) {
+            hideGraphLoading();
+        }
+    }
+
+    function pickExpandPosition(origin, index, total) {
+        const zoom = Math.max(cy.zoom() || 1, 0.15);
+        const radius = 210 / zoom;
+        const angle = total <= 1 ? 0 : (index / total) * Math.PI * 2 - Math.PI / 2;
+        return {
+            x: origin.x + radius * Math.cos(angle),
+            y: origin.y + radius * Math.sin(angle)
+        };
+    }
+
+    function revealAround(eles) {
+        if (!cy || !eles || eles.empty()) {
+            return;
+        }
+        const ext = cy.extent();
+        const bb = eles.boundingBox({ includeLabels: true });
+        const margin = 40 / Math.max(cy.zoom() || 1, 0.15);
+        const clipped = bb.x1 < ext.x1 + margin ||
+            bb.x2 > ext.x2 - margin ||
+            bb.y1 < ext.y1 + margin ||
+            bb.y2 > ext.y2 - margin;
+        if (clipped) {
+            cy.animate({
+                center: { eles: eles },
+                duration: 180
+            });
+        }
+    }
+
+    function getLoadingOverlay() {
+        if (!containerEl || !containerEl.parentElement) {
+            return null;
+        }
+        return containerEl.parentElement.querySelector(':scope > .graph-loading');
+    }
+
+    function showGraphLoading() {
+        if (hideLoadingTimer) {
+            clearTimeout(hideLoadingTimer);
+            hideLoadingTimer = null;
+        }
+        const overlay = getLoadingOverlay();
+        if (!overlay) {
+            return;
+        }
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        loadingShownAt = Date.now();
+        graphLoading = true;
+    }
+
+    function hideGraphLoadingNow() {
+        if (hideLoadingTimer) {
+            clearTimeout(hideLoadingTimer);
+            hideLoadingTimer = null;
+        }
+        const overlay = getLoadingOverlay();
+        if (overlay) {
+            overlay.classList.remove('visible');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        graphLoading = false;
+        loadingShownAt = 0;
+    }
+
+    function hideGraphLoading(immediate) {
+        if (immediate || !loadingShownAt) {
+            hideGraphLoadingNow();
+            return;
+        }
+        const remain = LOADING_MIN_MS - (Date.now() - loadingShownAt);
+        if (remain <= 0) {
+            hideGraphLoadingNow();
+            return;
+        }
+        if (hideLoadingTimer) {
+            clearTimeout(hideLoadingTimer);
+        }
+        hideLoadingTimer = setTimeout(hideGraphLoadingNow, remain);
     }
 
     function ensureToggleLayer() {
@@ -95,10 +195,17 @@
             if (type === 'tag' && node.data('hasChildren')) {
                 if (node.data('expanded')) {
                     layer.appendChild(createToggleButton('-', '收起子节点', function() {
+                        if (graphLoading) {
+                            return;
+                        }
                         collapseChildren(node.id());
                     }, node));
                 } else {
                     layer.appendChild(createToggleButton('+', '展开子节点', function() {
+                        if (graphLoading) {
+                            return;
+                        }
+                        showGraphLoading();
                         vscodeApi.postMessage({
                             command: commands.expandNode,
                             nodeId: node.id(),
@@ -135,6 +242,7 @@
         currentLevel = 0;
         rootNodeIds = {};
         expandedChildren = {};
+        hideGraphLoading(true);
         containerEl.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">📊</div>
@@ -236,6 +344,7 @@
         }
         rootNodeIds = {};
         expandedChildren = {};
+        hideGraphLoading(true);
         containerEl.innerHTML = '';
 
         const elements = [
@@ -279,6 +388,8 @@
                         'text-max-width': '120px',
                         'width': 'label',
                         'height': 'label',
+                        'min-width': 48,
+                        'min-height': 28,
                         'padding': '10px',
                         'text-margin-y': 0
                     }
@@ -360,18 +471,20 @@
 
     function appendChildren(parentId, payload) {
         if (!cy || !parentId) {
+            hideGraphLoading();
             return;
         }
         const parent = cy.getElementById(parentId);
         if (!parent.length) {
+            hideGraphLoading();
             return;
         }
         const nodes = (payload && payload.nodes) || [];
-        const edges = (payload && payload.edges) || [];
         const parentPos = parent.position();
         const addedChildIds = [];
+        const newNodes = [];
 
-        nodes.forEach(function(n, index) {
+        nodes.forEach(function(n) {
             if (!n || !n.id) {
                 return;
             }
@@ -379,8 +492,13 @@
             if (nodeExists(n.id)) {
                 return;
             }
-            const angle = (index / Math.max(nodes.length, 1)) * Math.PI - Math.PI / 2;
-            cy.add({
+            newNodes.push(n);
+        });
+
+        let added = cy.collection();
+        newNodes.forEach(function(n, index) {
+            const pos = pickExpandPosition(parentPos, index, newNodes.length);
+            added = added.union(cy.add({
                 group: 'nodes',
                 data: {
                     id: n.id,
@@ -392,20 +510,15 @@
                     expanded: false
                 },
                 classes: n.type,
-                position: {
-                    x: parentPos.x + 90 * Math.cos(angle),
-                    y: parentPos.y + 90 * Math.sin(angle)
-                }
-            });
+                position: pos
+            }));
         });
 
-        edges.forEach(function(e) {
-            const source = e.source || parentId;
-            const target = e.target;
-            if (!target || !nodeExists(source) || !nodeExists(target)) {
+        addedChildIds.forEach(function(childId) {
+            if (!nodeExists(parentId) || !nodeExists(childId)) {
                 return;
             }
-            const edgeId = e.id || ('edge-' + source + '-' + target);
+            const edgeId = 'edge-' + parentId + '-' + childId;
             if (nodeExists(edgeId)) {
                 return;
             }
@@ -413,16 +526,19 @@
                 group: 'edges',
                 data: {
                     id: edgeId,
-                    source: source,
-                    target: target
+                    source: parentId,
+                    target: childId
                 }
             });
         });
 
         expandedChildren[parentId] = addedChildIds;
         parent.data('expanded', true);
-        applyLayout();
+        finishLocalUpdate(true);
         updateInPlaceStatus();
+        if (added && !added.empty()) {
+            revealAround(parent.union(added));
+        }
     }
 
     function childStillNeeded(childId, exceptParentId) {
@@ -441,23 +557,19 @@
         return false;
     }
 
-    function collapseChildren(parentId) {
-        if (!cy) {
-            return;
-        }
+    function collapseSubtree(parentId) {
         const kids = expandedChildren[parentId];
         if (!kids) {
             const parent = cy.getElementById(parentId);
             if (parent.length) {
                 parent.data('expanded', false);
-                rebuildNodeToggles();
             }
             return;
         }
 
         kids.forEach(function(childId) {
             if (expandedChildren[childId]) {
-                collapseChildren(childId);
+                collapseSubtree(childId);
             }
         });
 
@@ -491,7 +603,22 @@
         if (parent.length) {
             parent.data('expanded', false);
         }
-        applyLayout();
+    }
+
+    function collapseChildren(parentId) {
+        if (!cy) {
+            return;
+        }
+        if (!expandedChildren[parentId]) {
+            const parent = cy.getElementById(parentId);
+            if (parent.length) {
+                parent.data('expanded', false);
+                rebuildNodeToggles();
+            }
+            return;
+        }
+        collapseSubtree(parentId);
+        finishLocalUpdate(true);
         updateInPlaceStatus();
     }
 

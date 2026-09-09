@@ -111,10 +111,57 @@ body {
     background: #34A853;
 }
 
+.graph-stage {
+    position: relative;
+}
+
 .graph-container {
     flex: 1;
     height: calc(100vh - 120px);
     position: relative;
+}
+
+.graph-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.graph-loading.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.graph-loading::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--vscode-editor-background);
+    opacity: 0.72;
+}
+
+.graph-loading-spinner {
+    position: relative;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--vscode-widget-border, rgba(127, 127, 127, 0.35));
+    border-top-color: var(--vscode-progressBar-background, var(--vscode-focusBorder));
+    border-radius: 50%;
+    animation: graph-loading-spin 0.8s linear infinite;
+}
+
+@keyframes graph-loading-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .graph-node-toggles {

@@ -665,7 +665,10 @@ function getMarkdownWebviewContent(
     contextHtml += '      <span class="legend-item">点击节点跳转；点 + 在原图展开，点 - 收起</span>';
     contextHtml += '    </div>';
     contextHtml += '  </div>';
-    contextHtml += '  <div id="commentTagGraph" class="comment-tag-graph"></div>';
+    contextHtml += '  <div class="graph-stage">';
+    contextHtml += '    <div id="commentTagGraph" class="comment-tag-graph"></div>';
+    contextHtml += '    <div class="graph-loading" aria-hidden="true"><div class="graph-loading-spinner" role="status" aria-label="正在重新布局"></div></div>';
+    contextHtml += '  </div>';
     contextHtml += '</div>';
 
     contextHtml += '</div>'; // 结束context-tabs

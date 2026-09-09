@@ -28,7 +28,12 @@
         <span class="legend-item">点击节点跳转；点 + 在原图展开，点 - 收起</span>
     </div>
     
-    <div id="graph-container" class="graph-container"></div>
+    <div class="graph-stage">
+        <div id="graph-container" class="graph-container"></div>
+        <div class="graph-loading" aria-hidden="true">
+            <div class="graph-loading-spinner" role="status" aria-label="正在重新布局"></div>
+        </div>
+    </div>
     
     <script src="${cytoscapeUri}"></script>
     <script src="${jsUri}"></script>
