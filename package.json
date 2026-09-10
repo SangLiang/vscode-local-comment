@@ -566,6 +566,12 @@
         "key": "ctrl+alt+shift+j",
         "mac": "cmd+alt+shift+j",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "localComment.previewMarkdown",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v",
+        "when": "editorTextFocus && editorLangId == markdown"
       }
     ],
     "configuration": {
