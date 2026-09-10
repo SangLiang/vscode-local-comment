@@ -50,6 +50,21 @@ export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contex
     }
 }
 
+function pushCommentInputTagConfig(
+    webview: vscode.Webview,
+    commentManager: CommentManager
+): void {
+    const tagManager = new TagManager();
+    tagManager.updateTags(commentManager.getAllComments());
+    const availableTagNames = tagManager.getAvailableTagNames();
+    postMarkdownPreviewConfig(webview, {
+        sendAvailableTags: true,
+        availableTagNames,
+        sendTagSuggestions: true,
+        tagSuggestions: availableTagNames.map(tag => `@${tag}`).join(',')
+    });
+}
+
 export async function showMarkdownWebviewInput(
     context: vscode.ExtensionContext,
     prompt: string,
@@ -140,20 +155,9 @@ export async function showMarkdownWebviewInput(
                     // 并行加载标签建议和代码上下文
                     const promises: Promise<void | boolean>[] = [];
                     
-                    // 加载标签建议并推送通用配置（mermaid 主题 / 字号 / 可用标签 / 标签建议）
                     promises.push(
                         Promise.resolve().then(() => {
-                            const tagManager = new TagManager();
-                            tagManager.updateTags(commentManager.getAllComments());
-                            const availableTagNames = tagManager.getAvailableTagNames();
-                            const asyncTagSuggestions = availableTagNames.map(tag => `@${tag}`).join(',');
-
-                            postMarkdownPreviewConfig(panel.webview, {
-                                sendAvailableTags: true,
-                                availableTagNames,
-                                sendTagSuggestions: true,
-                                tagSuggestions: asyncTagSuggestions
-                            });
+                            pushCommentInputTagConfig(panel.webview, commentManager);
                         })
                     );
 
@@ -181,6 +185,14 @@ export async function showMarkdownWebviewInput(
                 }
             })();
         }, 0);
+
+        const tagSyncDisposable = commentManager.onDidChangeComments(() => {
+            try {
+                pushCommentInputTagConfig(panel.webview, commentManager);
+            } catch (error) {
+                logger.error('更新注释输入页标签建议失败:', error);
+            }
+        });
 
         const commentTagGraphStack: { items: BreadcrumbItem[]; visitedNodes: Set<string> } = {
             items: [],
@@ -562,6 +574,7 @@ export async function showMarkdownWebviewInput(
 
         // 面板关闭时返回undefined
         panel.onDidDispose(() => {
+            tagSyncDisposable.dispose();
             if (asyncLoadTimer !== undefined) {
                 clearTimeout(asyncLoadTimer);
                 asyncLoadTimer = undefined;
