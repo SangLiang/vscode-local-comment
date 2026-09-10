@@ -227,6 +227,10 @@
         } catch (error) {
             console.error('预览更新失败:', error);
             previewArea.innerHTML = '<p>预览生成失败，请重试</p>';
+        } finally {
+            if (window.PageLoading) {
+                window.PageLoading.notifyFirstRenderComplete();
+            }
         }
     }
 
@@ -1004,6 +1008,8 @@
     if ((previewVisible || currentTab === 'preview-tab') && textarea.value) {
         updatePreview(textarea.value);
         console.log('页面加载时自动更新预览内容');
+    } else if (window.PageLoading) {
+        window.PageLoading.notifyFirstRenderComplete();
     }
     
     // 设置焦点

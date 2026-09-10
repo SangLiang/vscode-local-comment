@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildPageLoadingHtml } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { TimerManager } from '../utils/timerUtils';
@@ -637,6 +637,7 @@ ${mermaidScript}
         });
 
         const templateVariables: Record<string, string> = {
+            pageLoadingHtml: buildPageLoadingHtml(DELAY_TIMES.WEBVIEW_PAGE_LOADING_TIMEOUT),
             fileName: WebviewUtils.escapeHtml(fileName),
             escapedContent: WebviewUtils.escapeHtml(content || ''),
             markedJsUri: resourceUris.markedJsUri || '',

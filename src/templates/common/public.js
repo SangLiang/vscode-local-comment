@@ -201,6 +201,38 @@ function fitAllMermaidCharts() {
     });
 }
 
+(function() {
+    var pageLoadingHidden = false;
+
+    function hidePageLoading() {
+        if (pageLoadingHidden) {
+            return;
+        }
+        pageLoadingHidden = true;
+        var el = document.getElementById('lc-page-loading');
+        if (el) {
+            el.style.display = 'none';
+            el.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function notifyFirstRenderComplete() {
+        hidePageLoading();
+    }
+
+    function hidePageLoadingAfter(promise) {
+        Promise.resolve(promise).finally(hidePageLoading);
+    }
+
+    if (typeof window !== 'undefined') {
+        window.PageLoading = {
+            hide: hidePageLoading,
+            hideAfter: hidePageLoadingAfter,
+            notifyFirstRenderComplete: notifyFirstRenderComplete
+        };
+    }
+})();
+
 // 如果在浏览器环境中，将函数暴露到全局作用域
 if (typeof window !== 'undefined') {
     window.escapeHtml = escapeHtml;

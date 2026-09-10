@@ -4,7 +4,7 @@ import { CommentManager, LocalComment } from '../managers/commentManager';
 import { ApiService, ApiRoutes } from '../apiService';
 import { ProjectManager } from '../managers/projectManager';
 import { normalizeFilePath, getErrorMessage } from '../utils/utils';
-import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml, buildPageLoadingHtml } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
 import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo, MarkdownContextInfo, MarkdownSaveCallback } from './command/comment';
@@ -680,6 +680,7 @@ function getMarkdownWebviewContent(
 
     // 准备模板变量
     const templateVariables: Record<string, string> = {
+        pageLoadingHtml: buildPageLoadingHtml(DELAY_TIMES.WEBVIEW_PAGE_LOADING_TIMEOUT),
         contextHtml,
         escapedPrompt: WebviewUtils.escapeHtml(prompt),
         escapedPlaceholder: WebviewUtils.escapeHtml(placeholder),

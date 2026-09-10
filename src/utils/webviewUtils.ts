@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { IPC_MESSAGES } from '../constants';
+import { DELAY_TIMES, IPC_MESSAGES } from '../constants';
 
 /**
  * 资源 URI 构建选项
@@ -372,6 +372,18 @@ export function postMarkdownPreviewConfig(
             tagSuggestions: opts.tagSuggestions
         });
     }
+}
+
+/**
+ * Markdown 面板首屏加载遮罩 HTML（内联样式 + 超时兜底脚本，不依赖外链 CSS）。
+ */
+export function buildPageLoadingHtml(timeoutMs: number = DELAY_TIMES.WEBVIEW_PAGE_LOADING_TIMEOUT): string {
+    const timeout = Math.max(1000, Math.floor(timeoutMs));
+    return `<style>@keyframes lc-page-loading-spin{to{transform:rotate(360deg);}}</style>
+<div id="lc-page-loading" role="status" aria-label="加载中" aria-hidden="false" style="position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:var(--vscode-editor-background,#1e1e1e);">
+<div style="width:32px;height:32px;border:3px solid var(--vscode-widget-border,rgba(127,127,127,0.35));border-top-color:var(--vscode-progressBar-background,var(--vscode-focusBorder,#007acc));border-radius:50%;animation:lc-page-loading-spin 0.8s linear infinite;"></div>
+</div>
+<script>(function(){var t=${timeout};setTimeout(function(){if(window.PageLoading){window.PageLoading.hide();}else{var e=document.getElementById('lc-page-loading');if(e){e.style.display='none';e.setAttribute('aria-hidden','true');}}},t);})();</script>`;
 }
 
 /**

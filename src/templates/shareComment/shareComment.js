@@ -42,6 +42,10 @@
                     <pre>${error.message}</pre>
                 </div>
             `;
+        } finally {
+            if (window.PageLoading) {
+                window.PageLoading.notifyFirstRenderComplete();
+            }
         }
     }
 
@@ -99,6 +103,9 @@
             updatePreview(window.markdownContent);
         } else {
             console.log('window.markdownContent 不存在或为空');
+            if (window.PageLoading) {
+                window.PageLoading.notifyFirstRenderComplete();
+            }
         }
     }
 

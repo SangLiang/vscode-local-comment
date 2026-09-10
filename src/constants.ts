@@ -49,6 +49,12 @@ export const DELAY_TIMES = {
      * 编辑源文件后延迟刷新预览，避免每次按键都完整重渲染
      */
     MARKDOWN_PREVIEW_LIVE_SYNC: 400,
+
+    /**
+     * Markdown 相关 Webview 首屏加载遮罩超时
+     * 库加载或首次渲染失败时的兜底关闭时间
+     */
+    WEBVIEW_PAGE_LOADING_TIMEOUT: 10000,
 } as const;
 
 /**

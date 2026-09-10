@@ -47,7 +47,7 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn(),
 }));
 
-import { WebviewUtils, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml } from './webviewUtils';
+import { WebviewUtils, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml, buildPageLoadingHtml } from './webviewUtils';
 
 describe('WebviewUtils.buildResourceUris 缓存', () => {
     beforeEach(() => {
@@ -227,6 +227,24 @@ describe('postMarkdownPreviewConfig', () => {
         const commands = postMessage.mock.calls.map((c: unknown[]) => (c[0] as { command: string }).command);
         expect(commands).not.toContain('setAvailableTags');
         expect(commands).not.toContain('updateTagSuggestions');
+    });
+});
+
+describe('buildPageLoadingHtml', () => {
+    it('生成带内联样式、遮罩节点与超时脚本的 HTML', () => {
+        const html = buildPageLoadingHtml(8000);
+
+        expect(html).toContain('id="lc-page-loading"');
+        expect(html).toContain('@keyframes lc-page-loading-spin');
+        expect(html).toContain('position:fixed');
+        expect(html).toContain('window.PageLoading');
+        expect(html).toContain('8000');
+    });
+
+    it('超时低于 1000ms 时钳制为 1000ms', () => {
+        const html = buildPageLoadingHtml(200);
+        expect(html).toContain('1000');
+        expect(html).not.toContain('200');
     });
 });
 

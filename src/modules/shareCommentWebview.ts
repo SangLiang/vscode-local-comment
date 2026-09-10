@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
 import { TagManager } from '../managers/tagManager';
-import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml } from '../utils/webviewUtils';
+import { WebviewUtils, ResourceUris, buildMarkdownPanelResourceOptions, buildMarkdownLocalResourceRoots, postMarkdownPreviewConfig, buildMarkdownScriptTags, buildContextHtml, buildPageLoadingHtml } from '../utils/webviewUtils';
 import { getErrorMessage } from '../utils/utils';
 import { logger } from '../utils/logger';
 import { VIEW_TYPES, COMMANDS, IPC_MESSAGES, DELAY_TIMES } from '../constants';
@@ -258,6 +258,7 @@ function getShareCommentWebviewContent(
 
     // 准备模板变量
     const templateVariables: Record<string, string> = {
+        pageLoadingHtml: buildPageLoadingHtml(DELAY_TIMES.WEBVIEW_PAGE_LOADING_TIMEOUT),
         contextHtml,
         escapedContent: WebviewUtils.escapeHtml(markdownContent || ''),
         markedJsUri: markedJsUri || '',
