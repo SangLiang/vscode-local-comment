@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
+## [2.3.0] - Unreleased
+
+### Added
+
+- Added comment color rendering to the local comment navigation panel in the Explorer
+
+- Added a relation graph tab in the local comment editor, allowing you to view the comment relations referenced by the current comment
+
+- Changed the default click behavior of the local comment Activity Bar so that clicking it now opens the management list of the current comment group directly
+
+- Added local comment color rendering to links in the management list
+
+- Added a loading overlay: pages that have not finished rendering now show a spinner instead of unstyled structure
+
+- Added Ctrl+Alt+V (Mac: Cmd+Alt+V) for Markdown file preview, avoiding VS Code's native Ctrl+Shift+V preview shortcut
+
+### Fixed
+
+- Fixed an issue where newly added tags from elsewhere could not be @-mentioned in the editor while editing Markdown comment content
+
+- Fixed and optimized packaging logic to reduce the VSIX package size
+
+- Fixed some other known issues
+
 ## [2.2.0] - 2026-09-02
 
 ### Added

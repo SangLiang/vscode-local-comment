@@ -120,7 +120,7 @@ Typical cases: **researching a codebase**, **design notes that should not land i
 
 - **Reference code tags in Markdown**: In any `.md` file, right-click and select "Insert tag reference" to insert `@tagName`. When previewing, click these references to **jump directly to the tag definition in code**.
 - **Tags as links**: Declare with `${tagName}` in code, reference with `@tagName` in Markdown — documents and code form a two-way connection.
-- **Preview and export**: Right-click and select "Preview Markdown" for Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; **Ctrl+F** to search in the preview; **Alt+click** a preview block to jump to the matching line in the `.md` source; click "Export HTML" to generate a self-contained file for offline viewing.
+- **Preview and export**: In a `.md` file press **Ctrl+Alt+V** (or right-click "Preview Markdown") for Mermaid diagrams, LaTeX formulas, and syntax-highlighted code; **Ctrl+F** to search in the preview; **Alt+click** a preview block to jump to the matching line in the `.md` source; click "Export HTML" to generate a self-contained file for offline viewing.
 
 > 💡 **Use cases**: Write architecture docs referencing key code implementations with `@`; take notes while reading source, then jump back to code with one click.
 
@@ -194,12 +194,12 @@ That makes it easier to stay aligned after **branch switches** or **large refact
 | `Ctrl+Shift+E` | Edit comment | Quick edit for current line |
 | `Ctrl+Shift+D` | Delete comment | Remove comment on current line |
 | `Ctrl+Shift+T` | Selection to comment | Convert selection |
-| - | Preview Markdown | Right-click menu or Command Palette (`.md` files only) |
 
 ### Markdown preview
 
 | Shortcut | Action | Notes |
 |----------|--------|--------|
+| `Ctrl+Alt+V` | Open Markdown preview | Markdown files only; does not take VS Code's native `Ctrl+Shift+V` |
 | `Ctrl+F` | Search in preview | Find text in the Markdown preview panel |
 | `Alt+left click` | Jump to source | Click a preview block to open the matching line in the `.md` file |
 

@@ -2,9 +2,34 @@
 
 本文件记录本项目所有重要变更。
 
+## [2.3.0] - 未发布
+
+### 新增
+
+- 为资源管理器里的 local comment 导航面板也加上了注释颜色渲染
+
+- 在本地注释编辑器中，加入关系图tab，允许查看该条注释引用的注释关系
+
+- 调整了点击 local comment active bar 的默认行为，现在点击后会直接打开当前注释组的管理列表
+
+- 为管理列表中的链接也添加了 local comment 颜色渲染
+
+- 加入加载遮罩，未完成的渲染页面会转圈等待，而不是把无样式的结构渲染出来
+
+- Markdown 文件预览新增快捷键 Ctrl+Alt+V（Mac: Cmd+Alt+V），避免与 VS Code 原生预览 Ctrl+Shift+V 冲突
+
+### 修复
+
+- 修复在编辑markdown注释内容的时候，外部tag标签新增，在编辑器里无法@到新tag的错误
+
+- 修复优化打包的逻辑，减小vsix包的体积
+
+- 其他一些已知问题 
+
 ## [2.2.0] - 2026-09-02
 
 ### 新增
+
 - 为 local comment 注释内容在编辑的显示里添加颜色选择,用户可以根据注释的重要级别选择合适的注释颜色
 
 ![image](https://raw.githubusercontent.com/SangLiang/vscode-local-comment/refs/heads/master/images/local_comment_color.png)
