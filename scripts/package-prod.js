@@ -39,7 +39,7 @@ try {
 
     console.log('   打包VSIX文件（将自动编译TypeScript）...');
     const packageStart = Date.now();
-    execSync(`npx @vscode/vsce package`, {
+    execSync('npx --no-install vsce package', {
         stdio: 'inherit',
         cwd: path.join(__dirname, '..')
     });

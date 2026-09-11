@@ -53,7 +53,7 @@ try {
     // 注意：vsce package 会自动执行 vscode:prepublish 脚本（即 npm run compile），所以不需要手动编译
     console.log('   打包VSIX文件（将自动编译TypeScript）...');
     const packageStart = Date.now();
-    execSync(`npx @vscode/vsce package --out ${outputFileName}`, {
+    execSync(`npx --no-install vsce package --out ${outputFileName}`, {
         stdio: 'inherit',
         cwd: path.join(__dirname, '..')
     });
