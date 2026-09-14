@@ -143,6 +143,16 @@
     background-color: var(--vscode-button-hoverBackground);
 }
 
+.export-btn.secondary {
+    background-color: var(--vscode-button-secondaryBackground, transparent);
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    border-color: var(--vscode-button-border, transparent);
+}
+
+.export-btn.secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
 .export-btn:active {
     transform: translateY(1px);
 }

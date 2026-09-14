@@ -364,6 +364,11 @@ export class MarkdownPreviewWebview {
                 return;
             }
 
+            if (message.command === IPC_MESSAGES.REFRESH_PREVIEW) {
+                await this.handleRefreshPreview();
+                return;
+            }
+
             if (message.command === IPC_MESSAGES.GO_TO_TAG_DECLARATION && message.tagName) {
                 try {
                     await vscode.commands.executeCommand(
@@ -418,6 +423,35 @@ export class MarkdownPreviewWebview {
                 });
             }
         });
+    }
+
+    /** 处理刷新预览请求：重新从磁盘读取源文件并强制推送 updateContent（绕过内容去重，确保重渲染） */
+    private async handleRefreshPreview(): Promise<void> {
+        try {
+            const uri = vscode.Uri.file(this._sourceFilePath);
+            const document = await vscode.workspace.openTextDocument(uri);
+            const content = document.getText();
+            const resolvedContent = this.resolveMarkdownContent(content);
+            // 更新基线，避免后续 liveSync/保存推送被去重跳过
+            this._lastSyncedContent = resolvedContent;
+            // 直接 postMessage 而非走 updateContent，绕过「内容未变则跳过」的去重逻辑；
+            // 同时带上 tagNames，绕过前端「内容相同且无 tagNames 则跳过」的早退分支，确保强制重渲染
+            this.panel.webview.postMessage({
+                command: IPC_MESSAGES.UPDATE_CONTENT,
+                content: resolvedContent,
+                tagNames: this.availableTagNames
+            });
+        } catch (error) {
+            logger.error('刷新预览失败:', error);
+            vscode.window.showErrorMessage(`刷新预览失败: ${getErrorMessage(error)}`);
+            // 读盘失败时回推上次基线内容，让前端走完渲染流程并隐藏加载遮罩，避免遮罩卡死
+            const fallback = this._lastSyncedContent ?? '';
+            this.panel.webview.postMessage({
+                command: IPC_MESSAGES.UPDATE_CONTENT,
+                content: fallback,
+                tagNames: this.availableTagNames
+            });
+        }
     }
 
     /** 处理 Webview 的字号调节请求：计算新值、写配置、回推实际字号给当前面板 */

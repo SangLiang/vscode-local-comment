@@ -204,6 +204,15 @@ function fitAllMermaidCharts() {
 (function() {
     var pageLoadingHidden = false;
 
+    function showPageLoading() {
+        pageLoadingHidden = false;
+        var el = document.getElementById('lc-page-loading');
+        if (el) {
+            el.style.display = 'flex';
+            el.setAttribute('aria-hidden', 'false');
+        }
+    }
+
     function hidePageLoading() {
         if (pageLoadingHidden) {
             return;
@@ -226,6 +235,7 @@ function fitAllMermaidCharts() {
 
     if (typeof window !== 'undefined') {
         window.PageLoading = {
+            show: showPageLoading,
             hide: hidePageLoading,
             hideAfter: hidePageLoadingAfter,
             notifyFirstRenderComplete: notifyFirstRenderComplete

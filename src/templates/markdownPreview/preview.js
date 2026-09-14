@@ -791,6 +791,24 @@
         });
     }
 
+    /** 绑定刷新预览按钮：请求扩展重新从磁盘读取文件并强制重渲染 */
+    function initRefreshPreviewControl() {
+        const refreshBtn = document.getElementById('refreshPreviewBtn');
+        if (!refreshBtn) {
+            return;
+        }
+        refreshBtn.addEventListener('click', function() {
+            refreshBtn.disabled = true;
+            // 显示全屏加载遮罩，给用户「正在刷新」的视觉反馈；渲染完成后由 updatePreviewContent 的 finally 隐藏
+            if (window.PageLoading) {
+                window.PageLoading.show();
+            }
+            vscode.postMessage({ command: 'refreshPreview' });
+            // 兜底：若扩展侧读取失败未回推 updateContent，400ms 后恢复按钮可点；遮罩由渲染流程隐藏
+            setTimeout(function() { refreshBtn.disabled = false; }, 400);
+        });
+    }
+
     /**
      * 核心预览管线：
      * 1) 占位保护 ${标签} → 2) marked 注入 data-source-line → 3) @tag / KaTeX
@@ -800,6 +818,9 @@
         if (!content || content.trim() === '') {
             previewArea.innerHTML = '<p style="color: var(--vscode-descriptionForeground); text-align: center; margin-top: 40px;">暂无内容</p>';
             rebuildToc();
+            if (window.PageLoading) {
+                window.PageLoading.hide();
+            }
             return;
         }
 
@@ -1059,6 +1080,7 @@
 
     initActionMenuControls();
     initFontSizeControls();
+    initRefreshPreviewControl();
     // 主动请求配置推送，兜底扩展侧 setTimeout(0) 推送时 webview 尚未就绪导致字号等丢失
     vscode.postMessage({ command: 'requestPreviewConfig' });
     if (currentPreviewFontSize) {

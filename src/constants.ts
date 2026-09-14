@@ -179,6 +179,8 @@ export const IPC_MESSAGES = {
     
     /** 更新 Webview 中的 Markdown 内容（用于文件保存后刷新预览） */
     UPDATE_CONTENT: 'updateContent',
+    /** Webview → 扩展：请求重新从磁盘读取文件并刷新 Markdown 预览 */
+    REFRESH_PREVIEW: 'refreshPreview',
     
     // 共享注释相关消息
     EXPORT_TO_LOCAL_COMMENT: 'exportToLocalComment',
