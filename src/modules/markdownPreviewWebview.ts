@@ -612,7 +612,7 @@ export class MarkdownPreviewWebview {
         keepPrintBg: boolean = true,
         hasMermaid: boolean = false
     ): string {
-        const safeName = fileName ? fileName.replace(/\.md$/i, '') : 'export';
+        const safeName = WebviewUtils.escapeHtml(fileName ? fileName.replace(/\.md$/i, '') : 'export');
         // 仅影响「打印」时是否保留背景色，与屏幕浏览时的表格边框无关
         const printStyles = keepPrintBg
             ? `@media print {
