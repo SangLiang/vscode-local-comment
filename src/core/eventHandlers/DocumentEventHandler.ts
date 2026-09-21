@@ -27,9 +27,11 @@ export class DocumentEventHandler {
 
         // 监听文档打开
         const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument(() => {
-            // 文档打开时只刷新注释装饰器
+            // 文档打开时刷新注释装饰器
             this.container.commentProvider.refresh();
-            // 注释树在文档打开时不需要刷新，因为内容没有变化
+            // document 从无到有，getComments 可匹配；
+            // 防抖刷新注释树，让该文件注释图标从暗色（未打开未匹配）更新为彩色（已匹配）
+            this.container.commentTreeProvider.refreshDebounced();
         });
         disposables.push(onDidOpenTextDocument);
 

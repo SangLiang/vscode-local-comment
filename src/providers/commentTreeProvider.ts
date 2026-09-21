@@ -6,6 +6,7 @@ import { BookmarkManager, Bookmark } from '../managers/bookmarkManager';
 import { logger } from '../utils/logger';
 import { COMMANDS } from '../constants';
 import { resolveCommentTreeIcon, buildCommentTreeIconSvg } from '../utils/commentDecorationColor';
+import { TimerManager } from '../utils/timerUtils';
 
 const commentTreeIconUriCache = new Map<string, vscode.Uri>();
 
@@ -27,17 +28,21 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
     private _onDidChangeTreeData: vscode.EventEmitter<CommentTreeItem | undefined | null | void> = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<CommentTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
     private disposables: vscode.Disposable[] = [];
-    
+
+    private readonly _timerManager = new TimerManager();
+    private _refreshTimer: NodeJS.Timeout | null = null;
+    private readonly REFRESH_DEBOUNCE_DELAY = 150;
+
     constructor(private commentManager: CommentManager, private fileHeatManager?: FileHeatManager, private bookmarkManager?: BookmarkManager) {
         // 监听文件热度更新事件，只有在热度更新时才刷新排序
         if (this.fileHeatManager) {
             const heatUpdateDisposable = this.fileHeatManager.onDidUpdateHeat(() => {
                 logger.debug('[CommentTreeProvider] 文件热度更新，触发注释树刷新');
-                this.refresh(); // 热度更新时刷新注释树排序
+                this.refreshDebounced(); // 热度更新时防抖刷新注释树排序
             });
             this.disposables.push(heatUpdateDisposable);
         }
-        
+
         // 监听书签变化事件
         if (this.bookmarkManager) {
             const bookmarkUpdateDisposable = this.bookmarkManager.onDidChangeBookmarks(() => {
@@ -46,11 +51,28 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             });
             this.disposables.push(bookmarkUpdateDisposable);
         }
+
+        this.disposables.push(this._timerManager);
     }
 
     refresh(): void {
         logger.debug('🔄 [CommentTreeProvider] 执行完整刷新 - 触发树数据变更事件');
         this._onDidChangeTreeData.fire();
+    }
+
+    /**
+     * 防抖刷新：用于编辑器切换 / 文档打开 / 热度更新等高频连续事件。
+     * 150ms 内多次触发只执行最后一次，避免连续切 tab 时重复全树重算。
+     * 用户主动操作（增删改注释、分组切换、登录）仍应调用立即 refresh()。
+     */
+    refreshDebounced(): void {
+        if (this._refreshTimer) {
+            this._timerManager.clearTimeout(this._refreshTimer);
+        }
+        this._refreshTimer = this._timerManager.setTimeout(() => {
+            this._refreshTimer = null;
+            this.refresh();
+        }, this.REFRESH_DEBOUNCE_DELAY);
     }
 
     getTreeItem(element: CommentTreeItem): vscode.TreeItem {

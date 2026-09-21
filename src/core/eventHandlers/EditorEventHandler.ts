@@ -20,9 +20,11 @@ export class EditorEventHandler {
         // 监听编辑器切换事件
         const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor((editor) => {
             if (editor) {
-                // 编辑器切换时只刷新注释装饰器
+                // 编辑器切换时刷新注释装饰器
                 this.container.commentProvider.refresh();
-                // 注释树在编辑器切换时不需要刷新，因为内容没有变化
+                // 切换到的文件 document 已打开，getComments 可匹配；
+                // 防抖刷新注释树，让匹配状态（图标颜色）及时更新
+                this.container.commentTreeProvider.refreshDebounced();
             }
         });
         disposables.push(onDidChangeActiveTextEditor);
