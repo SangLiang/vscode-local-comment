@@ -14,8 +14,8 @@ Local Comment provides complete Markdown support, including in-editor comments, 
 
 ### Preview Markdown Files
 
-- In any `.md` file editor, **right-click and select "Preview Markdown"**
-- Or run `Local Comment: Preview Markdown` from the Command Palette
+- In any `.md` file editor, press <kbd>Ctrl+Alt+V</kbd> (Mac: <kbd>Cmd+Alt+V</kbd>), or **right-click and select "Preview Markdown"**
+- You can also run `Local Comment: Preview Markdown` from the Command Palette
 - Supports live rendering: Mermaid diagrams, LaTeX formulas, syntax-highlighted code
 - Diagram interactions: Zoom buttons (+/-), <kbd>Ctrl</kbd> + scroll to zoom, mouse drag to pan
 

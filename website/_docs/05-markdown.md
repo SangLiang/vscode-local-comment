@@ -13,8 +13,8 @@ Local Comment 提供完整的 Markdown 支持，包括编辑器内的注释、Ma
 
 ### 预览 Markdown 文件
 
-- 在任意 `.md` 文件编辑器中，**右键选择「预览 Markdown」**
-- 或使用命令面板执行 `Local Comment: Preview Markdown`
+- 在任意 `.md` 文件编辑器中，按 <kbd>Ctrl+Alt+V</kbd>（Mac: <kbd>Cmd+Alt+V</kbd>），或**右键选择「预览 Markdown」**
+- 也可使用命令面板执行 `Local Comment: Preview Markdown`
 - 支持实时渲染：Mermaid 图表、LaTeX 公式、代码语法高亮
 - 图表交互：支持缩放按钮（+/-）、<kbd>Ctrl</kbd> + 滚轮缩放、鼠标拖拽平移
 

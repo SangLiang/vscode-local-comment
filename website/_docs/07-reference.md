@@ -17,6 +17,12 @@ permalink: /docs/reference/
 | <kbd>Ctrl+Shift+D</kbd> | <kbd>Cmd+Shift+D</kbd> | 删除当前行注释 |
 | <kbd>Ctrl+Shift+T</kbd> | <kbd>Cmd+Shift+T</kbd> | 选中内容转注释 |
 
+### Markdown 预览
+
+| 快捷键（Windows/Linux） | 快捷键（macOS） | 动作 |
+|------------------------|----------------|------|
+| <kbd>Ctrl+Alt+V</kbd> | <kbd>Cmd+Alt+V</kbd> | 打开 Markdown 预览（仅 Markdown 文件，不占用原生 <kbd>Ctrl+Shift+V</kbd>） |
+
 ### 书签
 
 | 快捷键（Windows/Linux） | 快捷键（macOS） | 动作 |
@@ -26,7 +32,7 @@ permalink: /docs/reference/
 | <kbd>Ctrl+Alt+Shift+J</kbd> | <kbd>Cmd+Alt+Shift+J</kbd> | 上一个书签 |
 
 <div class="callout callout-tip">
-<strong>记忆技巧：</strong>M 代表 Markdown，C 代表 Comment，E 代表 Edit，D 代表 Delete，T 代表 Turn（转换）。书签的 J/K 对应 VS Code: 默认的「上一个/下一个」语义。
+<strong>记忆技巧：</strong>M 代表 Markdown，C 代表 Comment，E 代表 Edit，D 代表 Delete，T 代表 Turn（转换）。预览用 V（View），与书签同属 Ctrl+Alt 家族，避免占用 VS Code 原生预览。书签的 J/K 对应 VS Code: 默认的「上一个/下一个」语义。
 </div>
 
 ## 设置项 {#settings}

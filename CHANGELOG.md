@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 [中文版](./CHANGELOG.zh-CN.md)
 
-## [2.3.0] - Unreleased
+## [2.3.0] - 2026-09-21
 
 ### Added
 
@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed an issue where newly added tags from elsewhere could not be @-mentioned in the editor while editing Markdown comment content
+
+- Fixed some rendering issues for comments displayed in the Panel Tree view
 
 - Fixed and optimized packaging logic to reduce the VSIX package size
 

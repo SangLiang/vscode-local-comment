@@ -18,6 +18,12 @@ lang: en
 | <kbd>Ctrl+Shift+D</kbd> | <kbd>Cmd+Shift+D</kbd> | Delete comment on current line |
 | <kbd>Ctrl+Shift+T</kbd> | <kbd>Cmd+Shift+T</kbd> | Convert selection to comment |
 
+### Markdown Preview
+
+| Shortcut (Windows/Linux) | Shortcut (macOS) | Action |
+|-------------------------|-----------------|--------|
+| <kbd>Ctrl+Alt+V</kbd> | <kbd>Cmd+Alt+V</kbd> | Open Markdown preview (Markdown files only; does not take native <kbd>Ctrl+Shift+V</kbd>) |
+
 ### Bookmarks
 
 | Shortcut (Windows/Linux) | Shortcut (macOS) | Action |
@@ -27,7 +33,7 @@ lang: en
 | <kbd>Ctrl+Alt+Shift+J</kbd> | <kbd>Cmd+Alt+Shift+J</kbd> | Previous bookmark |
 
 <div class="callout callout-tip">
-<strong>Memory trick:</strong> M stands for Markdown, C stands for Comment, E stands for Edit, D stands for Delete, T stands for Turn (convert). Bookmarks' J/K correspond to VS Code:'s default "previous/next" semantics.
+<strong>Memory trick:</strong> M stands for Markdown, C stands for Comment, E stands for Edit, D stands for Delete, T stands for Turn (convert). Preview uses V (View) in the same Ctrl+Alt family as bookmarks, so it does not take VS Code's native preview shortcut. Bookmarks' J/K correspond to VS Code:'s default "previous/next" semantics.
 </div>
 
 ## Settings {#settings}
