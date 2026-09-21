@@ -413,7 +413,7 @@ export class CommentManager implements vscode.Disposable {
     // ============== 旧 API 兼容方法 ==============
 
     /**
-     * @deprecated 使用 saveCommentsAsync 或直接通过 _saveAndFire 触发保存
+     * 触发注释保存并广播变更事件。对外公开入口，供命令层调用。
      */
     public async saveComments(): Promise<void> {
         await this._saveAndFire();

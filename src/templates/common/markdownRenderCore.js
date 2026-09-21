@@ -100,11 +100,6 @@
             '</div>';
     }
 
-    /** @deprecated 使用 wrapMermaidChartHtml */
-    function wrapMermaidSvg(chartId, svg) {
-        return wrapMermaidChartHtml(chartId, svg);
-    }
-
     /**
      * 创建渲染实例（每 Webview 面板一个，避免初始化状态互相覆盖）。
      * @param {{ handDrawnEnabled?: boolean }} [options]
@@ -459,7 +454,7 @@
                     return '<div class="mermaid-error">图表渲染失败: ' + (rendered.error || 'unknown') +
                         '<pre>' + normalizeMermaidDefinition(chartDefinition) + '</pre></div>';
                 }
-                return wrapMermaidSvg(rendered.chartId, rendered.svg);
+                return wrapMermaidChartHtml(rendered.chartId, rendered.svg);
             }));
             if (mermaidBlocks.length > 0) {
                 console.log(
