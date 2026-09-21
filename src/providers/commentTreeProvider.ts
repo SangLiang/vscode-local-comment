@@ -216,7 +216,13 @@ export class CommentTreeProvider implements vscode.TreeDataProvider<CommentTreeI
             
             // 使用Map快速查找匹配的注释
             const matchedComment = matchedCommentsMap.get(comment.id);
-            const isMatchable = matchedComment !== undefined;
+            // isMatchable 读 comment.isMatched（上次打开文件匹配时写入，关闭文件后保留），
+            // 不依赖 getComments 是否返回该注释——后者在文档关闭时返回空，会把"没打开"误判成"未匹配"导致图标误暗。
+            // undefined（从未匹配过，如导入/迁移的旧注释）乐观视为可匹配，打开文件后 getComments 会修正。
+            // isMatchable 读 comment.isMatched（上次打开文件匹配时写入，关闭文件后保留），
+            // 不依赖 getComments 是否返回该注释——后者在文档关闭时返回空，会把"没打开"误判成"未匹配"导致图标误暗。
+            // undefined（从未匹配过，如导入/迁移的旧注释）乐观视为可匹配，打开文件后 getComments 会修正。
+            const isMatchable = comment.isMatched !== false;
             
             // 构建标签
             const label = `第${(matchedComment?.line || comment.line) + 1}行: ${comment.content}`;
