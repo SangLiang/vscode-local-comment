@@ -84,15 +84,14 @@ function collectLevelZeroReferences(
 
 export function buildTagRelationGraphData(options: {
     commentManager: CommentManager;
+    tagManager: TagManager;
     centerFilePath: string;
     centerLabel: string;
     centerContent?: string;
     level: number;
     breadcrumb: BreadcrumbItem[];
 }): GraphData {
-    const { commentManager, centerFilePath, centerLabel, centerContent, level, breadcrumb } = options;
-    const tagManager = new TagManager();
-    tagManager.updateTags(commentManager.getAllComments());
+    const { commentManager, tagManager, centerFilePath, centerLabel, centerContent, level, breadcrumb } = options;
 
     let references: string[] = [];
     if (level === 0) {
@@ -161,12 +160,14 @@ export function buildTagRelationGraphData(options: {
 
 export function buildTagRelationChildNodes(options: {
     commentManager: CommentManager;
+    tagManager: TagManager;
     parentId: string;
     centerLabel: string;
     centerFilePath: string;
 }): { nodes: GraphNode[]; edges: GraphEdge[] } {
     const data = buildTagRelationGraphData({
         commentManager: options.commentManager,
+        tagManager: options.tagManager,
         centerFilePath: options.centerFilePath,
         centerLabel: options.centerLabel,
         level: 1,

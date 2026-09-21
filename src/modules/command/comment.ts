@@ -277,6 +277,7 @@ export function registerCommentCommands(
             commentManager,
             projectManager,
             authManager,
+            tagManager,
             uri,
             comment,
             onSaveAndContinue: createSaveAndContinueCallback('edit', uri, comment.id, comment.line, comment.content, comment.color),
@@ -384,6 +385,7 @@ export function registerCommentCommands(
                     await showShareCommentWebview(
                         context as vscode.ExtensionContext,
                         commentManager,
+                        tagManager,
                         targetComment.content,
                         `共享注释预览 - ${path.basename(filePath)}:${line + 1}`,
                         contextInfo
@@ -821,6 +823,7 @@ export function registerCommentCommands(
                             '添加多行本地注释',
                             projectManager,
                             commentManager,
+                            tagManager,
                             '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签',
                             '',
                             {
@@ -863,6 +866,7 @@ export function registerCommentCommands(
                     '添加多行本地注释',
                     projectManager,
                     commentManager,
+                    tagManager,
                     '支持 Markdown 语法和多行输入，使用 $标签名 声明标签，使用 @标签名 引用标签',
                     '',
                     {
@@ -1034,6 +1038,7 @@ export function registerCommentCommands(
             await showShareCommentWebview(
                 context,
                 commentManager,
+                tagManager,
                 content as string,
                 `注释预览 - ${fileName}:${lineNumber + 1}`,
                 contextInfo

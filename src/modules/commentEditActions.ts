@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommentManager, LocalComment } from '../managers/commentManager';
 import { ProjectManager } from '../managers/projectManager';
 import { AuthManager } from '../managers/authManager';
+import { TagManager } from '../managers/tagManager';
 import { getCodeContext, showMarkdownWebviewInput } from './markdownWebview';
 import { getFileNameFromUri } from '../utils/pathUtils';
 import { getErrorMessage } from '../utils/utils';
@@ -13,11 +14,12 @@ export async function openCommentEditor(options: {
     commentManager: CommentManager;
     projectManager: ProjectManager;
     authManager: AuthManager;
+    tagManager: TagManager;
     uri: vscode.Uri;
     comment: Pick<LocalComment, 'id' | 'line' | 'content' | 'lineContent' | 'isShared' | 'color'>;
     onSaveAndContinue: MarkdownSaveCallback;
 }): Promise<void> {
-    const { context, commentManager, projectManager, authManager, uri, comment, onSaveAndContinue } = options;
+    const { context, commentManager, projectManager, authManager, tagManager, uri, comment, onSaveAndContinue } = options;
 
     try {
         const fileName = getFileNameFromUri(uri);
@@ -61,6 +63,7 @@ export async function openCommentEditor(options: {
             fileExists ? '修改注释内容' : '修改注释内容 (原文件已删除)',
             projectManager,
             commentManager,
+            tagManager,
             fileExists ?
                 '支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签' :
                 '原文件已删除，但您仍可以编辑注释内容。支持 Markdown 语法和多行输入，使用 ${标签名} 声明标签，使用 @标签名 引用标签',

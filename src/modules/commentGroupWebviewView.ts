@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommentManager } from '../managers/commentManager';
 import { ProjectManager } from '../managers/projectManager';
 import { AuthManager } from '../managers/authManager';
+import { TagManager } from '../managers/tagManager';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { IPC_MESSAGES } from '../constants';
 import { CommentManageWebviewPanel } from './commentManageWebview';
@@ -38,6 +39,7 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
         private readonly _commentManager: CommentManager,
         private readonly _projectManager: ProjectManager,
         private readonly _authManager: AuthManager,
+        private readonly _tagManager: TagManager,
         private readonly _refreshCommentUi: () => void
     ) {}
 
@@ -96,6 +98,7 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
             this._commentManager,
             this._projectManager,
             this._authManager,
+            this._tagManager,
             groupFileName
         );
     }

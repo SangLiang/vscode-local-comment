@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as path from 'path';
 import { LocalComment } from '../managers/commentTypes';
 import type { CommentManager } from '../managers/commentManager';
+import { TagManager } from '../managers/tagManager';
 import {
     buildTagRelationGraphData,
     buildTagRelationChildNodes,
@@ -29,6 +30,13 @@ function mockManager(all: Record<string, LocalComment[]>): CommentManager {
         getAllComments: () => all,
         getComments: (uri: { fsPath: string }) => all[uri.fsPath] ?? []
     } as unknown as CommentManager;
+}
+
+/** 与扩展侧容器实例用法一致：基于全量注释构建一次索引后复用 */
+function buildTagManager(commentManager: CommentManager): TagManager {
+    const tm = new TagManager();
+    tm.updateTags(commentManager.getAllComments());
+    return tm;
 }
 
 const authPath = path.join('/proj', 'auth.ts');
@@ -60,8 +68,10 @@ describe('buildTagRelationGraphData', () => {
     const breadcrumb = [{ id: 'root', label: '当前注释', filePath: authPath }];
 
     it('centerContent 有已声明 @tag 时画出中心和目标节点', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '当前注释',
             centerContent: '复用 @configLoader',
@@ -75,8 +85,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('断链不出现在图上', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '当前注释',
             centerContent: '没有 @notExist',
@@ -89,8 +101,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('无 @tag 时只有中心节点', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '当前注释',
             centerContent: '普通说明',
@@ -102,8 +116,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('代码块内 @tag 不进入第一层', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '当前注释',
             centerContent: '```\n@configLoader\n```\n外面 @sessionStore',
@@ -123,8 +139,10 @@ describe('buildTagRelationGraphData', () => {
             ],
             [sessionPath]: [comment({ id: 'sess', line: 3, content: '${sessionStore}' })]
         };
+        const commentManager = mockManager(all);
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(all),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '当前注释',
             centerContent: '只有文字',
@@ -135,8 +153,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('level>=1 从声明正文展开并过滤断链', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: '@configLoader\nauth.ts:11',
             level: 1,
@@ -152,8 +172,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('buildTagRelationChildNodes 把子节点挂到指定父节点', () => {
+        const commentManager = mockManager(declaredComments());
         const children = buildTagRelationChildNodes({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             parentId: 'tag-configLoader',
             centerLabel: '@configLoader\nauth.ts:11',
             centerFilePath: authPath
@@ -164,8 +186,10 @@ describe('buildTagRelationGraphData', () => {
     });
 
     it('未提供 centerContent 的 level 0 包含文件内全部注释引用', () => {
+        const commentManager = mockManager(declaredComments());
         const data = buildTagRelationGraphData({
-            commentManager: mockManager(declaredComments()),
+            commentManager,
+            tagManager: buildTagManager(commentManager),
             centerFilePath: authPath,
             centerLabel: 'auth.ts',
             level: 0,

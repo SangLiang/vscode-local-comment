@@ -12,6 +12,7 @@ import { generateId } from '../utils/idUtils';
 export async function showShareCommentWebview(
     context: vscode.ExtensionContext,
     commentManager: CommentManager,
+    tagManager: TagManager,
     markdownContent: string,
     title: string = '注释预览',
     contextInfo?: {
@@ -92,8 +93,6 @@ export async function showShareCommentWebview(
     let configPostTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
         configPostTimer = undefined;
         try {
-            const tagManager = new TagManager();
-            tagManager.updateTags(commentManager.getAllComments());
             postMarkdownPreviewConfig(panel.webview, {
                 sendAvailableTags: true,
                 availableTagNames: tagManager.getAvailableTagNames()

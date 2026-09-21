@@ -3,6 +3,7 @@ import * as path from 'path';
 import { CommentManager } from '../managers/commentManager';
 import { ProjectManager } from '../managers/projectManager';
 import { AuthManager } from '../managers/authManager';
+import { TagManager } from '../managers/tagManager';
 import { WebviewUtils } from '../utils/webviewUtils';
 import { VIEW_TYPES, IPC_MESSAGES, COMMANDS } from '../constants';
 import {
@@ -44,6 +45,7 @@ export class CommentManageWebviewPanel {
     private readonly _commentManager: CommentManager;
     private readonly _projectManager: ProjectManager;
     private readonly _authManager: AuthManager;
+    private readonly _tagManager: TagManager;
     private _groupFileName: string;
     private _lastQuery?: string;
     private _lastCommentKind: CommentKindFilter = '';
@@ -57,6 +59,7 @@ export class CommentManageWebviewPanel {
         commentManager: CommentManager,
         projectManager: ProjectManager,
         authManager: AuthManager,
+        tagManager: TagManager,
         groupFileName: string
     ): void {
         const title = `注释管理 - ${groupFileName}`;
@@ -89,6 +92,7 @@ export class CommentManageWebviewPanel {
             commentManager,
             projectManager,
             authManager,
+            tagManager,
             groupFileName
         );
     }
@@ -99,7 +103,8 @@ export class CommentManageWebviewPanel {
         extensionUri: vscode.Uri,
         commentManager: CommentManager,
         projectManager: ProjectManager,
-        authManager: AuthManager
+        authManager: AuthManager,
+        tagManager: TagManager
     ): void {
         const groupFileName = commentManager.getCurrentCommentsConfig();
         CommentManageWebviewPanel.currentPanel = new CommentManageWebviewPanel(
@@ -109,6 +114,7 @@ export class CommentManageWebviewPanel {
             commentManager,
             projectManager,
             authManager,
+            tagManager,
             groupFileName
         );
     }
@@ -120,6 +126,7 @@ export class CommentManageWebviewPanel {
         commentManager: CommentManager,
         projectManager: ProjectManager,
         authManager: AuthManager,
+        tagManager: TagManager,
         groupFileName: string
     ) {
         this._panel = panel;
@@ -128,6 +135,7 @@ export class CommentManageWebviewPanel {
         this._commentManager = commentManager;
         this._projectManager = projectManager;
         this._authManager = authManager;
+        this._tagManager = tagManager;
         this._groupFileName = groupFileName;
 
         this._update();
@@ -442,6 +450,7 @@ export class CommentManageWebviewPanel {
             commentManager: this._commentManager,
             projectManager: this._projectManager,
             authManager: this._authManager,
+            tagManager: this._tagManager,
             uri,
             comment,
             onSaveAndContinue: async (

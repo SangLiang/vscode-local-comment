@@ -49,6 +49,7 @@ export class ProviderRegistry {
             this.container.commentManager,
             this.container.projectManager,
             this.container.authManager,
+            this.container.tagManager,
             () => {
                 this.container.refreshCommentUi();
             }
@@ -250,7 +251,8 @@ export class ProviderRegistry {
                     context.extensionUri,
                     container.commentManager,
                     container.projectManager,
-                    container.authManager
+                    container.authManager,
+                    container.tagManager
                 );
             }
         });

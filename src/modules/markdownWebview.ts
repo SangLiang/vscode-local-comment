@@ -52,10 +52,8 @@ export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contex
 
 function pushCommentInputTagConfig(
     webview: vscode.Webview,
-    commentManager: CommentManager
+    tagManager: TagManager
 ): void {
-    const tagManager = new TagManager();
-    tagManager.updateTags(commentManager.getAllComments());
     const availableTagNames = tagManager.getAvailableTagNames();
     postMarkdownPreviewConfig(webview, {
         sendAvailableTags: true,
@@ -70,6 +68,7 @@ export async function showMarkdownWebviewInput(
     prompt: string,
     projectManager: ProjectManager,
     commentManager: CommentManager,
+    tagManager: TagManager,
     placeholder: string = '',
     existingContent: string = '',
     contextInfo?: MarkdownContextInfo,
@@ -157,7 +156,7 @@ export async function showMarkdownWebviewInput(
                     
                     promises.push(
                         Promise.resolve().then(() => {
-                            pushCommentInputTagConfig(panel.webview, commentManager);
+                            pushCommentInputTagConfig(panel.webview, tagManager);
                         })
                     );
 
@@ -188,7 +187,7 @@ export async function showMarkdownWebviewInput(
 
         const tagSyncDisposable = commentManager.onDidChangeComments(() => {
             try {
-                pushCommentInputTagConfig(panel.webview, commentManager);
+                pushCommentInputTagConfig(panel.webview, tagManager);
             } catch (error) {
                 logger.error('更新注释输入页标签建议失败:', error);
             }
@@ -217,6 +216,7 @@ export async function showMarkdownWebviewInput(
             commentTagGraphStack.visitedNodes = new Set();
             return buildTagRelationGraphData({
                 commentManager,
+                tagManager,
                 centerFilePath: filePath,
                 centerLabel: '当前注释',
                 centerContent: content,
@@ -245,6 +245,7 @@ export async function showMarkdownWebviewInput(
             if (level === 0) {
                 return buildTagRelationGraphData({
                     commentManager,
+                    tagManager,
                     centerFilePath: item.filePath,
                     centerLabel: '当前注释',
                     centerContent: commentTagGraphRootContent,
@@ -254,6 +255,7 @@ export async function showMarkdownWebviewInput(
             }
             return buildTagRelationGraphData({
                 commentManager,
+                tagManager,
                 centerFilePath: item.filePath,
                 centerLabel: item.label,
                 level,
@@ -452,10 +454,6 @@ export async function showMarkdownWebviewInput(
                         // 处理跳转到tag声明的消息
                         if (message.tagName) {
                             try {
-                                // 使用TagManager查找tag声明
-                                const tagManager = new TagManager();
-                                tagManager.updateTags(commentManager.getAllComments());
-                                
                                 const declaration = tagManager.getTagDeclaration(message.tagName);
                                 
                                 if (declaration) {
@@ -496,6 +494,7 @@ export async function showMarkdownWebviewInput(
                         try {
                             const children = buildTagRelationChildNodes({
                                 commentManager,
+                                tagManager,
                                 parentId: nodeId,
                                 centerLabel: label,
                                 centerFilePath: filePath || sourceFilePath()

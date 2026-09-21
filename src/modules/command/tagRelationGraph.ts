@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager } from '../../managers/commentManager';
+import { TagManager } from '../../managers/tagManager';
 import { TagRelationGraphWebview, BreadcrumbItem, TagRelationGraphMessage } from '../tagRelationGraphWebview';
 import { COMMANDS } from '../../constants';
 import { logger } from '../../utils/logger';
@@ -9,12 +10,13 @@ import { buildTagRelationGraphData, buildTagRelationChildNodes } from '../../uti
 
 let rootItem: BreadcrumbItem | undefined;
 
-function buildRootGraph(commentManager: CommentManager) {
+function buildRootGraph(commentManager: CommentManager, tagManager: TagManager) {
     if (!rootItem) {
         return null;
     }
     return buildTagRelationGraphData({
         commentManager,
+        tagManager,
         centerFilePath: rootItem.filePath,
         centerLabel: rootItem.label,
         level: 0,
@@ -24,7 +26,8 @@ function buildRootGraph(commentManager: CommentManager) {
 
 export function registerTagRelationGraphCommands(
     context: vscode.ExtensionContext,
-    commentManager: CommentManager
+    commentManager: CommentManager,
+    tagManager: TagManager
 ): vscode.Disposable[] {
     const disposables: vscode.Disposable[] = [];
 
@@ -59,11 +62,11 @@ export function registerTagRelationGraphCommands(
                     filePath,
                     fileName,
                     async (message) => {
-                        await handleMessage(message, commentManager, webview);
+                        await handleMessage(message, commentManager, tagManager, webview);
                     }
                 );
 
-                const data = buildRootGraph(commentManager);
+                const data = buildRootGraph(commentManager, tagManager);
                 if (data) {
                     webview.updateGraph(data);
                 }
@@ -81,11 +84,12 @@ export function registerTagRelationGraphCommands(
 async function handleMessage(
     message: TagRelationGraphMessage,
     commentManager: CommentManager,
+    tagManager: TagManager,
     webview: TagRelationGraphWebview
 ): Promise<void> {
     switch (message.command) {
         case 'expandNode':
-            handleExpandNode(message, commentManager, webview);
+            handleExpandNode(message, commentManager, tagManager, webview);
             break;
         case 'goToDefinition':
             await handleGoToDefinition(message);
@@ -93,11 +97,11 @@ async function handleMessage(
         case 'navigateBack':
         case 'resetToRoot':
         case 'refresh':
-            handleResetToRoot(commentManager, webview);
+            handleResetToRoot(commentManager, tagManager, webview);
             break;
         case 'navigateToLevel':
             if (message.level === 0) {
-                handleResetToRoot(commentManager, webview);
+                handleResetToRoot(commentManager, tagManager, webview);
             }
             break;
     }
@@ -106,6 +110,7 @@ async function handleMessage(
 function handleExpandNode(
     message: TagRelationGraphMessage,
     commentManager: CommentManager,
+    tagManager: TagManager,
     webview: TagRelationGraphWebview
 ): void {
     const nodeId = message.nodeId;
@@ -116,6 +121,7 @@ function handleExpandNode(
 
     const children = buildTagRelationChildNodes({
         commentManager,
+        tagManager,
         parentId: nodeId,
         centerLabel: label,
         centerFilePath: message.filePath || rootItem?.filePath || ''
@@ -143,9 +149,10 @@ async function handleGoToDefinition(message: TagRelationGraphMessage): Promise<v
 
 function handleResetToRoot(
     commentManager: CommentManager,
+    tagManager: TagManager,
     webview: TagRelationGraphWebview
 ): void {
-    const data = buildRootGraph(commentManager);
+    const data = buildRootGraph(commentManager, tagManager);
     if (data) {
         webview.updateGraph(data);
     }

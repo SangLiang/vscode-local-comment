@@ -1188,6 +1188,7 @@ export function registerCommands(
             await showShareCommentWebview(
                 commentManager.getContext(),
                 commentManager,
+                tagManager,
                 comment.content,
                 `共享注释预览 - ${contextInfo.fileName}:${comment.line + 1}`,
                 contextInfo
@@ -1222,7 +1223,7 @@ export function registerCommands(
     const tagCommands = registerTagCommands(tagManager, commentManager);
 
     // 注册Tag关系图命令
-    const tagRelationGraphCommands = registerTagRelationGraphCommands(context, commentManager);
+    const tagRelationGraphCommands = registerTagRelationGraphCommands(context, commentManager, tagManager);
 
     // 返回所有注册的命令，以便在extension.ts中添加到subscriptions
     return [
