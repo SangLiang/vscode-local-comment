@@ -20,7 +20,8 @@ const noWorkspaceEl = document.getElementById('no-workspace');
 const mainContentEl = document.getElementById('main-content');
 const errorMessageEl = document.getElementById('error-message');
 
-function formatName(fileName) {
+// 与扩展侧 commentManageUtils.formatGroupDisplayName 规则一致：去 .json 后缀；空值占位 '—'。
+function formatGroupDisplayName(fileName) {
     if (!fileName) {
         return '—';
     }
@@ -53,7 +54,7 @@ function renderGroups(data) {
     const current = data.current || '';
     const viewing = data.viewing || '';
 
-    currentGroupEl.textContent = formatName(current);
+    currentGroupEl.textContent = formatGroupDisplayName(current);
     groupListEl.innerHTML = '';
 
     if (groups.length === 0) {
@@ -90,7 +91,7 @@ function renderGroups(data) {
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'group-name';
-        nameSpan.textContent = formatName(fileName);
+        nameSpan.textContent = formatGroupDisplayName(fileName);
         nameSpan.title = '点击查看该分组注释';
         nameSpan.addEventListener('click', () => {
             vscode.postMessage({ command: CMD.SELECT_COMMENT_GROUP, fileName });

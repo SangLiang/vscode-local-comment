@@ -7,12 +7,9 @@ import { IPC_MESSAGES } from '../constants';
 import { CommentManageWebviewPanel } from './commentManageWebview';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/utils';
+import { formatGroupDisplayName } from '../utils/commentManageUtils';
 
 const GROUP_FILE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
-
-function formatGroupDisplayName(fileName: string): string {
-    return fileName.replace(/\.json$/i, '');
-}
 
 function validateGroupFileName(value: string, existingConfigs: string[]): string | null {
     const trimmed = value.trim();

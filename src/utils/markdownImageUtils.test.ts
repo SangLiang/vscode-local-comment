@@ -17,6 +17,12 @@ function fakeResolveUri(absPath: string): string {
     return 'vscode-webview-resource://test/' + absPath.replace(/\\/g, '/');
 }
 
+/** Windows 上 path.parse(cwd).root 可能是小写盘符（如 `d:\`），而断言期望常写死大写。
+ *  归一化所有盘符（`X:` 后跟 `/` 或 `\`）的大小写后再比，避免假红。 */
+function normUri(s: string): string {
+    return s.replace(/([a-zA-Z]):([\\/])/g, (_, d: string, sep: string) => d.toUpperCase() + ':' + sep);
+}
+
 describe('markdownImageUtils 工具函数测试', () => {
     describe('isSkippableImageSrc - 跳过判断', () => {
         it('空值、空字符串与锚点应跳过', () => {
@@ -76,13 +82,13 @@ describe('markdownImageUtils 工具函数测试', () => {
         it('HTML img 标签应替换相对路径并保留其它属性', () => {
             const md = '<img src="hex-map-generation-guide/offset-axial-map.svg" width="520" alt="offset↔axial 对照" />';
             const out = resolveMarkdownImagePaths(md, MD_FILE, fakeResolveUri);
-            expect(out).toBe('<img src="vscode-webview-resource://test/D:/repo/docs/hex-map-generation-guide/offset-axial-map.svg" width="520" alt="offset↔axial 对照" />');
+            expect(normUri(out)).toBe(normUri('<img src="vscode-webview-resource://test/D:/repo/docs/hex-map-generation-guide/offset-axial-map.svg" width="520" alt="offset↔axial 对照" />'));
         });
 
         it('单引号 HTML img 也应替换', () => {
             const md = "<img src='foo.svg' width='100'>";
             const out = resolveMarkdownImagePaths(md, MD_FILE, fakeResolveUri);
-            expect(out).toBe("<img src='vscode-webview-resource://test/D:/repo/docs/foo.svg' width='100'>");
+            expect(normUri(out)).toBe(normUri("<img src='vscode-webview-resource://test/D:/repo/docs/foo.svg' width='100'>"));
         });
 
         it('远程 URL 与 data URI 不应被替换', () => {

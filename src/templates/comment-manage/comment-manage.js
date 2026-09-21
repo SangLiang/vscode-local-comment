@@ -33,7 +33,8 @@ let isActiveGroup = true;
 let filterDebounceTimer = null;
 const selectedIds = new Set();
 
-function formatGroupName(fileName) {
+// 与扩展侧 commentManageUtils.formatGroupDisplayName 规则一致：去 .json 后缀；空值占位 '—'。
+function formatGroupDisplayName(fileName) {
     if (!fileName) {
         return '—';
     }
@@ -196,9 +197,9 @@ function renderRows(data) {
     }
 
     if (active) {
-        groupLabelEl.textContent = `当前分组：${formatGroupName(groupFileName)}`;
+        groupLabelEl.textContent = `当前分组：${formatGroupDisplayName(groupFileName)}`;
     } else {
-        groupLabelEl.textContent = `预览分组：${formatGroupName(groupFileName)}（当前使用：${formatGroupName(activeGroupFileName)}）`;
+        groupLabelEl.textContent = `预览分组：${formatGroupDisplayName(groupFileName)}（当前使用：${formatGroupDisplayName(activeGroupFileName)}）`;
     }
 
     if (rows.length === 0) {

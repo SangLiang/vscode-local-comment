@@ -9,6 +9,7 @@ import {
     flattenCommentsToRows,
     filterCommentRows,
     sortCommentRows,
+    formatGroupDisplayName,
     CommentRowSortKey,
     SortDirection,
     CommentManageRow,
@@ -22,10 +23,6 @@ import * as fs from 'fs';
 import type { UpdatedContextInfo, MarkdownSaveOutcome } from './command/comment';
 import type { FileComments } from '../managers/commentTypes';
 import { isCommentEditNoop } from '../utils/commentDecorationColor';
-
-function formatGroupDisplayName(fileName: string): string {
-    return fileName.replace(/\.json$/i, '');
-}
 
 export class CommentManageWebviewPanel {
     public static currentPanel: CommentManageWebviewPanel | undefined;

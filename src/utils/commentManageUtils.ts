@@ -3,6 +3,12 @@ import { FileComments, LocalComment } from '../managers/commentTypes';
 import { extractTagsFromMarkdown } from './tagParser';
 import { colorKeyForStorage, resolveCommentDecorationColor } from './commentDecorationColor';
 
+/** 去掉分组配置文件名的 `.json` 后缀，用于 UI 展示；空值返回空串。
+ *  前端 webview 各自的占位符（如 `'—'`）由调用方决定。 */
+export function formatGroupDisplayName(fileName: string): string {
+  return fileName ? fileName.replace(/\.json$/i, '') : '';
+}
+
 /**
  * 注释管理表格的一行。
  * 由存储 JSON 展平而来，供 Activity Bar 注释管理 Webview 渲染。
