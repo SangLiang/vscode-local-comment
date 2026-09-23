@@ -644,8 +644,7 @@ html:has(.graph-fullscreen) body {
 .container.graph-fullscreen .input-area,
 .container.graph-fullscreen .button-group,
 .container.graph-fullscreen .header,
-.container.graph-fullscreen .context-title,
-.container.graph-fullscreen .note-meta {
+.container.graph-fullscreen .context-title {
     display: none;
 }
 
@@ -716,7 +715,9 @@ html:has(.graph-fullscreen) body {
 
 .tab-btn.active {
     color: var(--note-tab-active);
-    font-weight: 600;
+    /* Keep weight 400 so label width (and neighbor tabs) do not jump */
+    font-weight: 400;
+    text-shadow: 0.35px 0 0 currentColor, -0.35px 0 0 currentColor;
     border-bottom-color: var(--note-tab-active) !important;
 }
 
@@ -1017,14 +1018,38 @@ html:has(.graph-fullscreen) body {
     cursor: grab !important;
 }
 
-/* 预览控制面板样式 */
+/* Preview toolbar (right of tabs): tool control, not a tab — no divider underline */
 .preview-controls {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding: 8px 0;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--note-border);
+    padding: 0;
+    margin: 0 0 8px 0;
+    border-bottom: none;
+}
+
+.tab-header .preview-controls {
+    margin-bottom: 0;
+    padding-bottom: 8px; /* align with tab text, sit above divider without drawing a second line */
+    align-self: flex-end;
+}
+
+.tab-header .control-btn {
+    border: none;
+    border-bottom: none;
+    background: transparent;
+    color: var(--note-muted);
+    font-size: 12px;
+    font-weight: 400;
+    padding: 4px 6px;
+    border-radius: 4px;
+    box-shadow: none;
+    text-decoration: none;
+}
+
+.tab-header .control-btn:hover {
+    background-color: var(--note-hover);
+    color: var(--note-fg);
 }
 
 /* 手绘风格切换按钮 */
