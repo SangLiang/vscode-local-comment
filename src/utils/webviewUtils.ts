@@ -495,20 +495,6 @@ export function buildContextHtml(
         }
     }
 
-    if (contextInfo.fileName) {
-        html += `<div class="context-item">
-            <span class="context-label">文件:</span>
-            <span class="context-value">${WebviewUtils.escapeHtml(contextInfo.fileName)}</span>
-        </div>`;
-    }
-
-    if (contextInfo.lineNumber !== undefined) {
-        html += `<div class="context-item">
-            <span class="context-label">行号:</span>
-            <span class="context-value">第 ${contextInfo.lineNumber + 1} 行</span>
-        </div>`;
-    }
-
     if (contextInfo.selectedText) {
         html += `<div class="context-item">
             <span class="context-label">选中:</span>

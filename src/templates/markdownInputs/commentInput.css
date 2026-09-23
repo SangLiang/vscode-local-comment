@@ -1,75 +1,170 @@
 @import url('../../templates/common/public.css');
 
+/* =============================================================================
+   B1 Notion-like note theme
+   VS Code theme is used ONLY to pick light vs dark; chrome uses fixed palettes.
+   ============================================================================= */
+
+:root,
+html[data-note-theme="light"],
+body.vscode-light,
+body.vscode-high-contrast-light {
+    --note-bg: #F6F8FA;
+    --note-card: #FFFFFF;
+    --note-fg: #24292E;
+    --note-muted: #6A737D;
+    --note-border: #E1E4E8;
+    --note-tab-inactive: #6A737D;
+    --note-tab-active: #24292E;
+    --note-input-bg: #FFFFFF;
+    --note-input-border: #D1D5DA;
+    --note-btn-primary-bg: #24292E;
+    --note-btn-primary-fg: #FFFFFF;
+    --note-btn-secondary-bg: #FFFFFF;
+    --note-btn-secondary-fg: #24292E;
+    --note-btn-secondary-border: #D1D5DA;
+    --note-hover: rgba(36, 41, 46, 0.06);
+    --note-selection: rgba(36, 41, 46, 0.10);
+    --note-code-bg: #F6F8FA;
+    --note-shadow: 0 1px 2px rgba(27, 31, 35, 0.04);
+    --note-danger: #CF222E;
+}
+
+html[data-note-theme="dark"],
+body.vscode-dark,
+body.vscode-high-contrast {
+    /* Sampled from B1 dark mockup: page ~#101113, input lifted ~#151618 */
+    --note-bg: #101113;
+    --note-card: #151618;
+    --note-fg: #E0E0E0;
+    --note-muted: #858585;
+    --note-border: #2A2B2D;
+    --note-tab-inactive: #858585;
+    --note-tab-active: #E0E0E0;
+    --note-input-bg: #151618;
+    --note-input-border: #393A3C;
+    --note-btn-primary-bg: #E0E0E0;
+    --note-btn-primary-fg: #101113;
+    --note-btn-secondary-bg: #191A1C;
+    --note-btn-secondary-fg: #E0E0E0;
+    --note-btn-secondary-border: #393A3C;
+    --note-hover: rgba(224, 224, 224, 0.08);
+    --note-selection: rgba(224, 224, 224, 0.12);
+    --note-code-bg: #101113;
+    --note-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --note-danger: #F85149;
+}
+
+/* Override public.css body chrome for this note webview */
+body {
+    background-color: var(--note-bg) !important;
+    color: var(--note-fg) !important;
+}
+
+
 .container {
     max-width: 100%;
-    margin: 0 10px;
-    width: calc(100% - 20px);
+    margin: 0 auto;
+    padding: 16px 20px 24px;
+    width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    background: var(--note-bg);
+    color: var(--note-fg);
 }
+
+/* Top note meta: path + line as muted secondary text (no tool-panel title) */
+.note-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+    margin: 0 0 4px 0;
+    padding: 2px 0 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--note-muted);
+    font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+    word-break: break-all;
+}
+
+.note-meta-sep {
+    color: var(--note-border);
+    font-weight: 400;
+}
+
+.note-meta-line {
+    flex-shrink: 0;
+}
+
 .context-info {
-    background-color: var(--vscode-editor-inactiveSelectionBackground);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
-    padding: 12px;
-    margin-bottom: 20px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 8px;
     font-size: 13px;
     width: 100%;
     box-sizing: border-box;
     overflow: hidden;
 }
+
+/* Soften legacy title if any leftover markup remains */
 .context-title {
-    font-weight: bold;
-    color: var(--vscode-textPreformat-foreground);
-    margin-bottom: 8px;
+    display: none;
 }
+
 .context-item {
-    margin: 4px 0;
+    margin: 8px 0;
     display: flex;
     align-items: flex-start;
     width: 100%;
     min-width: 0;
 }
+
 .context-label {
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     min-width: 60px;
     margin-right: 8px;
+    font-size: 12px;
 }
+
 .context-value {
-    color: var(--vscode-foreground);
+    color: var(--note-fg);
     font-family: var(--vscode-editor-font-family);
     flex: 1;
     word-break: break-all;
     min-width: 0;
     overflow: hidden;
 }
+
 .code-preview {
-    background-color: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-textBlockQuote-border);
-    border-radius: 3px;
+    background-color: var(--note-code-bg);
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
     padding: 8px;
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
     white-space: pre-wrap;
-    color: var(--vscode-textPreformat-foreground);
+    color: var(--note-fg);
 }
 .code-preview.original-code {
-    background-color: var(--vscode-diffEditor-removedTextBackground, var(--vscode-textCodeBlock-background));
-    border-left: 3px solid var(--vscode-gitDecoration-deletedResourceForeground, #ff6b6b);
+    background-color: var(--note-code-bg);
+    border-left: 3px solid var(--note-danger);
     position: relative;
 }
 .code-preview.original-code::before {
     content: "创建注释时的代码快照";
     display: block;
     font-size: 11px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     margin-bottom: 6px;
-    font-weight: bold;
+    font-weight: 600;
 }
 .code-context-preview {
-    background-color: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-textBlockQuote-border);
-    border-radius: 3px;
+    background-color: var(--note-card);
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
     max-height: 300px;
@@ -85,22 +180,22 @@
     border-bottom: 1px solid transparent;
     min-width: max-content;
     white-space: nowrap;
-    cursor: pointer; /* 添加指针样式，表明可点击 */
-    transition: background-color 0.15s ease; /* 添加过渡效果 */
-    position: relative; /* 为伪元素定位 */
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    position: relative;
 }
 
 .code-line:hover {
-    background-color: var(--vscode-list-hoverBackground);
+    background-color: var(--note-hover);
 }
 
 .code-line.hover-line {
-    background-color: var(--vscode-list-hoverBackground);
+    background-color: var(--note-hover);
 }
 
 .code-line.target-line {
-    background-color: var(--vscode-editor-selectionBackground);
-    border-color: var(--vscode-editor-selectionBorder);
+    background-color: var(--note-selection);
+    border-color: transparent;
 }
 
 /* 添加左侧高亮条 */
@@ -111,15 +206,15 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background-color: var(--vscode-focusBorder);
+    background-color: var(--note-tab-active);
 }
 
 /* 添加点击效果 */
 .code-line:active {
-    background-color: var(--vscode-list-activeSelectionBackground);
+    background-color: var(--note-selection);
 }
 .line-number {
-    color: var(--vscode-editorLineNumber-foreground);
+    color: var(--note-muted);
     font-size: 12px;
     min-width: 35px;
     text-align: right;
@@ -127,33 +222,43 @@
     user-select: none;
 }
 .target-line .line-number {
-    color: var(--vscode-editorLineNumber-activeForeground);
-    font-weight: bold;
+    color: var(--note-fg);
+    font-weight: 600;
 }
 .line-content {
-    color: var(--vscode-textPreformat-foreground);
+    color: var(--note-fg);
     white-space: pre;
     flex: none;
     min-width: auto;
 }
 .target-line .line-content {
-    font-weight: bold;
+    font-weight: 600;
 }
 .header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    margin-top: 4px;
 }
 .prompt-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 .prompt {
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--vscode-textPreformat-foreground);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--note-muted);
+    letter-spacing: 0;
 }
-/* 提示图标 + 悬停弹出层 */
+
+.note-edit-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 .help-hint-wrapper {
     position: relative;
     display: inline-flex;
@@ -176,10 +281,10 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background-color: var(--vscode-badge-background);
-    color: var(--vscode-badge-foreground);
+    background-color: var(--note-border);
+    color: var(--note-muted);
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 700;
     cursor: help;
     flex-shrink: 0;
 }
@@ -187,15 +292,14 @@
     position: absolute;
     left: 0;
     top: calc(100% + 8px);
-    /* 在图标下方显示，左对齐，JavaScript 会动态调整位置避免超出边界 */
     min-width: 260px;
     max-width: 320px;
     width: max-content;
     padding: 10px 12px;
-    background-color: var(--vscode-editorWidget-background);
-    border: 1px solid var(--vscode-editorWidget-border);
-    border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    background-color: var(--note-card);
+    border: 1px solid var(--note-border);
+    border-radius: 8px;
+    box-shadow: var(--note-shadow);
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
@@ -209,17 +313,17 @@
 }
 .help-popover-title {
     font-size: 12px;
-    font-weight: bold;
-    color: var(--vscode-foreground);
+    font-weight: 600;
+    color: var(--note-fg);
     margin-bottom: 8px;
     padding-bottom: 6px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--note-border);
 }
 .help-popover-list {
     margin: 0;
     padding-left: 18px;
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     line-height: 1.6;
 }
 .help-popover-list li {
@@ -231,12 +335,12 @@
 .help-popover-list code {
     padding: 1px 4px;
     font-size: 11px;
-    background-color: var(--vscode-textCodeBlock-background);
+    background-color: var(--note-code-bg);
     border-radius: 3px;
-    color: var(--vscode-textPreformat-foreground);
+    color: var(--note-fg);
 }
 .input-area {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 textarea {
     width: 100%;
@@ -244,10 +348,10 @@ textarea {
     max-height: 600px;
     padding: 12px;
     padding-bottom: 24px;
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
-    background-color: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
+    border: 1px solid var(--note-input-border);
+    border-radius: 6px;
+    background-color: var(--note-input-bg);
+    color: var(--note-fg);
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
     line-height: 1.5;
@@ -255,55 +359,74 @@ textarea {
     box-sizing: border-box;
 }
 textarea:focus {
-    outline: 1px solid var(--vscode-focusBorder);
-    outline-offset: -1px;
+    outline: none;
+    border-color: var(--note-fg);
+    box-shadow: 0 0 0 1px var(--note-fg);
 }
 .button-group {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
+    align-items: center;
+    padding-top: 4px;
 }
 button {
-    padding: 8px 16px;
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 4px;
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
-    font-family: var(--vscode-font-family);
+    font-family: var(--vscode-font-family, inherit);
+    background: transparent;
+    color: var(--note-fg);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+
+/* Primary: 保存并退出 */
 .save-btn {
-    background-color: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
+    background-color: var(--note-btn-primary-bg);
+    color: var(--note-btn-primary-fg);
+    border-color: var(--note-btn-primary-bg);
+    font-weight: 600;
 }
 .save-btn:hover {
-    background-color: var(--vscode-button-hoverBackground);
+    opacity: 0.92;
 }
+
+/* Cancel: quiet text button */
 .cancel-btn {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
+    background-color: transparent;
+    color: var(--note-muted);
+    border-color: transparent;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 .cancel-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
+    color: var(--note-fg);
+    background-color: var(--note-hover);
 }
+
+/* Secondary: 保存 */
 .save-continue-btn {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-secondaryBorder);
+    background-color: var(--note-btn-secondary-bg);
+    color: var(--note-btn-secondary-fg);
+    border: 1px solid var(--note-btn-secondary-border);
 }
 .save-continue-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
+    background-color: var(--note-hover);
 }
+
 .share-btn {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-secondaryBorder);
+    background-color: var(--note-btn-secondary-bg);
+    color: var(--note-btn-secondary-fg);
+    border: 1px solid var(--note-btn-secondary-border);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 .share-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-    border-color: var(--vscode-button-secondaryBorder);
+    background-color: var(--note-hover);
+    border-color: var(--note-btn-secondary-border);
 }
 .share-btn:disabled {
     opacity: 0.75;
@@ -319,39 +442,39 @@ button {
 }
 .autocomplete-dropdown {
     position: absolute;
-    background-color: var(--vscode-dropdown-background);
-    border: 1px solid var(--vscode-dropdown-border);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--note-card);
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
+    box-shadow: var(--note-shadow);
     max-height: 200px;
     overflow-y: auto;
     z-index: 9999;
     display: none;
     min-width: 150px;
     max-width: 300px;
-    /* 确保下拉框在所有情况下都可见 */
     pointer-events: auto;
 }
 .autocomplete-item {
     padding: 8px 12px;
     cursor: pointer;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--note-border);
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
+    color: var(--note-fg);
 }
 .autocomplete-item:last-child {
     border-bottom: none;
 }
 .autocomplete-item:hover,
 .autocomplete-item.selected {
-    background-color: var(--vscode-list-hoverBackground);
+    background-color: var(--note-hover);
 }
 .autocomplete-item .tag-name {
-    color: var(--vscode-symbolIcon-functionForeground);
-    font-weight: bold;
+    color: var(--note-fg);
+    font-weight: 600;
 }
 .autocomplete-item .tag-description {
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     font-size: 12px;
     margin-left: 8px;
 }
@@ -393,21 +516,26 @@ button {
     padding: 6px 12px;
 }
 
-/* Tab 切换样式 */
+/* Tab 切换样式 — B1 underline, no capsule */
 .context-tabs {
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .tab-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--vscode-panel-border);
-    margin-bottom: 12px;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--note-border);
+    margin-bottom: 14px;
+    gap: 12px;
 }
 
 .tab-buttons {
     display: flex;
+    align-items: flex-end;
+    gap: 22px;
+    /* Pull tabs down so active underline sits on the header divider (one line) */
+    margin-bottom: -1px;
 }
 
 .preview-controls {
@@ -416,9 +544,10 @@ button {
     align-items: center;
 }
 
-/* 放在 .prompt-row 里时靠右对齐 */
-.prompt-row .decoration-color-picker {
-    margin-left: auto;
+/* 放在 .prompt-row / .note-edit-toolbar 里时靠右对齐 */
+.prompt-row .decoration-color-picker,
+.note-edit-toolbar .decoration-color-picker {
+    margin-left: 0;
 }
 
 .decoration-color-picker {
@@ -429,10 +558,10 @@ button {
 }
 
 .decoration-color-swatch {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     padding: 0;
-    border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.45));
+    border: 1px solid var(--note-border);
     border-radius: 3px;
     cursor: pointer;
     box-sizing: border-box;
@@ -440,18 +569,26 @@ button {
 }
 
 .decoration-color-swatch.is-selected {
-    outline: 2px solid var(--vscode-focusBorder);
+    outline: 2px solid var(--note-tab-active);
     outline-offset: 1px;
 }
 
-.prompt-row .scroll-sync-toggle {
+.prompt-row .scroll-sync-toggle,
+.note-edit-toolbar .scroll-sync-toggle {
     margin-left: 0;
 }
 
 .scroll-sync-toggle {
     display: inline-flex;
     align-items: center;
+    gap: 4px;
     cursor: pointer;
+    color: var(--note-muted);
+    font-size: 12px;
+}
+
+.scroll-sync-toggle:hover {
+    color: var(--note-fg);
 }
 
 .scroll-sync-toggle input {
@@ -465,18 +602,20 @@ button {
 .control-btn {
     background: none;
     border: none;
-    padding: 4px;
+    padding: 4px 6px;
     cursor: pointer;
-    color: var(--vscode-icon-foreground);
+    color: var(--note-muted);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: underline;
+    text-decoration: none;
+    font-size: 12px;
 }
 
 .control-btn:hover {
-    background-color: var(--vscode-toolbar-hoverBackground);
+    background-color: var(--note-hover);
+    color: var(--note-fg);
 }
 
 /* Maximized state */
@@ -505,7 +644,8 @@ html:has(.graph-fullscreen) body {
 .container.graph-fullscreen .input-area,
 .container.graph-fullscreen .button-group,
 .container.graph-fullscreen .header,
-.container.graph-fullscreen .context-title {
+.container.graph-fullscreen .context-title,
+.container.graph-fullscreen .note-meta {
     display: none;
 }
 
@@ -550,34 +690,40 @@ html:has(.graph-fullscreen) body {
     min-height: 0;
 }
 
+/* B1 underline tabs: active 2px bar covers the 1px header divider (single line) */
 .tab-btn {
-    border-radius:0px !important;
-    background: none;
-    border: none;
-    padding: 8px 16px;
+    border-radius: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    padding: 9px 0 8px !important;
+    margin: 0;
     cursor: pointer;
     font-size: 13px;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    font-family: var(--vscode-editor-font-family);
+    line-height: 1.2;
+    color: var(--note-tab-inactive);
+    font-weight: 400;
+    font-family: inherit;
     position: relative;
+    transition: color 0.15s ease, border-bottom-color 0.15s ease;
+    box-shadow: none !important;
 }
 
 .tab-btn:hover {
-    background-color: var(--vscode-list-hoverBackground);
-    color: var(--vscode-foreground);
+    background: none !important;
+    color: var(--note-tab-active);
 }
 
 .tab-btn.active {
-    color: var(--vscode-foreground);
-    border-bottom-color: var(--vscode-textLink-foreground);
-    font-weight: bold;
+    color: var(--note-tab-active);
+    font-weight: 600;
+    border-bottom-color: var(--note-tab-active) !important;
 }
 
 .tab-content {
     display: none;
     animation: fadeIn 0.2s ease-in-out;
+    padding: 2px 0 8px;
 }
 
 .tab-content.active {
@@ -587,7 +733,7 @@ html:has(.graph-fullscreen) body {
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-4px);
     }
     to {
         opacity: 1;
@@ -595,16 +741,16 @@ html:has(.graph-fullscreen) body {
     }
 }
 
-/* 预览全文搜索（与 markdownPreview/preview.css 对齐） */
+/* 预览全文搜索（与 markdownPreview/preview.css 对齐）*/
 .preview-find-bar {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
     margin-bottom: 8px;
-    background-color: var(--vscode-editorWidget-background);
-    border: 1px solid var(--vscode-editorWidget-border);
-    border-radius: 4px;
+    background-color: var(--note-card);
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
     position: sticky;
     top: 0;
     z-index: 20;
@@ -620,22 +766,22 @@ html:has(.graph-fullscreen) body {
     padding: 4px 8px;
     font-size: 13px;
     font-family: inherit;
-    color: var(--vscode-input-foreground);
-    background-color: var(--vscode-input-background);
-    border: 1px solid var(--vscode-input-border, var(--vscode-editorWidget-border));
-    border-radius: 2px;
+    color: var(--note-fg);
+    background-color: var(--note-input-bg);
+    border: 1px solid var(--note-input-border);
+    border-radius: 4px;
     outline: none;
 }
 
 .preview-find-input:focus {
-    border-color: var(--vscode-focusBorder);
+    border-color: var(--note-fg);
 }
 
 .preview-find-status {
     flex-shrink: 0;
     min-width: 52px;
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     text-align: center;
     white-space: nowrap;
 }
@@ -650,15 +796,15 @@ html:has(.graph-fullscreen) body {
     justify-content: center;
     font-size: 14px;
     line-height: 1;
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    background-color: var(--vscode-button-secondaryBackground, transparent);
-    border: 1px solid var(--vscode-button-border, var(--vscode-editorWidget-border));
-    border-radius: 2px;
+    color: var(--note-btn-secondary-fg);
+    background-color: var(--note-btn-secondary-bg);
+    border: 1px solid var(--note-btn-secondary-border);
+    border-radius: 4px;
     cursor: pointer;
 }
 
 .preview-find-btn:hover:not(:disabled) {
-    background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-toolbar-hoverBackground));
+    background-color: var(--note-hover);
 }
 
 .preview-find-btn:disabled {
@@ -671,24 +817,24 @@ html:has(.graph-fullscreen) body {
 }
 
 #previewArea mark.preview-find-match {
-    background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+    background-color: rgba(255, 200, 0, 0.35);
     color: inherit;
     padding: 0;
     border-radius: 2px;
 }
 
 #previewArea mark.preview-find-match-current {
-    background-color: var(--vscode-editor-findMatchBackground, rgba(234, 92, 0, 0.66));
-    outline: 1px solid var(--vscode-focusBorder, #007fd4);
+    background-color: rgba(255, 180, 0, 0.55);
+    outline: 1px solid var(--note-fg);
 }
 
-/* 更新预览区域样式，适配tab布局 */
+/* 更新预览区域样式 — note card body, less stacked borders */
 #previewArea {
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
-    padding: 12px;
-    background-color: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
+    border: none;
+    border-radius: 0;
+    padding: 4px 2px 12px;
+    background-color: transparent;
+    color: var(--note-fg);
     min-height: 100px;
     max-height: 400px;
     overflow-y: auto;
@@ -878,7 +1024,7 @@ html:has(.graph-fullscreen) body {
     align-items: center;
     padding: 8px 0;
     margin-bottom: 8px;
-    border-bottom: 1px solid var(--vscode-input-border);
+    border-bottom: 1px solid var(--note-border);
 }
 
 /* 手绘风格切换按钮 */
@@ -887,9 +1033,9 @@ html:has(.graph-fullscreen) body {
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
+    background: var(--note-btn-secondary-bg);
+    color: var(--note-btn-secondary-fg);
+    border: 1px solid var(--note-btn-secondary-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
@@ -899,10 +1045,8 @@ html:has(.graph-fullscreen) body {
 }
 
 .hand-drawn-toggle:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
-    border-color: var(--vscode-focusBorder);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--note-hover);
+    border-color: var(--note-border);
 }
 
 .hand-drawn-toggle:active {
@@ -911,9 +1055,9 @@ html:has(.graph-fullscreen) body {
 }
 
 .hand-drawn-toggle.active {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border-color: var(--vscode-focusBorder);
+    background: var(--note-btn-primary-bg);
+    color: var(--note-btn-primary-fg);
+    border-color: var(--note-btn-primary-bg);
 }
 
 .hand-drawn-toggle span {
@@ -971,11 +1115,11 @@ html:has(.graph-fullscreen) body {
     max-width: 400px;
     width: 100%;
     padding: 18px 20px;
-    border-radius: 6px;
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    color: var(--vscode-foreground);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    border: 1px solid var(--note-border);
+    background: var(--note-card);
+    color: var(--note-fg);
+    box-shadow: var(--note-shadow);
     box-sizing: border-box;
 }
 
@@ -983,13 +1127,13 @@ html:has(.graph-fullscreen) body {
     font-size: 15px;
     font-weight: 600;
     margin: 0 0 8px 0;
-    color: var(--vscode-foreground);
+    color: var(--note-fg);
 }
 
 .discard-confirm-desc {
     margin: 0 0 18px 0;
     font-size: 13px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
     line-height: 1.45;
 }
 
@@ -1009,22 +1153,22 @@ html:has(.graph-fullscreen) body {
 }
 
 .discard-confirm-btn-secondary {
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border-color: var(--vscode-button-border, transparent);
+    background: var(--note-btn-secondary-bg);
+    color: var(--note-btn-secondary-fg);
+    border-color: var(--note-btn-secondary-border);
 }
 
 .discard-confirm-btn-secondary:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--note-hover);
 }
 
 .discard-confirm-btn-primary {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
+    background: var(--note-btn-primary-bg);
+    color: var(--note-btn-primary-fg);
 }
 
 .discard-confirm-btn-primary:hover {
-    background: var(--vscode-button-hoverBackground);
+    opacity: 0.92;
 }
 
 #toggle-preview-size-btn.is-hidden {
@@ -1126,12 +1270,12 @@ html:has(.graph-fullscreen) body {
     justify-content: space-between;
     align-items: center;
     padding: 4px 0 8px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--note-border);
 }
 
 #tag-graph-tab .breadcrumb {
     font-size: 13px;
-    color: var(--vscode-foreground);
+    color: var(--note-fg);
     min-width: 0;
 }
 
@@ -1142,12 +1286,12 @@ html:has(.graph-fullscreen) body {
 }
 
 #tag-graph-tab .breadcrumb-item:hover {
-    background: var(--vscode-list-hoverBackground);
+    background: var(--note-hover);
 }
 
 #tag-graph-tab .breadcrumb-separator {
     margin: 0 4px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
 }
 
 #tag-graph-tab .tag-graph-actions {
@@ -1165,21 +1309,21 @@ html:has(.graph-fullscreen) body {
 #tag-graph-tab .tag-graph-status {
     margin-left: auto;
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
 }
 
 #tag-graph-tab .tag-graph-btn {
     padding: 4px 12px;
-    border: 1px solid var(--vscode-button-secondaryBackground);
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border-radius: 3px;
+    border: 1px solid var(--note-btn-secondary-border);
+    background: var(--note-btn-secondary-bg);
+    color: var(--note-btn-secondary-fg);
+    border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
 }
 
 #tag-graph-tab .tag-graph-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--note-hover);
 }
 
 #tag-graph-tab .tag-graph-btn:disabled {
@@ -1224,7 +1368,7 @@ html:has(.graph-fullscreen) body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--vscode-descriptionForeground);
+    color: var(--note-muted);
 }
 
 #tag-graph-tab .empty-state-icon {

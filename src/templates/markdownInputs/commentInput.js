@@ -1,5 +1,22 @@
 (function() {
     const vscode = acquireVsCodeApi();
+
+    // B1 note theme: map VS Code light/dark body class -> fixed palette via data-note-theme
+    (function syncNoteTheme() {
+        const root = document.documentElement;
+        function applyNoteTheme() {
+            const body = document.body;
+            const isLight = body.classList.contains('vscode-light')
+                || body.classList.contains('vscode-high-contrast-light');
+            root.setAttribute('data-note-theme', isLight ? 'light' : 'dark');
+        }
+        applyNoteTheme();
+        try {
+            const obs = new MutationObserver(applyNoteTheme);
+            obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        } catch (e) { /* ignore */ }
+    })();
+
     const textarea = document.getElementById('contentInput');
     const previewArea = document.getElementById('previewArea');
     const decorationColorSelect = document.getElementById('decorationColorSelect');

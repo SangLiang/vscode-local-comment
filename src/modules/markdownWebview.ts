@@ -622,7 +622,22 @@ function getMarkdownWebviewContent(
     // 构建上下文信息HTML（总是显示，即使没有contextInfo）
     let contextHtml = '';
     contextHtml = '<div class="context-info">';
-    contextHtml += '<div class="context-title">代码上下文</div>';
+
+    // B1: muted path + line as top meta (no tool-panel title)
+    {
+        const metaParts: string[] = [];
+        if (contextInfo?.fileName) {
+            metaParts.push(`<span class="note-meta-file">${WebviewUtils.escapeHtml(contextInfo.fileName)}</span>`);
+        } else if (contextInfo?.filePath) {
+            metaParts.push(`<span class="note-meta-file">${WebviewUtils.escapeHtml(contextInfo.filePath)}</span>`);
+        }
+        if (contextInfo?.lineNumber !== undefined) {
+            metaParts.push(`<span class="note-meta-line">L${contextInfo.lineNumber + 1}</span>`);
+        }
+        if (metaParts.length > 0) {
+            contextHtml += `<div class="note-meta">${metaParts.join('<span class="note-meta-sep">·</span>')}</div>`;
+        }
+    }
 
     // 添加tab切换功能
     contextHtml += '<div class="context-tabs">';
