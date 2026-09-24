@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { WebviewUtils, ResourceUris } from '../utils/webviewUtils';
 import { logger } from '../utils/logger';
-import { VIEW_TYPES } from '../constants';
+import { VIEW_TYPES, IPC_MESSAGES } from '../constants';
 import { EditorUtils } from '../utils/editorUtils';
 import { getErrorMessage } from '../utils/utils';
-import type { GraphData } from '../utils/tagRelationGraphData';
+import type { BreadcrumbItem, GraphData } from '../utils/tagRelationGraphData';
 
 export type { GraphNode, GraphEdge, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
 
@@ -20,6 +20,7 @@ export interface TagRelationGraphMessage {
 export class TagRelationGraphWebview {
     private static currentPanel: TagRelationGraphWebview | undefined;
     private static currentFilePath: string | undefined;
+    private static rootItem: BreadcrumbItem | undefined;
 
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
@@ -95,14 +96,14 @@ export class TagRelationGraphWebview {
 
     updateGraph(data: GraphData): void {
         this.panel.webview.postMessage({
-            command: 'updateGraph',
+            command: IPC_MESSAGES.TAG_GRAPH_UPDATE,
             data: data
         });
     }
 
     appendChildren(parentId: string, data: { nodes: GraphData['nodes']; edges: GraphData['edges'] }): void {
         this.panel.webview.postMessage({
-            command: 'updateGraph',
+            command: IPC_MESSAGES.TAG_GRAPH_UPDATE,
             mode: 'append',
             parentId,
             data
@@ -111,7 +112,7 @@ export class TagRelationGraphWebview {
 
     showError(message: string): void {
         this.panel.webview.postMessage({
-            command: 'showError',
+            command: IPC_MESSAGES.TAG_GRAPH_SHOW_ERROR,
             error: message
         });
     }
@@ -144,8 +145,17 @@ export class TagRelationGraphWebview {
         return WebviewUtils.replaceTemplateVariables(template, templateVariables);
     }
 
+    static setRootItem(item: BreadcrumbItem | undefined): void {
+        TagRelationGraphWebview.rootItem = item;
+    }
+
+    static getRootItem(): BreadcrumbItem | undefined {
+        return TagRelationGraphWebview.rootItem;
+    }
+
     dispose(): void {
         TagRelationGraphWebview.currentPanel = undefined;
         TagRelationGraphWebview.currentFilePath = undefined;
+        TagRelationGraphWebview.rootItem = undefined;
     }
 }

@@ -2,25 +2,34 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommentManager } from '../../managers/commentManager';
 import { TagManager } from '../../managers/tagManager';
-import { TagRelationGraphWebview, BreadcrumbItem, TagRelationGraphMessage } from '../tagRelationGraphWebview';
-import { COMMANDS } from '../../constants';
+import { TagRelationGraphWebview, TagRelationGraphMessage } from '../tagRelationGraphWebview';
+import { COMMANDS, IPC_MESSAGES } from '../../constants';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/utils';
-import { buildTagRelationGraphData, buildTagRelationChildNodes } from '../../utils/tagRelationGraphData';
+import {
+    buildPanelRootGraph,
+    createVscodeTagRelationGraphHost,
+    expandTagRelationNode,
+    goToTagRelationDefinition,
+    navigatePanelToLevel
+} from '../../utils/tagRelationGraphHandlers';
 
-let rootItem: BreadcrumbItem | undefined;
-
-function buildRootGraph(commentManager: CommentManager, tagManager: TagManager) {
-    if (!rootItem) {
-        return null;
-    }
-    return buildTagRelationGraphData({
-        commentManager,
-        tagManager,
-        centerFilePath: rootItem.filePath,
-        centerLabel: rootItem.label,
-        level: 0,
-        breadcrumb: [rootItem]
+function createHost() {
+    return createVscodeTagRelationGraphHost({
+        getWorkspaceFolders: () =>
+            vscode.workspace.workspaceFolders?.map(folder => ({ fsPath: folder.uri.fsPath })),
+        openFileAt: async (filePath, line) => {
+            const uri = vscode.Uri.file(filePath);
+            const showOptions: vscode.TextDocumentShowOptions = {
+                viewColumn: vscode.ViewColumn.One
+            };
+            if (line !== undefined) {
+                const position = new vscode.Position(line, 0);
+                showOptions.selection = new vscode.Range(position, position);
+            }
+            await vscode.window.showTextDocument(uri, showOptions);
+        },
+        logWarn: (message, detail) => logger.warn(message, detail)
     });
 }
 
@@ -51,11 +60,11 @@ export function registerTagRelationGraphCommands(
                     fileName = path.basename(filePath);
                 }
 
-                rootItem = {
+                TagRelationGraphWebview.setRootItem({
                     id: 'root',
                     label: fileName,
                     filePath
-                };
+                });
 
                 const webview = TagRelationGraphWebview.createOrShow(
                     context,
@@ -66,12 +75,16 @@ export function registerTagRelationGraphCommands(
                     }
                 );
 
-                const data = buildRootGraph(commentManager, tagManager);
+                const data = buildPanelRootGraph(
+                    TagRelationGraphWebview.getRootItem(),
+                    commentManager,
+                    tagManager
+                );
                 if (data) {
                     webview.updateGraph(data);
                 }
             } catch (error) {
-                logger.error('显示 Tag 关系图失败:', error);
+                logger.error('显示 Tag 关系图失败', error);
                 vscode.window.showErrorMessage(`显示关系图失败: ${getErrorMessage(error)}`);
             }
         }
@@ -87,73 +100,50 @@ async function handleMessage(
     tagManager: TagManager,
     webview: TagRelationGraphWebview
 ): Promise<void> {
+    const host = createHost();
+
     switch (message.command) {
-        case 'expandNode':
-            handleExpandNode(message, commentManager, tagManager, webview);
-            break;
-        case 'goToDefinition':
-            await handleGoToDefinition(message);
-            break;
-        case 'navigateBack':
-        case 'resetToRoot':
-        case 'refresh':
-            handleResetToRoot(commentManager, tagManager, webview);
-            break;
-        case 'navigateToLevel':
-            if (message.level === 0) {
-                handleResetToRoot(commentManager, tagManager, webview);
+        case IPC_MESSAGES.TAG_GRAPH_EXPAND_NODE: {
+            const result = expandTagRelationNode(host, {
+                nodeId: message.nodeId,
+                label: message.label,
+                filePath: message.filePath,
+                fallbackFilePath: TagRelationGraphWebview.getRootItem()?.filePath,
+                commentManager,
+                tagManager
+            });
+            if (result) {
+                webview.appendChildren(result.parentId, result.children);
             }
             break;
-    }
-}
-
-function handleExpandNode(
-    message: TagRelationGraphMessage,
-    commentManager: CommentManager,
-    tagManager: TagManager,
-    webview: TagRelationGraphWebview
-): void {
-    const nodeId = message.nodeId;
-    const label = message.label;
-    if (!nodeId || !label) {
-        return;
-    }
-
-    const children = buildTagRelationChildNodes({
-        commentManager,
-        tagManager,
-        parentId: nodeId,
-        centerLabel: label,
-        centerFilePath: message.filePath || rootItem?.filePath || ''
-    });
-    webview.appendChildren(nodeId, children);
-}
-
-async function handleGoToDefinition(message: TagRelationGraphMessage): Promise<void> {
-    const filePath = message.filePath;
-    if (!filePath) {
-        return;
-    }
-
-    const uri = vscode.Uri.file(filePath);
-    const showOptions: vscode.TextDocumentShowOptions = {
-        viewColumn: vscode.ViewColumn.One
-    };
-    if (message.line !== undefined) {
-        const position = new vscode.Position(message.line, 0);
-        showOptions.selection = new vscode.Range(position, position);
-    }
-
-    await vscode.window.showTextDocument(uri, showOptions);
-}
-
-function handleResetToRoot(
-    commentManager: CommentManager,
-    tagManager: TagManager,
-    webview: TagRelationGraphWebview
-): void {
-    const data = buildRootGraph(commentManager, tagManager);
-    if (data) {
-        webview.updateGraph(data);
+        }
+        case IPC_MESSAGES.TAG_GRAPH_GO_TO_DEFINITION:
+            await goToTagRelationDefinition(host, message);
+            break;
+        case IPC_MESSAGES.TAG_GRAPH_NAVIGATE_BACK:
+        case IPC_MESSAGES.TAG_GRAPH_RESET_TO_ROOT:
+        case IPC_MESSAGES.TAG_GRAPH_REFRESH: {
+            const data = buildPanelRootGraph(
+                TagRelationGraphWebview.getRootItem(),
+                commentManager,
+                tagManager
+            );
+            if (data) {
+                webview.updateGraph(data);
+            }
+            break;
+        }
+        case IPC_MESSAGES.TAG_GRAPH_NAVIGATE_TO_LEVEL: {
+            const data = navigatePanelToLevel(
+                message.level,
+                TagRelationGraphWebview.getRootItem(),
+                commentManager,
+                tagManager
+            );
+            if (data) {
+                webview.updateGraph(data);
+            }
+            break;
+        }
     }
 }

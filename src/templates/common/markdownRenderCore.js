@@ -424,9 +424,15 @@
          * Markdown → HTML（含标签、KaTeX、Mermaid）。单块 Mermaid 失败不阻断整页。
          * @param {string} content
          * @param {string[]|undefined} [availableTagNames] 可用标签白名单；传入时仅渲染真实存在的 @tag
+         * @param {{ sourceLines?: boolean }} [options] sourceLines:true 时走预览主管线并注入 data-source-line
          * @returns {Promise<string>}
          */
-        async function renderMarkdownToHtml(content, availableTagNames) {
+        async function renderMarkdownToHtml(content, availableTagNames, options) {
+            options = options || {};
+            // sourceLines: true → 预览页顺序（marked 先行 + katex-on-HTML）；默认保持 commentInput 顺序
+            if (options.sourceLines === true) {
+                return renderPreviewMarkdownToHtml(content, availableTagNames);
+            }
             await waitForLibs();
 
             // ${标签} 先占位，支持中文标签名
@@ -484,6 +490,416 @@
             });
         }
 
+
+        /** preview 主管线用的 Mermaid HTML 占位正则 */
+        var MERMAID_CODE_BLOCK_HTML_REGEX = /<pre[^>]*><code class="[^"]*\blanguage-mermaid\b[^"]*">[\s\S]*?<\/code><\/pre>/gi;
+
+    function isHtmlFragment(html) {
+        var trimmed = (html || '').trim();
+        if (!trimmed.startsWith('<')) {
+            return false;
+        }
+        if (/^<\/[\w-]+>\s*$/.test(trimmed)) {
+            return true;
+        }
+        if (/^<[\w-]+[^>]*>\s*$/.test(trimmed)) {
+            return true;
+        }
+        return false;
+    }
+
+    function createHighlightCodeRenderer(originalCode) {
+        return function(code, language) {
+            if (language === 'mermaid') {
+                return '<pre><code class="language-mermaid">' + code + '</code></pre>';
+            }
+            if (typeof hljs !== 'undefined') {
+                try {
+                    if (language && hljs.getLanguage(language)) {
+                        var highlighted = hljs.highlight(code, { language: language }).value;
+                        return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
+                    }
+                    var result = hljs.highlightAuto(code);
+                    var langClass = result.language ? ' language-' + result.language : '';
+                    return '<pre><code class="hljs' + langClass + '">' + result.value + '</code></pre>';
+                } catch (error) {
+                    console.warn('代码高亮失败:', error);
+                    return originalCode.call(this, code, language);
+                }
+            }
+            return originalCode.call(this, code, language);
+        };
+    }
+
+    function createSourceLineRenderer(markedObj, sourceContent) {
+        var sourceLines = sourceContent.split(/\r?\n/);
+        var currentLineIndex = 0;
+        var lastLine = 0;
+
+        /** 去掉 HTML/Markdown 标记后做模糊行匹配 */
+        function normalizeForMatch(text) {
+            return (text || '')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/^#+\s+/, '')
+                .replace(/^(\s*[-*+]|\s*\d+\.)\s+/, '')
+                .replace(/\*\*/g, '')
+                .replace(/`/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function findLineByText(hintHtml) {
+            var probe = normalizeForMatch(hintHtml);
+            if (probe.length < 2) {
+                return lastLine;
+            }
+            var shortProbe = probe.slice(0, Math.min(probe.length, 48));
+
+        function lineMatches(lineText, preferListMarker) {
+                var linePlain = normalizeForMatch(lineText);
+                if (linePlain.length < 2) {
+                    return false;
+                }
+                if (preferListMarker && !/^(\s*[-*+]|\s*\d+\.)\s/.test(lineText)) {
+                    return false;
+                }
+                var head = shortProbe.slice(0, Math.min(shortProbe.length, 20));
+                if (head.length >= 8 && linePlain.startsWith(head)) {
+                    return true;
+                }
+                if (linePlain.length >= 8 && shortProbe.startsWith(linePlain.slice(0, Math.min(linePlain.length, 20)))) {
+                    return true;
+                }
+                var common = 0;
+                for (var j = 0; j < Math.min(linePlain.length, shortProbe.length); j++) {
+                    if (linePlain[j] === shortProbe[j]) {
+                        common++;
+                    } else {
+                        break;
+                    }
+                }
+                return common >= 10;
+            }
+
+            function scanLines(preferListMarker) {
+                for (var i = currentLineIndex; i < sourceLines.length; i++) {
+                    if (lineMatches(sourceLines[i], preferListMarker)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+                for (var i = 0; i < currentLineIndex; i++) {
+                    if (lineMatches(sourceLines[i], preferListMarker)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+                return null;
+            }
+
+            var matched = scanLines(false);
+            if (matched === null && probe.length >= 4) {
+                matched = scanLines(true);
+            }
+            if (matched !== null) {
+                return matched;
+            }
+            return lastLine;
+        }
+
+        function assignLineForCode(code, language) {
+            var lang = language || '';
+            for (var i = currentLineIndex; i < sourceLines.length; i++) {
+                var trimmed = sourceLines[i].trim();
+                if (trimmed.startsWith('```')) {
+                    if (!lang || trimmed === '```' + lang || trimmed.startsWith('```' + lang)) {
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        return i;
+                    }
+                }
+            }
+            return findLineByText(code);
+        }
+
+        function wrapBlockTag(tagName, innerHtml, line) {
+            return '<' + tagName + ' data-source-line="' + line + '">' + innerHtml + '</' + tagName + '>';
+        }
+
+        var renderer = new markedObj.Renderer();
+        var originalCode = renderer.code || function(code, language) {
+            return '<pre><code' + (language ? ' class="language-' + language + '"' : '') + '>' + code + '</code></pre>';
+        };
+
+        renderer.heading = function(text, level) {
+            var line = findLineByText(text);
+            return wrapBlockTag('h' + level, text, line);
+        };
+
+        renderer.paragraph = function(text) {
+            var line = findLineByText(text);
+            return wrapBlockTag('p', text, line);
+        };
+
+        renderer.blockquote = function(quote) {
+            var line = findLineByText(quote);
+            return wrapBlockTag('blockquote', quote, line);
+        };
+
+        renderer.code = function(code, language) {
+            var line = assignLineForCode(code, language);
+            var highlighted = createHighlightCodeRenderer(originalCode).call(this, code, language);
+            if (highlighted.indexOf('<pre') === 0) {
+                return highlighted.replace('<pre', '<pre data-source-line="' + line + '"');
+            }
+            var lang = language || '';
+            var cls = lang ? ' class="language-' + lang + '"' : '';
+            return '<pre data-source-line="' + line + '"><code' + cls + '>' + code + '</code></pre>';
+        };
+
+        renderer.list = function(body, ordered, start) {
+            var tag = ordered ? 'ol' : 'ul';
+            var startAttr = ordered && start !== 1 ? ' start="' + start + '"' : '';
+            return '<' + tag + startAttr + '>' + body + '</' + tag + '>';
+        };
+
+        renderer.listitem = function(text, task, checked) {
+            var line = null;
+            var probe = normalizeForMatch(text);
+            if (probe.length >= 2) {
+                var head = probe.slice(0, Math.min(probe.length, 20));
+                for (var i = currentLineIndex; i < sourceLines.length; i++) {
+                    if (!/^(\s*[-*+]|\s*\d+\.)\s/.test(sourceLines[i])) {
+                        continue;
+                    }
+                    var linePlain = normalizeForMatch(sourceLines[i]);
+                    if (linePlain.startsWith(head) || (head.length >= 8 && head.startsWith(linePlain.slice(0, 20)))) {
+                        line = i;
+                        currentLineIndex = i + 1;
+                        lastLine = i;
+                        break;
+                    }
+                }
+            }
+            if (line === null) {
+                line = findLineByText(text);
+            }
+            // marked(GFM) 已在 text 内注入 checkbox，此处勿再拼接，否则会重复
+            var attrs = ' data-source-line="' + line + '"' + (task ? ' class="task-list-item"' : '');
+            return '<li' + attrs + '>' + text + '</li>';
+        };
+
+        renderer.table = function(header, body) {
+            var line = findLineByText(header + body);
+            return '<table data-source-line="' + line + '"><thead>' + header + '</thead><tbody>' + body + '</tbody></table>';
+        };
+
+        renderer.hr = function() {
+            var line = findLineByText('---');
+            return '<hr data-source-line="' + line + '">';
+        };
+
+        renderer.html = function(html) {
+            if (isHtmlFragment(html)) {
+                return html;
+            }
+            var line = findLineByText(html);
+            return '<div data-source-line="' + line + '">' + html + '</div>';
+        };
+
+        return renderer;
+    }
+
+    function getMarkedObject() {
+        var markedObj = typeof marked !== 'undefined' ? marked : undefined;
+        if (typeof markedObj === 'undefined' && typeof window !== 'undefined') {
+            markedObj = window.marked;
+        }
+        if (typeof markedObj === 'undefined' && typeof global !== 'undefined') {
+            markedObj = global.marked;
+        }
+        return markedObj;
+    }
+
+    function maskHtmlForKatex(html) {
+        var blocks = [];
+        var masked = html.replace(/<pre[\s\S]*?<\/pre>/gi, function(match) {
+            blocks.push(match);
+            return '__LC_HTML_KATEX_MASK_' + (blocks.length - 1) + '__';
+        });
+        masked = masked.replace(/<code[\s\S]*?<\/code>/gi, function(match) {
+            blocks.push(match);
+            return '__LC_HTML_KATEX_MASK_' + (blocks.length - 1) + '__';
+        });
+        return { masked: masked, blocks: blocks };
+    }
+
+    /** 还原 maskHtmlForKatex 屏蔽的 pre/code 块 */
+    function unmaskHtmlAfterKatex(html, blocks) {
+        return html.replace(/__LC_HTML_KATEX_MASK_(\d+)__/g, function(_, index) {
+            return blocks[Number(index)] || '';
+        });
+    }
+
+    /** 在 HTML 中（跳过 pre/code）渲染 KaTeX */
+    function applyKatexInHtml(html) {
+        if (typeof katex === 'undefined') {
+            return html;
+        }
+        var masked = maskHtmlForKatex(html);
+        var processed = masked.masked;
+        try {
+            processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, function(match, formula) {
+                try {
+                    return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
+                } catch (error) {
+                    console.error('KaTeX 块级公式渲染失败:', error);
+                    return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
+                }
+            });
+            processed = processed.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, function(match, formula) {
+                try {
+                    return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
+                } catch (error) {
+                    console.error('KaTeX 行内公式渲染失败:', error);
+                    return '<span class="katex-error">公式渲染失败: ' + formula + '</span>';
+                }
+            });
+        } catch (error) {
+            console.error('LaTeX 公式处理失败:', error);
+            return html;
+        }
+        return unmaskHtmlAfterKatex(processed, masked.blocks);
+    }
+
+    function parseMarkdownWithSourceLines(markdownInput, sourceContent) {
+        var markedObj = getMarkedObject();
+        if (!markedObj || typeof markedObj.parse !== 'function' || typeof markedObj.Renderer === 'undefined') {
+            return marked.parse(markdownInput);
+        }
+        var sourceLineRenderer = createSourceLineRenderer(markedObj, sourceContent);
+        return markedObj.parse(markdownInput, {
+            breaks: true,
+            gfm: true,
+            renderer: sourceLineRenderer
+        });
+    }
+
+    function extractMermaidBlocksFromHtml(html) {
+        var blocks = [];
+        var regex = /<pre[^>]*data-source-line="(\d+)"[^>]*><code class="[^"]*\blanguage-mermaid\b[^"]*">([\s\S]*?)<\/code><\/pre>/gi;
+        var match;
+        while ((match = regex.exec(html)) !== null) {
+            blocks.push({
+                fullMatch: match[0],
+                sourceLine: match[1],
+                definition: match[2].trim()
+            });
+        }
+        if (blocks.length > 0) {
+            return blocks;
+        }
+        MERMAID_CODE_BLOCK_HTML_REGEX.lastIndex = 0;
+        while ((match = MERMAID_CODE_BLOCK_HTML_REGEX.exec(html)) !== null) {
+            var lineMatch = match[0].match(/data-source-line="(\d+)"/);
+            var codeMatch = match[0].match(/<code[^>]*>([\s\S]*?)<\/code>/);
+            blocks.push({
+                fullMatch: match[0],
+                sourceLine: lineMatch ? lineMatch[1] : '',
+                definition: codeMatch ? codeMatch[1].trim() : ''
+            });
+        }
+        return blocks;
+    }
+
+        /**
+         * 预览页主管线（与 commentInput 顺序不同）：
+         * marked+sourceLines → 恢复 tag 声明 → tag links → katex-on-HTML → Mermaid 从 HTML 占位渲染
+         * @param {string} content
+         * @param {string[]|undefined} availableTagNames
+         * @returns {Promise<string>}
+         */
+        async function renderPreviewMarkdownToHtml(content, availableTagNames) {
+            await waitForLibs();
+
+            var tagPlaceholders = new Map();
+            var markdownInput = String(content).replace(
+                /\$\{([\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*)\}/g,
+                function (match, tagName) {
+                    var placeholder = '__TAG_DECL_PLACEHOLDER_' + tagPlaceholders.size + '__';
+                    tagPlaceholders.set(placeholder, { original: match, tagName: tagName });
+                    return placeholder;
+                }
+            );
+
+            var finalHtml = parseMarkdownWithSourceLines(markdownInput, String(content));
+
+            tagPlaceholders.forEach(function (tagInfo, placeholder) {
+                finalHtml = finalHtml.split(placeholder).join(
+                    '<span class="tag-declaration">' + tagInfo.original + '</span>'
+                );
+            });
+
+            finalHtml = applyTagLinksInHtml(finalHtml, availableTagNames);
+            finalHtml = applyKatexInHtml(finalHtml);
+
+            var mermaidBlockInfos = extractMermaidBlocksFromHtml(finalHtml);
+            var mermaidCacheHits = 0;
+            var renderedMermaidBlocks = await Promise.all(mermaidBlockInfos.map(async function (blockInfo, index) {
+                try {
+                    var rendered = await renderMermaidDefinition(blockInfo.definition, index);
+                    if (rendered.fromCache) {
+                        mermaidCacheHits++;
+                    }
+                    if (rendered.error || !rendered.svg) {
+                        return {
+                            fullMatch: blockInfo.fullMatch,
+                            sourceLine: blockInfo.sourceLine,
+                            html: '<div class="mermaid-error">图表渲染失败: ' + (rendered.error || 'unknown') +
+                                '<pre>' + blockInfo.definition + '</pre></div>'
+                        };
+                    }
+                    return {
+                        fullMatch: blockInfo.fullMatch,
+                        sourceLine: blockInfo.sourceLine,
+                        html: wrapMermaidChartHtml(rendered.chartId, rendered.svg)
+                    };
+                } catch (error) {
+                    console.error('渲染Mermaid图表失败:', error);
+                    return {
+                        fullMatch: blockInfo.fullMatch,
+                        sourceLine: blockInfo.sourceLine,
+                        html: '<div class="mermaid-error">图表渲染失败: ' +
+                            (error && error.message ? error.message : String(error)) +
+                            '<pre>' + blockInfo.definition + '</pre></div>'
+                    };
+                }
+            }));
+
+            if (mermaidBlockInfos.length > 0) {
+                console.log(
+                    'MarkdownRenderCore(preview): 找到 ' + mermaidBlockInfos.length +
+                    ' 个Mermaid代码块，缓存命中 ' + mermaidCacheHits + ' / ' + mermaidBlockInfos.length
+                );
+            }
+
+            var finalHtmlWithSvg = finalHtml;
+            for (var bi = 0; bi < renderedMermaidBlocks.length; bi++) {
+                var block = renderedMermaidBlocks[bi];
+                var replacement = block.html;
+                if (block.sourceLine && replacement.indexOf('class="mermaid-chart"') !== -1) {
+                    replacement = replacement.replace(
+                        'class="mermaid-chart"',
+                        'class="mermaid-chart" data-source-line="' + block.sourceLine + '"'
+                    );
+                }
+                finalHtmlWithSvg = finalHtmlWithSvg.replace(block.fullMatch, replacement);
+            }
+            return finalHtmlWithSvg;
+        }
+
         /**
          * 切换手绘/主题后调用；会清空 libsPromise，下次 waitForLibs / render 可重新走初始化。
          * @param {{ handDrawnEnabled?: boolean, theme?: string }} [opts]
@@ -506,7 +922,10 @@
             renderMermaidDefinition: renderMermaidDefinition,
             clearMermaidSvgCache: clearMermaidSvgCache,
             renderMarkdownToHtml: renderMarkdownToHtml,
-            reinitializeMermaid: reinitializeMermaid
+            reinitializeMermaid: reinitializeMermaid,
+            /** Phase 1: 供 preview 复用，避免第二套 tag/split */
+            applyTagLinksInHtml: applyTagLinksInHtml,
+            splitHtmlPreservingCodeBlocks: splitHtmlPreservingCodeBlocks
         };
     }
 

@@ -1,4 +1,6 @@
 (function() {
+    // Keep these string values in sync with IPC_MESSAGES.TAG_GRAPH_* in src/constants.ts (panel defaults).
+    // Embedded commentInput.js overrides via options.commands (COMMENT_TAG_GRAPH_* names).
     const DEFAULT_COMMANDS = {
         expandNode: 'expandNode',
         goToDefinition: 'goToDefinition',

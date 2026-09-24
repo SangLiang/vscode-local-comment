@@ -201,6 +201,16 @@ export const IPC_MESSAGES = {
     GO_TO_COMMENT_TAG_DEFINITION: 'goToCommentTagDefinition',
     UPDATE_COMMENT_TAG_GRAPH: 'updateCommentTagGraph',
     COMMENT_TAG_GRAPH_ERROR: 'commentTagGraphError',
+    // Tag relation graph - independent panel IPC (bare names; do NOT unify with COMMENT_TAG_GRAPH_*)
+    TAG_GRAPH_EXPAND_NODE: 'expandNode',
+    TAG_GRAPH_GO_TO_DEFINITION: 'goToDefinition',
+    TAG_GRAPH_NAVIGATE_BACK: 'navigateBack',
+    TAG_GRAPH_RESET_TO_ROOT: 'resetToRoot',
+    TAG_GRAPH_NAVIGATE_TO_LEVEL: 'navigateToLevel',
+    TAG_GRAPH_REFRESH: 'refresh',
+    TAG_GRAPH_UPDATE: 'updateGraph',
+    TAG_GRAPH_SHOW_ERROR: 'showError',
+
 
     // 注释分组 WebviewView
     GET_COMMENT_GROUPS: 'getCommentGroups',

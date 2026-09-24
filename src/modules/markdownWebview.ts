@@ -10,7 +10,16 @@ import { IPC_MESSAGES, COMMANDS, DELAY_TIMES } from '../constants';
 import { UpdatedContextInfo, MarkdownContextInfo, MarkdownSaveCallback } from './command/comment';
 import { EditorUtils } from '../utils/editorUtils';
 import { buildDecorationColorSelectHtml } from '../utils/commentDecorationColor';
-import { buildTagRelationGraphData, buildTagRelationChildNodes, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
+import { buildTagRelationGraphData, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
+import {
+    buildStackedCommentTagGraph as buildStackedCommentTagGraphShared,
+    createVscodeTagRelationGraphHost,
+    expandTagRelationNode,
+    goToTagRelationDefinition,
+    navigateCommentTagGraphBack,
+    navigateCommentTagGraphToLevel,
+    type CommentTagGraphStack
+} from '../utils/tagRelationGraphHandlers';
 
 // 辅助函数：获取代码上下文（前后各10行）
 export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 10): Promise<{
@@ -193,7 +202,7 @@ export async function showMarkdownWebviewInput(
             }
         });
 
-        const commentTagGraphStack: { items: BreadcrumbItem[]; visitedNodes: Set<string> } = {
+        const commentTagGraphStack: CommentTagGraphStack = {
             items: [],
             visitedNodes: new Set()
         };
@@ -203,6 +212,25 @@ export async function showMarkdownWebviewInput(
             return contextInfo?.filePath
                 ?? activeEditor?.document.uri.fsPath
                 ?? '';
+        }
+
+        function createCommentTagGraphHost() {
+            return createVscodeTagRelationGraphHost({
+                getWorkspaceFolders: () =>
+                    vscode.workspace.workspaceFolders?.map(folder => ({ fsPath: folder.uri.fsPath })),
+                openFileAt: async (filePath, line) => {
+                    const uri = vscode.Uri.file(filePath);
+                    const showOptions: vscode.TextDocumentShowOptions = {
+                        viewColumn: vscode.ViewColumn.One
+                    };
+                    if (line !== undefined) {
+                        const position = new vscode.Position(line, 0);
+                        showOptions.selection = new vscode.Range(position, position);
+                    }
+                    await vscode.window.showTextDocument(uri, showOptions);
+                },
+                logWarn: (message, detail) => logger.warn(message, detail)
+            });
         }
 
         function resetCommentTagGraphRoot(content: string): GraphData {
@@ -233,7 +261,7 @@ export async function showMarkdownWebviewInput(
         }
 
         function postCommentTagGraphError(error: unknown): void {
-            logger.error('注释标签关系图失败:', error);
+            logger.error('注释标签关系图失败', error);
             panel.webview.postMessage({
                 command: IPC_MESSAGES.COMMENT_TAG_GRAPH_ERROR,
                 error: getErrorMessage(error)
@@ -241,26 +269,13 @@ export async function showMarkdownWebviewInput(
         }
 
         function buildStackedCommentTagGraph(level: number): GraphData {
-            const item = commentTagGraphStack.items[level];
-            if (level === 0) {
-                return buildTagRelationGraphData({
-                    commentManager,
-                    tagManager,
-                    centerFilePath: item.filePath,
-                    centerLabel: '当前注释',
-                    centerContent: commentTagGraphRootContent,
-                    level: 0,
-                    breadcrumb: commentTagGraphStack.items
-                });
-            }
-            return buildTagRelationGraphData({
+            return buildStackedCommentTagGraphShared(
+                commentTagGraphStack,
+                commentTagGraphRootContent,
                 commentManager,
                 tagManager,
-                centerFilePath: item.filePath,
-                centerLabel: item.label,
-                level,
-                breadcrumb: commentTagGraphStack.items
-            });
+                level
+            );
         }
 
         // 处理WebView消息
@@ -531,75 +546,66 @@ export async function showMarkdownWebviewInput(
                         }
                         break;
                     case IPC_MESSAGES.EXPAND_COMMENT_TAG_GRAPH: {
-                        const nodeId = message.nodeId as string | undefined;
-                        const filePath = message.filePath as string | undefined;
-                        const label = message.label as string | undefined;
-                        if (!nodeId || !label) {
-                            break;
-                        }
                         try {
-                            const children = buildTagRelationChildNodes({
+                            const result = expandTagRelationNode(createCommentTagGraphHost(), {
+                                nodeId: message.nodeId,
+                                label: message.label,
+                                filePath: message.filePath,
+                                fallbackFilePath: sourceFilePath(),
                                 commentManager,
-                                tagManager,
-                                parentId: nodeId,
-                                centerLabel: label,
-                                centerFilePath: filePath || sourceFilePath()
+                                tagManager
                             });
-                            panel.webview.postMessage({
-                                command: IPC_MESSAGES.UPDATE_COMMENT_TAG_GRAPH,
-                                mode: 'append',
-                                parentId: nodeId,
-                                data: children
-                            });
+                            if (result) {
+                                panel.webview.postMessage({
+                                    command: IPC_MESSAGES.UPDATE_COMMENT_TAG_GRAPH,
+                                    mode: 'append',
+                                    parentId: result.parentId,
+                                    data: result.children
+                                });
+                            }
                         } catch (error) {
                             postCommentTagGraphError(error);
                         }
                         break;
                     }
                     case IPC_MESSAGES.COMMENT_TAG_GRAPH_BACK:
-                        if (commentTagGraphStack.items.length <= 1) {
-                            break;
-                        }
                         try {
-                            const removed = commentTagGraphStack.items.pop();
-                            if (removed) {
-                                commentTagGraphStack.visitedNodes.delete(removed.id);
+                            const data = navigateCommentTagGraphBack(
+                                commentTagGraphStack,
+                                commentTagGraphRootContent,
+                                commentManager,
+                                tagManager
+                            );
+                            if (data) {
+                                postCommentTagGraph(data);
                             }
-                            postCommentTagGraph(buildStackedCommentTagGraph(commentTagGraphStack.items.length - 1));
                         } catch (error) {
                             postCommentTagGraphError(error);
                         }
                         break;
                     case IPC_MESSAGES.COMMENT_TAG_GRAPH_NAVIGATE_LEVEL: {
-                        const level = message.level as number | undefined;
-                        if (level === undefined || level < 0 || level >= commentTagGraphStack.items.length) {
-                            break;
-                        }
                         try {
-                            const newItems = commentTagGraphStack.items.slice(0, level + 1);
-                            commentTagGraphStack.items = newItems;
-                            commentTagGraphStack.visitedNodes = new Set(newItems.map(item => item.id));
-                            postCommentTagGraph(buildStackedCommentTagGraph(level));
+                            const data = navigateCommentTagGraphToLevel(
+                                message.level,
+                                commentTagGraphStack,
+                                commentTagGraphRootContent,
+                                commentManager,
+                                tagManager
+                            );
+                            if (data) {
+                                postCommentTagGraph(data);
+                            }
                         } catch (error) {
                             postCommentTagGraphError(error);
                         }
                         break;
                     }
                     case IPC_MESSAGES.GO_TO_COMMENT_TAG_DEFINITION: {
-                        const filePath = message.filePath as string | undefined;
-                        if (!filePath) {
-                            break;
-                        }
                         try {
-                            const uri = vscode.Uri.file(filePath);
-                            const showOptions: vscode.TextDocumentShowOptions = {
-                                viewColumn: vscode.ViewColumn.One
-                            };
-                            if (message.line !== undefined) {
-                                const position = new vscode.Position(message.line as number, 0);
-                                showOptions.selection = new vscode.Range(position, position);
-                            }
-                            await vscode.window.showTextDocument(uri, showOptions);
+                            await goToTagRelationDefinition(createCommentTagGraphHost(), {
+                                filePath: message.filePath,
+                                line: message.line
+                            });
                         } catch (error) {
                             vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
                         }
