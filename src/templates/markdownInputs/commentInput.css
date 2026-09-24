@@ -168,7 +168,7 @@ body {
     border-radius: 6px;
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
-    max-height: 300px;
+    max-height: min(60vh, 560px);
     overflow: auto;
     width: 100%;
     max-width: 100%;
@@ -343,6 +343,133 @@ body {
 .input-area {
     margin-bottom: 16px;
 }
+
+/* =============================================================================
+   Markdown insert toolbar (above textarea)
+   ============================================================================= */
+.md-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin: 0 0 8px 0;
+    padding: 4px 6px;
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
+    background: var(--note-card);
+    box-shadow: var(--note-shadow);
+    box-sizing: border-box;
+}
+
+.md-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--note-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.md-toolbar-btn:hover {
+    background-color: var(--note-hover);
+    color: var(--note-fg);
+}
+
+.md-toolbar-btn:focus-visible {
+    outline: none;
+    border-color: var(--note-fg);
+    color: var(--note-fg);
+}
+
+.md-toolbar-btn:active {
+    background-color: var(--note-selection);
+}
+
+.md-toolbar-btn svg {
+    display: block;
+    pointer-events: none;
+}
+
+.md-toolbar-sep {
+    display: inline-block;
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: var(--note-border);
+    flex-shrink: 0;
+}
+
+.md-toolbar-heading {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.md-toolbar-heading-toggle {
+    width: auto;
+    min-width: 28px;
+    padding: 0 6px;
+    gap: 2px;
+}
+
+.md-toolbar-caret {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 2px;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 4px solid currentColor;
+    opacity: 0.75;
+}
+
+.md-toolbar-heading-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 10050;
+    min-width: 128px;
+    padding: 4px;
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
+    background: var(--note-card);
+    box-shadow: var(--note-shadow);
+    box-sizing: border-box;
+}
+
+.md-toolbar-heading-menu[hidden] {
+    display: none !important;
+}
+
+.md-toolbar-heading-item {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--note-fg);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.md-toolbar-heading-item:hover,
+.md-toolbar-heading-item:focus-visible {
+    background: var(--note-hover);
+    outline: none;
+}
 textarea {
     width: 100%;
     min-height: 300px;
@@ -480,40 +607,63 @@ button {
     margin-left: 8px;
 }
 
-/* Markdown 预览样式 */
-.preview-area h1,
-.preview-area h2,
-.preview-area h3,
-.preview-area h4,
-.preview-area h5,
-.preview-area h6 {
-    margin-top: 16px;
-    margin-bottom: 8px;
+/* Markdown preview typography — mirror markdownPreview/preview.css */
+#previewArea h1,
+#previewArea h2,
+#previewArea h3,
+#previewArea h4,
+#previewArea h5,
+#previewArea h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 24px;
+    margin-bottom: 16px;
 }
-.preview-area p {
-    margin: 8px 0;
+#previewArea h1 { font-size: 2em; }
+#previewArea h2 { font-size: 1.5em; }
+#previewArea h3 { font-size: 1.25em; }
+#previewArea h4 { font-size: 1em; }
+#previewArea h5 { font-size: 0.875em; }
+#previewArea h6 {
+    font-size: 0.85em;
+    color: var(--note-muted);
 }
-.preview-area blockquote {
-    margin: 8px 0;
+#previewArea h1:first-child,
+#previewArea h2:first-child,
+#previewArea h3:first-child,
+#previewArea h4:first-child,
+#previewArea h5:first-child,
+#previewArea h6:first-child {
+    margin-top: 0;
+}
+#previewArea p,
+#previewArea blockquote,
+#previewArea ul,
+#previewArea ol,
+#previewArea dl,
+#previewArea table,
+#previewArea pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+#previewArea blockquote {
     padding-left: 12px;
+    border-left: 3px solid var(--note-border);
+    color: var(--note-muted);
 }
-.preview-area ul,
-.preview-area ol {
+#previewArea ul,
+#previewArea ol {
     padding-left: 24px;
 }
-
-.preview-area a:hover {
+#previewArea a:hover {
     text-decoration: underline;
 }
-.preview-area img {
+#previewArea img {
     max-width: 100%;
     height: auto;
 }
-.preview-area table {
-    margin: 8px 0;
-}
-.preview-area th,
-.preview-area td {
+#previewArea th,
+#previewArea td {
     padding: 6px 12px;
 }
 
@@ -650,12 +800,40 @@ html:has(.graph-fullscreen) body {
     display: none;
 }
 
+.container.code-snapshot-view {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 .container.code-snapshot-view .context-info {
-    margin-bottom: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0;
+}
+
+.container.code-snapshot-view .context-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .container.code-snapshot-view #code-tab.tab-content.active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     padding-bottom: 4px;
+}
+
+.container.code-snapshot-view .code-context-preview {
+    flex: 1;
+    max-height: none;
+    min-height: 360px;
+    height: calc(100vh - 120px);
 }
 .container.graph-fullscreen .input-area,
 .container.graph-fullscreen .button-group,
@@ -846,6 +1024,7 @@ html:has(.graph-fullscreen) body {
 }
 
 /* 更新预览区域样式 — note card body, less stacked borders */
+/* Align typography with markdownPreview/preview.css (not VS Code built-in MD) */
 #previewArea {
     border: none;
     border-radius: 0;
@@ -855,9 +1034,18 @@ html:has(.graph-fullscreen) body {
     min-height: 100px;
     max-height: 400px;
     overflow-y: auto;
-    font-family: var(--vscode-editor-font-family);
+    font-family: inherit; /* body -> --vscode-font-family via public.css */
     font-size: var(--vscode-editor-font-size);
     line-height: 1.5;
+    word-wrap: break-word;
+}
+
+#previewArea code,
+#previewArea pre,
+#previewArea kbd,
+#previewArea samp {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
 }
 
 

@@ -1030,6 +1030,239 @@
         window.PageLoading.notifyFirstRenderComplete();
     }
     
+    // ========== Markdown 插入工具栏 ==========
+    (function initMarkdownToolbar() {
+        const toolbar = document.querySelector('.md-toolbar');
+        if (!toolbar || !textarea) {
+            return;
+        }
+
+        const headingToggle = toolbar.querySelector('.md-toolbar-heading-toggle');
+        const headingMenu = toolbar.querySelector('.md-toolbar-heading-menu');
+
+        function notifyInput() {
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.focus();
+        }
+
+        function replaceSelection(text, selectStart, selectEnd) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const value = textarea.value;
+            textarea.value = value.slice(0, start) + text + value.slice(end);
+            const selStart = (typeof selectStart === 'number') ? start + selectStart : start + text.length;
+            const selEnd = (typeof selectEnd === 'number') ? start + selectEnd : selStart;
+            textarea.setSelectionRange(selStart, selEnd);
+            notifyInput();
+        }
+
+        function wrapSelection(before, after, placeholder) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.slice(start, end);
+            if (selected.length > 0) {
+                replaceSelection(before + selected + after, before.length, before.length + selected.length);
+            } else {
+                const ph = placeholder || '';
+                replaceSelection(before + ph + after, before.length, before.length + ph.length);
+            }
+        }
+
+        function insertTemplate(template, placeholder) {
+            const ph = placeholder || '';
+            const idx = ph ? template.indexOf(ph) : -1;
+            if (idx >= 0) {
+                replaceSelection(template, idx, idx + ph.length);
+            } else {
+                replaceSelection(template);
+            }
+        }
+
+        function getLineRange() {
+            const value = textarea.value;
+            let start = textarea.selectionStart;
+            let end = textarea.selectionEnd;
+            while (start > 0 && value.charAt(start - 1) !== '\n') {
+                start--;
+            }
+            if (end > start && value.charAt(end - 1) === '\n') {
+                end--;
+            }
+            while (end < value.length && value.charAt(end) !== '\n') {
+                end++;
+            }
+            return { start: start, end: end };
+        }
+
+        function prefixLines(prefixFn) {
+            const value = textarea.value;
+            const range = getLineRange();
+            const block = value.slice(range.start, range.end);
+            const lines = block.split('\n');
+            const prefixed = lines.map(function(line, i) {
+                return prefixFn(line, i);
+            }).join('\n');
+            textarea.value = value.slice(0, range.start) + prefixed + value.slice(range.end);
+            textarea.setSelectionRange(range.start, range.start + prefixed.length);
+            notifyInput();
+        }
+
+        function applyHeading(level) {
+            const marks = '#'.repeat(level) + ' ';
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const hasSelection = start !== end;
+            const range = getLineRange();
+            const block = textarea.value.slice(range.start, range.end);
+            const lines = block.split('\n');
+            const onlyEmpty = !hasSelection && lines.length === 1 && lines[0].replace(/^#{1,6}\s+/, '') === '';
+            if (onlyEmpty) {
+                const ph = '标题';
+                const text = marks + ph;
+                textarea.setSelectionRange(range.start, range.end);
+                replaceSelection(text, marks.length, marks.length + ph.length);
+                return;
+            }
+            prefixLines(function(line) {
+                const stripped = line.replace(/^#{1,6}\s+/, '');
+                return marks + stripped;
+            });
+        }
+
+        function applyLink(isImage) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.slice(start, end);
+            const label = selected || (isImage ? '描述' : '文本');
+            const urlPh = 'url';
+            const text = (isImage ? '![' : '[') + label + '](' + urlPh + ')';
+            const urlIdx = text.lastIndexOf(urlPh);
+            replaceSelection(text, urlIdx, urlIdx + urlPh.length);
+        }
+
+        function applyCodeBlock() {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.slice(start, end);
+            if (selected.length > 0) {
+                const fenced = '```\n' + selected + '\n```';
+                replaceSelection(fenced, 4, 4 + selected.length);
+            } else {
+                insertTemplate('```语言\n代码\n```', '语言');
+            }
+        }
+
+        function closeHeadingMenu() {
+            if (!headingMenu || !headingToggle) {
+                return;
+            }
+            headingMenu.hidden = true;
+            headingToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        function toggleHeadingMenu() {
+            if (!headingMenu || !headingToggle) {
+                return;
+            }
+            const willOpen = headingMenu.hidden;
+            headingMenu.hidden = !willOpen;
+            headingToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) {
+                const first = headingMenu.querySelector('.md-toolbar-heading-item');
+                if (first) {
+                    first.focus();
+                }
+            }
+        }
+
+        toolbar.addEventListener('mousedown', function(e) {
+            if (e.target.closest('[data-md-action]')) {
+                e.preventDefault();
+            }
+        });
+
+        toolbar.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-md-action]');
+            if (!btn || !toolbar.contains(btn)) {
+                return;
+            }
+            const action = btn.getAttribute('data-md-action');
+
+            if (action === 'heading-menu') {
+                toggleHeadingMenu();
+                return;
+            }
+
+            closeHeadingMenu();
+
+            switch (action) {
+                case 'heading': {
+                    const level = parseInt(btn.getAttribute('data-md-level'), 10) || 1;
+                    applyHeading(level);
+                    break;
+                }
+                case 'bold':
+                    wrapSelection('**', '**', '文本');
+                    break;
+                case 'italic':
+                    wrapSelection('*', '*', '文本');
+                    break;
+                case 'quote':
+                    prefixLines(function(line) {
+                        if (/^>\s?/.test(line)) {
+                            return line;
+                        }
+                        return '> ' + line;
+                    });
+                    break;
+                case 'inline-code':
+                    wrapSelection('`', '`', '代码');
+                    break;
+                case 'code-block':
+                    applyCodeBlock();
+                    break;
+                case 'link':
+                    applyLink(false);
+                    break;
+                case 'image':
+                    applyLink(true);
+                    break;
+                case 'ul':
+                    prefixLines(function(line) {
+                        if (/^\s*[-*+]\s+/.test(line)) {
+                            return line;
+                        }
+                        return '- ' + line;
+                    });
+                    break;
+                case 'ol':
+                    prefixLines(function(line, i) {
+                        if (/^\s*\d+\.\s+/.test(line)) {
+                            return line;
+                        }
+                        return (i + 1) + '. ' + line;
+                    });
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (headingMenu && !headingMenu.hidden && !toolbar.contains(e.target)) {
+                closeHeadingMenu();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && headingMenu && !headingMenu.hidden) {
+                closeHeadingMenu();
+                if (headingToggle) {
+                    headingToggle.focus();
+                }
+            }
+        });
+    })();
     // 设置焦点
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
