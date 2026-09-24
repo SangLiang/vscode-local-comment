@@ -1086,15 +1086,43 @@
             textarea.focus();
         }
 
-        function replaceSelection(text, selectStart, selectEnd) {
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const value = textarea.value;
-            textarea.value = value.slice(0, start) + text + value.slice(end);
+        /**
+         * Replace [start, end) with text in an undo-friendly way.
+         * Direct textarea.value assignment clears the browser undo stack;
+         * execCommand('insertText') records a normal edit so Ctrl+Z works.
+         */
+        function replaceRange(start, end, text, selectStart, selectEnd) {
+            textarea.focus();
+            textarea.setSelectionRange(start, end);
+            let inserted = false;
+            try {
+                inserted = document.execCommand('insertText', false, text);
+            } catch (e) {
+                inserted = false;
+            }
+            if (!inserted) {
+                // Fallback: setRangeText (Chromium) then value write
+                try {
+                    if (typeof textarea.setRangeText === 'function') {
+                        textarea.setRangeText(text, start, end, 'end');
+                        inserted = true;
+                    }
+                } catch (e2) {
+                    inserted = false;
+                }
+            }
+            if (!inserted) {
+                const value = textarea.value;
+                textarea.value = value.slice(0, start) + text + value.slice(end);
+            }
             const selStart = (typeof selectStart === 'number') ? start + selectStart : start + text.length;
             const selEnd = (typeof selectEnd === 'number') ? start + selectEnd : selStart;
             textarea.setSelectionRange(selStart, selEnd);
             notifyInput();
+        }
+
+        function replaceSelection(text, selectStart, selectEnd) {
+            replaceRange(textarea.selectionStart, textarea.selectionEnd, text, selectStart, selectEnd);
         }
 
         function wrapSelection(before, after, placeholder) {
@@ -1136,16 +1164,13 @@
         }
 
         function prefixLines(prefixFn) {
-            const value = textarea.value;
             const range = getLineRange();
-            const block = value.slice(range.start, range.end);
+            const block = textarea.value.slice(range.start, range.end);
             const lines = block.split('\n');
             const prefixed = lines.map(function(line, i) {
                 return prefixFn(line, i);
             }).join('\n');
-            textarea.value = value.slice(0, range.start) + prefixed + value.slice(range.end);
-            textarea.setSelectionRange(range.start, range.start + prefixed.length);
-            notifyInput();
+            replaceRange(range.start, range.end, prefixed, 0, prefixed.length);
         }
 
         function applyHeading(level) {
