@@ -12,8 +12,8 @@ import { EditorUtils } from '../utils/editorUtils';
 import { buildDecorationColorSelectHtml } from '../utils/commentDecorationColor';
 import { buildTagRelationGraphData, buildTagRelationChildNodes, GraphData, BreadcrumbItem } from '../utils/tagRelationGraphData';
 
-// 辅助函数：获取代码上下文（前后5行）
-export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 5): Promise<{
+// 辅助函数：获取代码上下文（前后各10行）
+export async function getCodeContext(uri: vscode.Uri, lineNumber: number, contextLines: number = 10): Promise<{
     contextLines: string[];
     contextStartLine: number;
 }> {
@@ -596,7 +596,7 @@ function getMarkdownWebviewContent(
         lineContent?: string; // 当前行的实际内容
         originalLineContent?: string; // 注释保存的代码快照
         selectedText?: string;
-        contextLines?: string[]; // 前后5行的代码内容
+        contextLines?: string[]; // 前后各10行的代码内容
         contextStartLine?: number; // 上下文开始的行号
         fileNotFound?: boolean; // 文件是否不存在
         filePath?: string; // 文件路径

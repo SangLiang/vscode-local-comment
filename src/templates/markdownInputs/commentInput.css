@@ -642,6 +642,21 @@ html:has(.graph-fullscreen) body {
     flex-direction: column;
 }
 
+
+/* Code snapshot tab: show snapshot only, hide comment editor chrome */
+.container.code-snapshot-view .header,
+.container.code-snapshot-view .input-area,
+.container.code-snapshot-view .button-group {
+    display: none;
+}
+
+.container.code-snapshot-view .context-info {
+    margin-bottom: 8px;
+}
+
+.container.code-snapshot-view #code-tab.tab-content.active {
+    padding-bottom: 4px;
+}
 .container.graph-fullscreen .input-area,
 .container.graph-fullscreen .button-group,
 .container.graph-fullscreen .header,

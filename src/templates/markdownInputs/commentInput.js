@@ -340,6 +340,7 @@
         }
         if (container) {
             container.classList.toggle('graph-fullscreen', targetTab === 'tag-graph-tab');
+            container.classList.toggle('code-snapshot-view', targetTab === 'code-tab');
             if (targetTab !== 'preview-tab') {
                 container.classList.remove('maximized');
             }
