@@ -33,24 +33,25 @@ body.vscode-high-contrast-light {
 html[data-note-theme="dark"],
 body.vscode-dark,
 body.vscode-high-contrast {
-    /* Sampled from B1 dark mockup: page ~#101113, input lifted ~#151618 */
-    --note-bg: #101113;
-    --note-card: #151618;
-    --note-fg: #E0E0E0;
-    --note-muted: #858585;
-    --note-border: #2A2B2D;
-    --note-tab-inactive: #858585;
-    --note-tab-active: #E0E0E0;
-    --note-input-bg: #151618;
-    --note-input-border: #393A3C;
-    --note-btn-primary-bg: #E0E0E0;
-    --note-btn-primary-fg: #101113;
-    --note-btn-secondary-bg: #191A1C;
-    --note-btn-secondary-fg: #E0E0E0;
-    --note-btn-secondary-border: #393A3C;
-    --note-hover: rgba(224, 224, 224, 0.08);
-    --note-selection: rgba(224, 224, 224, 0.12);
-    --note-code-bg: #101113;
+    /* D3 dark from mockup sample (not the earlier reference board) */
+    --note-bg: #141B23;
+    --note-card: #1E252D;
+    --note-fg: #E6EAF0;
+    --note-muted: #9DA4AE;
+    --note-border: #2E3744;
+    --note-tab-inactive: #9DA4AE;
+    --note-tab-active: #E6EAF0;
+    --note-accent: #4A7AB8;
+    --note-input-bg: #1E252D;
+    --note-input-border: #2E3744;
+    --note-btn-primary-bg: #4A7AB8;
+    --note-btn-primary-fg: #E6EAF0;
+    --note-btn-secondary-bg: #1E252D;
+    --note-btn-secondary-fg: #E6EAF0;
+    --note-btn-secondary-border: #2E3744;
+    --note-hover: rgba(230, 234, 240, 0.08);
+    --note-selection: rgba(74, 122, 184, 0.22);
+    --note-code-bg: #141B23;
     --note-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     --note-danger: #F85149;
 }
@@ -718,7 +719,7 @@ html:has(.graph-fullscreen) body {
     /* Keep weight 400 so label width (and neighbor tabs) do not jump */
     font-weight: 400;
     text-shadow: 0.35px 0 0 currentColor, -0.35px 0 0 currentColor;
-    border-bottom-color: var(--note-tab-active) !important;
+    border-bottom-color: var(--note-accent, var(--note-tab-active)) !important;
 }
 
 .tab-content {
