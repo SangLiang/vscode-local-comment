@@ -158,6 +158,8 @@ export const IPC_MESSAGES = {
     SAVE: 'save',
     SAVE_AND_CONTINUE: 'saveAndContinue',
     UPDATE_SELECTED_LINE: 'updateSelectedLine',
+    /** Webview → 扩展：跳转到注释关联的源文件行 */
+    GO_TO_SOURCE_LOCATION: 'goToSourceLocation',
     SHARE: 'share',
     GO_TO_TAG_DECLARATION: 'goToTagDeclaration',
     CANCEL: 'cancel',

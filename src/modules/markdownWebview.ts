@@ -324,6 +324,52 @@ export async function showMarkdownWebviewInput(
                             })();
                         }
                         break;
+                    case IPC_MESSAGES.GO_TO_SOURCE_LOCATION: {
+                        const targetLine = typeof message.lineNumber === 'number'
+                            ? message.lineNumber
+                            : contextInfo?.lineNumber;
+                        const filePath = (typeof message.filePath === 'string' && message.filePath)
+                            ? message.filePath
+                            : contextInfo?.filePath;
+                        if (!filePath || targetLine === undefined || targetLine === null) {
+                            vscode.window.showWarningMessage('无法跳转：缺少文件路径或行号');
+                            break;
+                        }
+                        if (contextInfo?.fileNotFound) {
+                            vscode.window.showWarningMessage('源文件不存在，无法跳转');
+                            break;
+                        }
+                        try {
+                            const uri = vscode.Uri.file(filePath);
+                            const document = await vscode.workspace.openTextDocument(uri);
+                            const existingEditor = vscode.window.visibleTextEditors.find(
+                                (editor) => editor.document.uri.fsPath === document.uri.fsPath
+                            );
+                            const viewColumn = existingEditor?.viewColumn
+                                ?? activeEditor?.viewColumn
+                                ?? vscode.ViewColumn.One;
+                            const clamped = Math.min(Math.max(0, Math.floor(targetLine)), Math.max(0, document.lineCount - 1));
+                            const position = new vscode.Position(clamped, 0);
+                            const editor = await vscode.window.showTextDocument(document, {
+                                viewColumn,
+                                preserveFocus: false,
+                                selection: new vscode.Range(position, position)
+                            });
+                            editor.selection = new vscode.Selection(position, position);
+                            editor.revealRange(
+                                new vscode.Range(position, position),
+                                vscode.TextEditorRevealType.InCenter
+                            );
+                            await vscode.commands.executeCommand('revealLine', {
+                                lineNumber: clamped + 1,
+                                at: 'center'
+                            });
+                        } catch (error) {
+                            logger.error('跳转到源文件失败:', error);
+                            vscode.window.showErrorMessage(`跳转失败: ${getErrorMessage(error)}`);
+                        }
+                        break;
+                    }
                     case IPC_MESSAGES.UPDATE_SELECTED_LINE:
                         // 处理用户点击代码行的消息
                         if (message.lineNumber !== undefined && contextInfo) {
@@ -623,7 +669,7 @@ function getMarkdownWebviewContent(
     let contextHtml = '';
     contextHtml = '<div class="context-info">';
 
-    // B1: muted path + line as top meta (no tool-panel title)
+    // B1: muted path + line as top meta; click jumps to source location
     {
         const metaParts: string[] = [];
         if (contextInfo?.fileName) {
@@ -635,7 +681,11 @@ function getMarkdownWebviewContent(
             metaParts.push(`<span class="note-meta-line">L${contextInfo.lineNumber + 1}</span>`);
         }
         if (metaParts.length > 0) {
-            contextHtml += `<div class="note-meta">${metaParts.join('<span class="note-meta-sep">·</span>')}</div>`;
+            const canJump = Boolean(contextInfo?.filePath) && contextInfo?.lineNumber !== undefined && !contextInfo?.fileNotFound;
+            const jumpAttrs = canJump
+                ? ' role="link" tabindex="0" title="跳转到源文件对应行" data-can-jump="true"'
+                : ' title="无法跳转：缺少文件路径或文件不存在" data-can-jump="false"';
+            contextHtml += `<div class="note-meta"${jumpAttrs}>${metaParts.join('<span class="note-meta-sep">·</span>')}</div>`;
         }
     }
 

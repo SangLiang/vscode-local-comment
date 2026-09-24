@@ -253,7 +253,39 @@
 
     // Tab切换功能
     function initTabSwitching() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
+        
+    // Top meta: click / Enter / Space jumps to source file location
+    (function bindNoteMetaJump() {
+        const noteMeta = document.querySelector('.note-meta');
+        if (!noteMeta || noteMeta.getAttribute('data-can-jump') !== 'true') {
+            return;
+        }
+        const lineEl = noteMeta.querySelector('.note-meta-line');
+        const initialLineMatch = lineEl && /^L(\d+)$/.exec(lineEl.textContent || '');
+        if (initialLineMatch) {
+            noteMeta.setAttribute('data-line-number', String(parseInt(initialLineMatch[1], 10) - 1));
+        }
+        function jumpToSource() {
+            const raw = noteMeta.getAttribute('data-line-number');
+            const payload = { command: 'goToSourceLocation' };
+            if (raw !== null && raw !== '' && !Number.isNaN(parseInt(raw, 10))) {
+                payload.lineNumber = parseInt(raw, 10);
+            }
+            vscode.postMessage(payload);
+        }
+        noteMeta.addEventListener('click', function(e) {
+            e.preventDefault();
+            jumpToSource();
+        });
+        noteMeta.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                jumpToSource();
+            }
+        });
+    })();
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
         
         tabButtons.forEach(button => {
@@ -524,25 +556,34 @@
     // 更新行号栏显示
     function updateLineNumberDisplay(lineNumber) {
         const codeTab = document.getElementById('code-tab');
-        if (!codeTab) return;
-        
-        // 查找行号显示区域
-        const contextItems = codeTab.querySelectorAll('.context-item');
-        let lineNumberItem = null;
-        
-        for (const item of contextItems) {
-            const label = item.querySelector('.context-label');
-            if (label && label.textContent === '行号:') {
-                lineNumberItem = item;
-                break;
+        if (codeTab) {
+            const contextItems = codeTab.querySelectorAll('.context-item');
+            let lineNumberItem = null;
+
+            for (const item of contextItems) {
+                const label = item.querySelector('.context-label');
+                if (label && label.textContent === '行号:') {
+                    lineNumberItem = item;
+                    break;
+                }
+            }
+
+            if (lineNumberItem) {
+                const lineNumberValue = lineNumberItem.querySelector('.context-value');
+                if (lineNumberValue) {
+                    lineNumberValue.textContent = `第 ${lineNumber + 1} 行`;
+                }
             }
         }
-        
-        if (lineNumberItem) {
-            const lineNumberValue = lineNumberItem.querySelector('.context-value');
-            if (lineNumberValue) {
-                lineNumberValue.textContent = `第 ${lineNumber + 1} 行`;
-            }
+
+        const noteMetaLine = document.querySelector('.note-meta-line');
+        if (noteMetaLine) {
+            noteMetaLine.textContent = `L${lineNumber + 1}`;
+        }
+
+        const noteMeta = document.querySelector('.note-meta');
+        if (noteMeta && noteMeta.getAttribute('data-can-jump') === 'true') {
+            noteMeta.setAttribute('data-line-number', String(lineNumber));
         }
     }
     

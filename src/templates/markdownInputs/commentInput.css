@@ -98,6 +98,29 @@ body {
     flex-shrink: 0;
 }
 
+.note-meta[data-can-jump="true"] {
+    cursor: pointer;
+    border-radius: 4px;
+    outline: none;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.note-meta[data-can-jump="true"]:hover,
+.note-meta[data-can-jump="true"]:focus-visible {
+    color: var(--note-fg);
+    background-color: var(--note-hover);
+}
+
+.note-meta[data-can-jump="true"]:hover .note-meta-file,
+.note-meta[data-can-jump="true"]:focus-visible .note-meta-file {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.note-meta[data-can-jump="false"] {
+    cursor: default;
+}
+
 .context-info {
     background-color: transparent;
     border: none;
@@ -144,8 +167,9 @@ body {
     border: 1px solid var(--note-border);
     border-radius: 6px;
     padding: 8px;
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
+    font-family: inherit;
+    font-size: calc(var(--vscode-editor-font-size, 14px) * 0.85);
+    line-height: 1.5;
     white-space: pre-wrap;
     color: var(--note-fg);
 }
@@ -166,8 +190,9 @@ body {
     background-color: var(--note-card);
     border: 1px solid var(--note-border);
     border-radius: 6px;
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
+    font-family: inherit; /* same as #previewArea / body UI font */
+    font-size: calc(var(--vscode-editor-font-size, 14px) * 0.85);
+    line-height: 1.5;
     max-height: min(60vh, 560px);
     overflow: auto;
     width: 100%;
@@ -216,7 +241,7 @@ body {
 }
 .line-number {
     color: var(--note-muted);
-    font-size: 12px;
+    font-size: inherit;
     min-width: 35px;
     text-align: right;
     margin-right: 12px;
