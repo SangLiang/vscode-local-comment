@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { LocalComment, SharedComment, FileComments } from './commentTypes';
 import { StoragePathUtils, StoragePaths } from '../utils/storagePathUtils';
+import { normalizeGroupConfigFileName } from '../utils/commentManageUtils';
 import { getFirstWorkspacePathOrWarn, remapFileCommentsToWorkspace } from '../utils/utils';
 import { generateId } from '../utils/idUtils';
 import { logger } from '../utils/logger';
@@ -668,13 +669,14 @@ export class CommentStorage extends WorkspaceJsonStorageBase {
   async renameCommentsConfig(oldFileName: string, newFileName: string): Promise<boolean> {
     const workspacePath = getFirstWorkspacePathOrWarn();
     if (workspacePath === null) return false;
-    if (!newFileName.endsWith('.json')) {
-      newFileName += '.json';
-    }
-    if (!/^[a-zA-Z0-9_-]+\.json$/.test(newFileName)) {
+    const safeOld = normalizeGroupConfigFileName(oldFileName);
+    const safeNew = normalizeGroupConfigFileName(newFileName);
+    if (!safeOld || !safeNew) {
       vscode.window.showWarningMessage('配置文件名只能包含字母、数字、下划线和连字符');
       return false;
     }
+    oldFileName = safeOld;
+    newFileName = safeNew;
     const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
     const oldPath = path.join(paths.commentsDir, oldFileName);
     const newPath = path.join(paths.commentsDir, newFileName);
@@ -706,6 +708,12 @@ export class CommentStorage extends WorkspaceJsonStorageBase {
   async deleteCommentsConfig(configFileName: string): Promise<boolean> {
     const workspacePath = getFirstWorkspacePathOrWarn();
     if (workspacePath === null) return false;
+    const safeDelete = normalizeGroupConfigFileName(configFileName);
+    if (!safeDelete) {
+      vscode.window.showWarningMessage('非法的配置文件名');
+      return false;
+    }
+    configFileName = safeDelete;
     const config = StoragePathUtils.loadConfig(workspacePath);
     if (config.comments === configFileName) {
       vscode.window.showWarningMessage('不能删除当前正在使用的分组');

@@ -8,26 +8,11 @@ import { IPC_MESSAGES } from '../constants';
 import { CommentManageWebviewPanel } from './commentManageWebview';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/utils';
-import { formatGroupDisplayName } from '../utils/commentManageUtils';
-
-const GROUP_FILE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
-
-function validateGroupFileName(value: string, existingConfigs: string[]): string | null {
-    const trimmed = value.trim();
-    if (!trimmed) {
-        return '文件名不能为空';
-    }
-    if (/\.json$/i.test(trimmed)) {
-        return '请勿输入 .json 后缀';
-    }
-    if (!GROUP_FILE_NAME_PATTERN.test(trimmed)) {
-        return '文件名只能包含字母、数字、下划线和连字符';
-    }
-    if (existingConfigs.includes(`${trimmed}.json`)) {
-        return '配置文件已存在';
-    }
-    return null;
-}
+import {
+    formatGroupDisplayName,
+    normalizeGroupConfigFileName,
+    validateNewGroupName,
+} from '../utils/commentManageUtils';
 
 export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
@@ -42,6 +27,20 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
         private readonly _tagManager: TagManager,
         private readonly _refreshCommentUi: () => void
     ) {}
+
+    
+    /** IPC 传入的分组文件名必须可规范为 stem.json，否则拒绝 */
+    private _requireSafeGroupFileName(raw: string | undefined): string | null {
+        if (!raw) {
+            return null;
+        }
+        const safe = normalizeGroupConfigFileName(raw);
+        if (!safe) {
+            vscode.window.showWarningMessage('非法的分组配置文件名');
+            return null;
+        }
+        return safe;
+    }
 
     resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -125,7 +124,7 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
             prompt: '请输入分组名称（不需要 .json 后缀）',
             placeHolder: '例如: feature-a',
             value,
-            validateInput: (input) => validateGroupFileName(input, existing),
+            validateInput: (input) => validateNewGroupName(input, existing),
         });
     }
 
@@ -141,14 +140,16 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 CommentManageWebviewPanel.currentPanel?.refreshRows();
                 vscode.window.showInformationMessage('注释分组已刷新');
                 return;
-            case IPC_MESSAGES.SELECT_COMMENT_GROUP:
-                if (!message.fileName) {
+            case IPC_MESSAGES.SELECT_COMMENT_GROUP: {
+                const safeSelect = this._requireSafeGroupFileName(message.fileName);
+                if (!safeSelect) {
                     return;
                 }
-                this._viewingGroupFileName = message.fileName;
-                this._openManagePanel(message.fileName);
+                this._viewingGroupFileName = safeSelect;
+                this._openManagePanel(safeSelect);
                 this.refreshGroups();
                 return;
+            }
             case IPC_MESSAGES.CREATE_COMMENT_GROUP: {
                 let fileName = message.fileName?.trim();
                 if (!fileName) {
@@ -157,12 +158,17 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                         return;
                     }
                 }
-                const validationError = validateGroupFileName(fileName, this._commentManager.listAvailableCommentsConfigs());
+                const validationError = validateNewGroupName(fileName, this._commentManager.listAvailableCommentsConfigs());
                 if (validationError) {
                     vscode.window.showWarningMessage(validationError);
                     return;
                 }
-                await this._commentManager.createCommentsConfig(fileName);
+                const safeCreate = normalizeGroupConfigFileName(fileName);
+                if (!safeCreate) {
+                    vscode.window.showWarningMessage('非法的分组配置文件名');
+                    return;
+                }
+                await this._commentManager.createCommentsConfig(safeCreate);
                 const createdFileName = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
                 this._viewingGroupFileName = createdFileName;
                 this._openManagePanel(createdFileName);
@@ -170,32 +176,34 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 return;
             }
             case IPC_MESSAGES.APPLY_COMMENT_GROUP: {
-                if (!message.fileName) {
+                const safeApply = this._requireSafeGroupFileName(message.fileName);
+                if (!safeApply) {
                     return;
                 }
-                await this._commentManager.switchCommentsConfig(message.fileName);
-                this._viewingGroupFileName = message.fileName;
-                CommentManageWebviewPanel.currentPanel?.onGroupApplied(message.fileName);
+                await this._commentManager.switchCommentsConfig(safeApply);
+                this._viewingGroupFileName = safeApply;
+                CommentManageWebviewPanel.currentPanel?.onGroupApplied(safeApply);
                 this.refreshGroups();
                 return;
             }
             case IPC_MESSAGES.RENAME_COMMENT_GROUP: {
-                if (!message.fileName) {
+                const safeOld = this._requireSafeGroupFileName(message.fileName);
+                if (!safeOld) {
                     return;
                 }
                 const existingForRename = this._commentManager
                     .listAvailableCommentsConfigs()
-                    .filter((f) => f !== message.fileName);
+                    .filter((f) => f !== safeOld);
                 const newFileName = await vscode.window.showInputBox({
                     title: '重命名注释分组',
                     prompt: '请输入新分组名称（不需要 .json 后缀）',
-                    value: formatGroupDisplayName(message.fileName),
-                    validateInput: (input) => validateGroupFileName(input, existingForRename),
+                    value: formatGroupDisplayName(safeOld),
+                    validateInput: (input) => validateNewGroupName(input, existingForRename),
                 });
                 if (!newFileName) {
                     return;
                 }
-                const ok = await this._commentManager.renameCommentsConfig(message.fileName, newFileName);
+                const ok = await this._commentManager.renameCommentsConfig(safeOld, newFileName);
                 if (!ok) {
                     this._post(IPC_MESSAGES.COMMENT_GROUP_ERROR, {
                         message: '重命名失败，请检查名称是否合法或目标分组是否已存在',
@@ -205,10 +213,11 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 return;
             }
             case IPC_MESSAGES.DELETE_COMMENT_GROUP: {
-                if (!message.fileName) {
+                const safeDelete = this._requireSafeGroupFileName(message.fileName);
+                if (!safeDelete) {
                     return;
                 }
-                const displayName = formatGroupDisplayName(message.fileName);
+                const displayName = formatGroupDisplayName(safeDelete);
                 const choice = await vscode.window.showWarningMessage(
                     `确定删除空分组「${displayName}」？`,
                     { modal: true },
@@ -218,7 +227,7 @@ export class CommentGroupWebviewViewProvider implements vscode.WebviewViewProvid
                 if (choice !== '删除') {
                     return;
                 }
-                const ok = await this._commentManager.deleteCommentsConfig(message.fileName);
+                const ok = await this._commentManager.deleteCommentsConfig(safeDelete);
                 if (!ok) {
                     this._post(IPC_MESSAGES.COMMENT_GROUP_ERROR, {
                         message: '删除失败，仅可删除空分组且不能删除当前分组',

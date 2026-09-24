@@ -203,12 +203,13 @@ export class ProviderRegistry {
 
     /**
      * 注册用户信息Webview的序列化器
+     * @returns 用于在扩展停用时取消注册的 Disposable
      */
-    registerUserInfoWebviewSerializer(): void {
+    registerUserInfoWebviewSerializer(): vscode.Disposable {
         const container = this.container;
         const context = this.context;
         
-        vscode.window.registerWebviewPanelSerializer(UserInfoWebview.viewType, {
+        return vscode.window.registerWebviewPanelSerializer(UserInfoWebview.viewType, {
             async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: unknown) {
                 // 恢复webview时也需要检查认证状态
                 if (!container.authManager) {
@@ -238,12 +239,13 @@ export class ProviderRegistry {
 
     /**
      * 注册注释管理 Webview 的序列化器
+     * @returns 用于在扩展停用时取消注册的 Disposable
      */
-    registerCommentManageWebviewSerializer(): void {
+    registerCommentManageWebviewSerializer(): vscode.Disposable {
         const container = this.container;
         const context = this.context;
 
-        vscode.window.registerWebviewPanelSerializer(CommentManageWebviewPanel.viewType, {
+        return vscode.window.registerWebviewPanelSerializer(CommentManageWebviewPanel.viewType, {
             async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: unknown) {
                 CommentManageWebviewPanel.revive(
                     webviewPanel,

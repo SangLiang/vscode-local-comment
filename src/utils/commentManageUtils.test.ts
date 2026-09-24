@@ -5,6 +5,9 @@ import {
   sortCommentRows,
   extractTagDeclarations,
   toCommentSummary,
+  formatGroupDisplayName,
+  normalizeGroupConfigFileName,
+  validateNewGroupName,
 } from './commentManageUtils';
 import { FileComments } from '../managers/commentTypes';
 
@@ -100,3 +103,69 @@ describe('commentManageUtils', () => {
     expect(sorted[1].line).toBe(20);
   });
 });
+
+
+describe('group config file name safety (TD-5)', () => {
+  describe('normalizeGroupConfigFileName', () => {
+    it('接受合法名干并补全 .json', () => {
+      expect(normalizeGroupConfigFileName('team_a')).toBe('team_a.json');
+      expect(normalizeGroupConfigFileName('team-a')).toBe('team-a.json');
+      expect(normalizeGroupConfigFileName('A1_b-2')).toBe('A1_b-2.json');
+    });
+
+    it('接受已带 .json 的合法文件名', () => {
+      expect(normalizeGroupConfigFileName('team_a.json')).toBe('team_a.json');
+      expect(normalizeGroupConfigFileName('  team_a.JSON  ')).toBe('team_a.json');
+    });
+
+    it('拒绝空值与空白', () => {
+      expect(normalizeGroupConfigFileName('')).toBeNull();
+      expect(normalizeGroupConfigFileName('   ')).toBeNull();
+    });
+
+    it('拒绝路径分隔符与穿越', () => {
+      expect(normalizeGroupConfigFileName('../evil')).toBeNull();
+      expect(normalizeGroupConfigFileName('..\\evil')).toBeNull();
+      expect(normalizeGroupConfigFileName('foo/bar')).toBeNull();
+      expect(normalizeGroupConfigFileName('foo\\bar')).toBeNull();
+      expect(normalizeGroupConfigFileName('/abs/evil.json')).toBeNull();
+      expect(normalizeGroupConfigFileName('C:\\tmp\\evil.json')).toBeNull();
+    });
+
+    it('拒绝非法字符与非 json 扩展', () => {
+      expect(normalizeGroupConfigFileName('has space')).toBeNull();
+      expect(normalizeGroupConfigFileName('中文')).toBeNull();
+      expect(normalizeGroupConfigFileName('evil.txt')).toBeNull();
+      expect(normalizeGroupConfigFileName('evil.json.bak')).toBeNull();
+      expect(normalizeGroupConfigFileName('a.b.json')).toBeNull();
+    });
+  });
+
+  describe('validateNewGroupName', () => {
+    const existing = ['alpha.json', 'Beta.json'];
+
+    it('合法新名通过', () => {
+      expect(validateNewGroupName('gamma', existing)).toBeNull();
+    });
+
+    it('拒绝空、后缀、路径与非法字符', () => {
+      expect(validateNewGroupName('', existing)).toBe('文件名不能为空');
+      expect(validateNewGroupName('gamma.json', existing)).toBe('请勿输入 .json 后缀');
+      expect(validateNewGroupName('../x', existing)).toBe('文件名不能包含路径分隔符');
+      expect(validateNewGroupName('bad name', existing)).toBe('文件名只能包含字母、数字、下划线和连字符');
+    });
+
+    it('拒绝与现有配置冲突（大小写不敏感）', () => {
+      expect(validateNewGroupName('alpha', existing)).toBe('配置文件已存在');
+      expect(validateNewGroupName('BETA', existing)).toBe('配置文件已存在');
+    });
+  });
+
+  describe('formatGroupDisplayName', () => {
+    it('去掉 .json 后缀', () => {
+      expect(formatGroupDisplayName('team_a.json')).toBe('team_a');
+      expect(formatGroupDisplayName('')).toBe('');
+    });
+  });
+});
+

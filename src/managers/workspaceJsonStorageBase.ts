@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { StoragePathUtils, StoragePaths, StorageConfig } from '../utils/storagePathUtils';
+import { normalizeGroupConfigFileName } from '../utils/commentManageUtils';
 import { getFirstWorkspaceFolder, getFirstWorkspacePathOrWarn } from '../utils/utils';
 import { logger } from '../utils/logger';
 
@@ -99,12 +100,27 @@ export abstract class WorkspaceJsonStorageBase {
 
   // ============== 创建配置 ==============
 
+  
+  /**
+   * 拒绝路径穿越与非法配置文件名；返回规范后的 stem.json。
+   */
+  protected resolveSafeConfigFileName(configFileName: string): string | null {
+    const safe = normalizeGroupConfigFileName(configFileName);
+    if (!safe) {
+      vscode.window.showWarningMessage(`非法的配置文件名: ${configFileName}`);
+      return null;
+    }
+    return safe;
+  }
+
   async createConfig(configFileName: string): Promise<void> {
     const workspacePath = getFirstWorkspacePathOrWarn();
     if (workspacePath === null) return;
-    if (!configFileName.endsWith('.json')) {
-      configFileName += '.json';
+    const safeName = this.resolveSafeConfigFileName(configFileName);
+    if (!safeName) {
+      return;
     }
+    configFileName = safeName;
     const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
     const configFile = path.join(this.getConfigDir(paths), configFileName);
     if (fs.existsSync(configFile)) {
@@ -122,6 +138,11 @@ export abstract class WorkspaceJsonStorageBase {
   async switchConfig(configFileName: string): Promise<void> {
     const workspacePath = getFirstWorkspacePathOrWarn();
     if (workspacePath === null) return;
+    const safeName = this.resolveSafeConfigFileName(configFileName);
+    if (!safeName) {
+      return;
+    }
+    configFileName = safeName;
     const paths = StoragePathUtils.getStoragePaths(this._context, workspacePath);
     const configFile = path.join(this.getConfigDir(paths), configFileName);
 

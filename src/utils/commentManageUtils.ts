@@ -9,6 +9,71 @@ export function formatGroupDisplayName(fileName: string): string {
   return fileName ? fileName.replace(/\.json$/i, '') : '';
 }
 
+/** 分组配置「名干」：仅字母数字、下划线、连字符（不含 .json） */
+export const GROUP_CONFIG_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+/** 分组配置文件名：名干 + .json */
+export const GROUP_CONFIG_FILE_PATTERN = /^[a-zA-Z0-9_-]+\.json$/;
+
+/**
+ * 将任意输入规范为安全的 `stem.json`。
+ * 含路径分隔符、`..`、空字节、非法字符或非 .json 扩展时返回 null。
+ */
+export function normalizeGroupConfigFileName(raw: string): string | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.includes('\0') || trimmed.includes('..') || /[/\\]/.test(trimmed)) {
+    return null;
+  }
+  const base = path.basename(trimmed);
+  if (base !== trimmed) {
+    return null;
+  }
+  if (base.includes('.') && !/\.json$/i.test(base)) {
+    return null;
+  }
+  const stem = base.replace(/\.json$/i, '');
+  if (!GROUP_CONFIG_NAME_PATTERN.test(stem)) {
+    return null;
+  }
+  return `${stem}.json`;
+}
+
+/**
+ * 新建/重命名输入框校验：用户不应带 .json 后缀。
+ * @param existingConfigs 已有文件名列表（通常带 .json）
+ * @returns 错误文案；合法时返回 null
+ */
+export function validateNewGroupName(value: string, existingConfigs: string[]): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '文件名不能为空';
+  }
+  if (/\.json$/i.test(trimmed)) {
+    return '请勿输入 .json 后缀';
+  }
+  if (trimmed.includes('\0') || trimmed.includes('..') || /[/\\]/.test(trimmed)) {
+    return '文件名不能包含路径分隔符';
+  }
+  if (!GROUP_CONFIG_NAME_PATTERN.test(trimmed)) {
+    return '文件名只能包含字母、数字、下划线和连字符';
+  }
+  const normalized = `${trimmed}.json`;
+  const clash = existingConfigs.some(
+    (item) => item.toLowerCase() === normalized.toLowerCase()
+  );
+  if (clash) {
+    return '配置文件已存在';
+  }
+  return null;
+}
+
+
 /**
  * 注释管理表格的一行。
  * 由存储 JSON 展平而来，供 Activity Bar 注释管理 Webview 渲染。
